@@ -8,7 +8,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
 
-quotes = []
+quoteMap = {}
 
 @bot.event
 async def on_ready():
@@ -16,14 +16,15 @@ async def on_ready():
 
 @bot.command()
 async def add(ctx, *, quote: str):
-    quotes.append(quote)
     sender = ctx.author.name
+    quoteMap[quote] = sender
     embed=discord.Embed(title= sender +' has added the following quote: ', description= '"' + quote + '"', color=0x00C940)
     await ctx.send(embed=embed)
 
 @bot.command()
 async def quote(ctx):
-    embed=discord.Embed(description='by ' + ctx.author.name,title='"' + random.choice(quotes) + '"', color=0xFF5733)
+    quoteDescription, quoteAuthor = random.choice(list(quoteMap.items()))
+    embed=discord.Embed(description='by ' + quoteAuthor ,title='"' + quoteDescription + '"', color=0xFF5733)
     await ctx.send(embed=embed)
 
 @bot.command()
