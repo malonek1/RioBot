@@ -17,9 +17,11 @@ async def submit(ctx, winnerScore: int, loserScore: int, loserUser: discord.Memb
     embed=discord.Embed(title= f'{loserUser.name} confirm these results by reacting with :white_check_mark: or reject the results with :x: ', color=0xC496EF)
     embed.add_field(name= f'{winnerUser.name}:', value= winnerScore, inline=False)
     embed.add_field(name= f'{loserUser.name}:', value= loserScore, inline=True)
-    await ctx.send(embed=embed)
-    checkEmoji = "\U0001F642"
-    await ctx.message.add_reaction(checkEmoji)
+    msg = await ctx.send(embed=embed)
+    checkEmoji = "\U00002705"
+    exEmoji = "\U0000274C"
+    await msg.add_reaction(checkEmoji)
+    await msg.add_reaction(exEmoji)
 
 
 bot.run(os.getenv('TOKEN'))
