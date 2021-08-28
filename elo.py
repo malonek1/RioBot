@@ -12,6 +12,12 @@ bot = commands.Bot(command_prefix='!', description='simple command bot', intents
 async def on_ready():
     print('Logged in as {0.user}'.format(bot))
 
+@bot.event
+async def on_command_error(ctx, error):
+    embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
+    embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
+    await ctx.send(embed=embed)
+
 @bot.command()
 async def submit(ctx, winnerScore: int, loserScore: int, loserUser: discord.Member):
     winnerUser = ctx.author
@@ -26,7 +32,7 @@ async def submit(ctx, winnerScore: int, loserScore: int, loserUser: discord.Memb
 
     def checkConfirm(reaction, user):
         return user == loserUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
-   
+
     try:
         reaction, user = await bot.wait_for('reaction_add', timeout=10.0, check=checkConfirm)
     except asyncio.TimeoutError:
