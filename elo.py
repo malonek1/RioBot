@@ -1,5 +1,6 @@
 import os
 import discord
+import asyncio
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -23,13 +24,21 @@ async def submit(ctx, winnerScore: int, loserScore: int, loserUser: discord.Memb
     await botReaction.add_reaction(checkEmoji)
     await botReaction.add_reaction(exEmoji)
 
-    def check(reaction, user):
-        return user == loserUser and str(reaction.emoji) in [checkEmoji]
-
-    confirmation = await bot.wait_for("reaction_add",check=check)
-
-    if confirmation:
-        embed=discord.Embed(title= 'Confirmed match between ' + f'{winnerUser.name}' + ' and ' + f'{loserUser.name}' + '!' , color=0x138F13)
+    def checkConfirm(reaction, user):
+        return user == loserUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
+   
+    try:
+        reaction, user = await bot.wait_for('reaction_add', timeout=10.0, check=checkConfirm)
+    except asyncio.TimeoutError:
+        await botReaction.delete()
+        embed=discord.Embed(title= 'Cancelled match between ' + f'{winnerUser.name}' + ' and ' + f'{loserUser.name}' + ' for not reacting in time!' , color=0xFF5733)
         await ctx.send(embed=embed)
+    else:
+        if reaction.emoji == checkEmoji:
+            embed=discord.Embed(title= 'Confirmed match between ' + f'{winnerUser.name}' + ' and ' + f'{loserUser.name}' + '!' , color=0x138F13)
+            await ctx.send(embed=embed)
+        elif reaction.emoji == exEmoji:
+            embed=discord.Embed(title= 'Cancelled match between ' + f'{winnerUser.name}' + ' and ' + f'{loserUser.name}' + '!' , color=0xFF5733)
+            await ctx.send(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
