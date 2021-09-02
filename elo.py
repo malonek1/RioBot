@@ -1,8 +1,8 @@
 import os
 import asyncio
-from SheetsParser import SheetsParser
+from SheetsParser import EloSheetsParser
 #Creation of sheets Object:
-sheetParser = SheetsParser('MSSB')
+sheetParser = EloSheetsParser('MSSB')
 
 #discord.py imports:
 import discord
@@ -64,10 +64,10 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                 #Update Spreadsheet
                 if submiterScore > oppScore:
                     print('Submitter Wins!')
-                    sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', submiterScore, oppScore)
+                    sheetParser.confirmMatch(f'{submiterUser}', f'{oppUser}', submiterScore, oppScore)
                 elif submiterScore < oppScore:
                     print('Opponent Wins!')
-                    sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', oppScore, submiterScore)
+                    sheetParser.confirmMatch(f'{oppUser}', f'{submiterUser}', oppScore, submiterScore)
             #Rejection message displays if secondary user reacts with an X mark
             elif reaction.emoji == exEmoji:
                 embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
