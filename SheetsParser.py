@@ -1,12 +1,15 @@
-#Google Sheets imports:
+import datetime
 import gspread
 import glicko2
 
-#Creation of gspread object
+#Creation of gspread objects
 client = gspread.service_account()
-eloSheet = client.open('MSSB Elo').worksheet('Elo')
-logSheet = client.open('MSSB Elo').worksheet('Logs')
 calcSheet = client.open('MSSB Elo').worksheet('Calculations')
+logSheet = client.open('MSSB Elo').worksheet('Logs')
+
+#Creation of pygsheet objects
+#pyg = pygsheets.authorize(service_file='mssb-elo-ac8af23a81f5.json')
+#pygLogSheet = pyg.open('MSSB').worksheet('Logs')
 
 class EloSheetsParser:
     def __init__(self, name):
@@ -20,20 +23,19 @@ class EloSheetsParser:
         print('function: confirmMatch entered')
         #Calculate Glicko
         if calcSheet.find(winnerName):
-            print(calcSheet.find(winnerName).row)
-            print(calcSheet.cell(calcSheet.find(winnerName).row, 6).value)
-            winner = glicko2.Player(float(calcSheet.cell(calcSheet.find(winnerName).row, 6).value), float(calcSheet.cell(calcSheet.find(winnerName).row, 7).value))
+            winner = glicko2.Player(float(calcSheet.cell(calcSheet.find(winnerName).row, 6).value), float(calcSheet.cell(calcSheet.find(winnerName).row, 8).value))
             print('Existing winner instantiated')
         else:
             winner = glicko2.Player(1500, 300)
             print('New winner instantiated')
 
         if calcSheet.find(loserName):
-            loser = glicko2.Player(float(calcSheet.cell(calcSheet.find(loserName).row, 6).value), float(calcSheet.cell(calcSheet.find(loserName).row, 7).value))
+            loser = glicko2.Player(float(calcSheet.cell(calcSheet.find(loserName).row, 6).value), float(calcSheet.cell(calcSheet.find(loserName).row, 8).value))
             print('Existing loser instantiated')
         else: 
             loser = glicko2.Player(1500, 300)
             print('New loser instantiated')
+            
         #loserElo = glicko2.Player()
 
         print("Old Rating Deviation: " + str(winner.rd))
@@ -53,28 +55,23 @@ class EloSheetsParser:
         print("New Rating Deviation: " + str(winner.rd))
         print("New Volatility: " + str(winner.vol))
 
-        #Enter data into sheets
         nextRow = self.next_available_row(logSheet)
 
-        #Update winner info
-        logSheet.update_acell("A{}".format(nextRow), winnerName)
-        logSheet.update_acell("B{}".format(nextRow), winnerScore)
-        logSheet.update_acell("C{}".format(nextRow), winner.rating)
-        logSheet.update_acell("D{}".format(nextRow), winner.rd)
+        #A list of all cells on the next row of the logSheet
+        cell_list = [logSheet.acell("A{}".format(nextRow)), logSheet.acell("B{}".format(nextRow)), logSheet.acell("C{}".format(nextRow)), logSheet.acell("D{}".format(nextRow)), logSheet.acell("E{}".format(nextRow)), logSheet.acell("F{}".format(nextRow)), logSheet.acell("G{}".format(nextRow)), logSheet.acell("H{}".format(nextRow)), logSheet.acell("I{}".format(nextRow)), logSheet.acell("J{}".format(nextRow))]
+        
+        #A list of all values to be added to the cells stored in cell_list
+        value_list = [winnerName, winnerScore, winner.rating, winner.rd, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), f'{int(nextRow) - 1}']
 
-        #Update loser info
-        logSheet.update_acell("E{}".format(nextRow), loserName)
-        logSheet.update_acell("F{}".format(nextRow), loserScore)
-        logSheet.update_acell("G{}".format(nextRow), loser.rating)
-        logSheet.update_acell("H{}".format(nextRow), loser.rd)
+        for i, val in enumerate(value_list):
+            cell_list[i].value = val
 
-        #Update index
-        print('next row index: ' + f'{int(nextRow) - 1}')
-        logSheet.update_acell("J{}".format(nextRow), f'{int(nextRow) - 1}')
+        #Add all gathered data to the next row of the logSheet
+        logSheet.update_cells(cell_list)
 
     def playerStats(self, winnerName, loserName):
-        winnerCell = eloSheet.find(winnerName)
-        loserCell = eloSheet.find(loserName)       
+        winnerCell = calcSheet.find(winnerName)
+        loserCell = calcSheet.find(loserName)       
         #Update Winner
         if winnerCell:
             print('--------------')
@@ -82,10 +79,10 @@ class EloSheetsParser:
             print('Row: ' + f'{winnerCell.row}')
             print('Column: ' + f'{winnerCell.col}')
             print('Value: ' + f'{winnerCell.value}')
-            print('Player Wins: ' + f'{eloSheet.cell(winnerCell.row, winnerCell.col + 1).value}')
+            print('Player Wins: ' + f'{calcSheet.cell(winnerCell.row, winnerCell.col + 1).value}')
 
-            playerWins = eloSheet.cell(winnerCell.row, winnerCell.col + 1).value
-            eloSheet.update_cell(winnerCell.row, winnerCell.col + 1, int(playerWins) + 1)
+            playerWins = calcSheet.cell(winnerCell.row, winnerCell.col + 1).value
+            calcSheet.update_cell(winnerCell.row, winnerCell.col + 1, int(playerWins) + 1)
 
         #Update Loser
         if loserCell:
@@ -94,7 +91,7 @@ class EloSheetsParser:
             print('Row: ' + f'{loserCell.row}')
             print('Column: ' + f'{loserCell.col}')
             print('Value: ' + f'{loserCell.value}')
-            print('Player Losses: ' + f'{eloSheet.cell(loserCell.row, loserCell.col + 2).value}')
+            print('Player Losses: ' + f'{calcSheet.cell(loserCell.row, loserCell.col + 2).value}')
 
-            playerLosses = eloSheet.cell(loserCell.row, loserCell.col + 2).value
-            eloSheet.update_cell(loserCell.row, loserCell.col + 2, int(playerLosses) + 1)
+            playerLosses = calcSheet.cell(loserCell.row, loserCell.col + 2).value
+            calcSheet.update_cell(loserCell.row, loserCell.col + 2, int(playerLosses) + 1)
