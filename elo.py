@@ -1,6 +1,7 @@
 import os
 import asyncio
 from SheetsParser import EloSheetsParser
+import CharacterStats
 #Creation of sheets Object:
 sheetParser = EloSheetsParser('MSSB')
 
@@ -72,6 +73,95 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
             elif reaction.emoji == exEmoji:
                 embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
                 await ctx.send(embed=embed)
+
+
+# Stats command
+# Character is either the character who's stat you want or "highest", "lowest", "average"
+# Stat is the stat you want to grab
+@bot.command()
+async def getStat(ctx, character: str, stat: str):
+    # check if arg 1 is "highest" "lowest" or "average"
+    # return information
+    arg1 = -1
+    arg2 = -1
+    character = character.lower()
+    stat = stat.lower()
+    if character == 'highest' or character == 'best':
+        arg1 = -2
+    elif character == 'lowest' or character == 'worst':
+        arg1 = -3
+    elif character == 'average':
+        arg1 = -4
+    else:
+        arg1 = CharacterStats.findCharacter(character) # returns row index of character
+    if arg1 == -1:
+        await ctx.send('No matching character found; try alternative spellings.\nRemember, the character\'s name must be one word.')
+    arg2 = CharacterStats.findStat(stat) # returns column index of character
+    if arg2 == -1:
+        await ctx.send('No matching stat found; try alternative spellings.\nRemember, the stat\'s name must be one word.')
+    
+    # grab info from list of lists
+    statName = CharacterStats.statsLoL[0][arg2]
+
+    # handle highest, lowest, and average
+    if arg1 < -1:
+        statList = [] # list of dicts; {'name': <str>, 'value': <int>}
+        typeOfSort = ''
+        for iRow in range(1, len(CharacterStats.statsLoL)): # skip first row; labels
+            statVal = CharacterStats.statsLoL[iRow][arg2]
+            try:
+                int(statVal)
+            except ValueError:
+                await ctx.send('That operation is not possile with this stat.')
+            statList.append({'name':CharacterStats.statsLoL[iRow][0], 'value':int(statVal)})
+
+        if arg1 == -4: # average
+            sumVals = 0
+            nVals = len(statList)
+            for info in statList:
+                sumVals += info['value']
+            await ctx.send('The average ' + statName + ' is ' + str(round(sumVals/nVals, 2)))
+            
+        if arg1 == -2: # highest of a stat
+            statList.sort(key = CharacterStats.sortStats, reverse=True)
+            typeOfSort = " highest "
+        
+        if arg1 == -3: # lowest of a stat
+            statList.sort(key = CharacterStats.sortStats)
+            typeOfSort = " lowest "
+        
+        # generate message for high and low
+        if arg1 == -2 or arg1 == -3:
+            targetStat = statList[0]['value']
+            targetChars = []
+            for character in statList:
+                if character['value'] == targetStat:
+                    targetChars.append(character['name'])
+            characterString = ' are '
+            numOfChars = len(targetChars)
+            for iChar in range(0, numOfChars):
+                if numOfChars == 1:
+                    characterString = ' is '
+                    characterString += targetChars[iChar]
+                if numOfChars == 2:
+                    if iChar == 0:
+                        characterString += targetChars[iChar] + " & "
+                    else:
+                        characterString += targetChars[iChar]
+                if numOfChars > 2:
+                    if iChar < numOfChars - 1:
+                        characterString += targetChars[iChar] + ", "
+                    else:
+                        characterString += "& " + targetChars[iChar]
+            await ctx.send('The' + typeOfSort + statName + ' is ' + str(statList[0]['value']) + "\nThe character(s) with this stat" + characterString)
+    
+    # handle normal stat grabbing
+    else:
+        # grab info from list of lists
+        characterName = CharacterStats.statsLoL[arg1][0]
+        statName = CharacterStats.statsLoL[0][arg2]
+        statVal = CharacterStats.statsLoL[arg1][arg2]
+        await ctx.send(characterName + '\'s ' + statName + ' is ' + str(statVal))
 
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('TOKEN'))
