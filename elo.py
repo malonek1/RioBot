@@ -3,7 +3,7 @@ import asyncio
 from SheetsParser import EloSheetsParser
 import CharacterStats
 #Creation of sheets Object:
-#sheetParser = EloSheetsParser('MSSB')
+sheetParser = EloSheetsParser('MSSB')
 
 #discord.py imports:
 import discord
