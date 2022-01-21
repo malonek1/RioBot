@@ -2,6 +2,7 @@ import os
 import asyncio
 from SheetsParser import EloSheetsParser
 import CharacterStats
+import csv
 #Creation of sheets Object:
 sheetParser = EloSheetsParser('MSSB')
 
@@ -13,10 +14,18 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
 
+statsLoL = []
+
 #Logging message to indicate bot is up and running
+# build stat objects from csv's
 @bot.event
 async def on_ready():
     print('Logged in as {0.user}'.format(bot))
+    with open('Stats.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            statsLoL.append(row)
+    CharacterStats.buildStatObjs()
 
 #Exception handler on user commands to bot
 @bot.event
@@ -90,7 +99,7 @@ async def getStat(ctx, character: str, stat: str):
         arg1 = -2
     elif character == 'lowest' or character == 'worst':
         arg1 = -3
-    elif character == 'average':
+    elif character == 'average' or character == 'avg':
         arg1 = -4
     else:
         arg1 = CharacterStats.findCharacter(character) # returns row index of character
@@ -101,19 +110,19 @@ async def getStat(ctx, character: str, stat: str):
         await ctx.send('No matching stat found; try alternative spellings.\nRemember, the stat\'s name must be one word.')
     
     # grab info from list of lists
-    statName = CharacterStats.statsLoL[0][arg2]
+    statName = statsLoL[0][arg2]
 
     # handle highest, lowest, and average
     if arg1 < -1:
         statList = [] # list of dicts; {'name': <str>, 'value': <int>}
         typeOfSort = ''
-        for iRow in range(1, len(CharacterStats.statsLoL)): # skip first row; labels
-            statVal = CharacterStats.statsLoL[iRow][arg2]
+        for iRow in range(1, len(statsLoL)): # skip first row; labels
+            statVal = statsLoL[iRow][arg2]
             try:
                 int(statVal)
             except ValueError:
                 await ctx.send('That operation is not possile with this stat.')
-            statList.append({'name':CharacterStats.statsLoL[iRow][0], 'value':int(statVal)})
+            statList.append({'name':statsLoL[iRow][0], 'value':int(statVal)})
 
         if arg1 == -4: # average
             sumVals = 0
@@ -158,9 +167,9 @@ async def getStat(ctx, character: str, stat: str):
     # handle normal stat grabbing
     else:
         # grab info from list of lists
-        characterName = CharacterStats.statsLoL[arg1][0]
-        statName = CharacterStats.statsLoL[0][arg2]
-        statVal = CharacterStats.statsLoL[arg1][arg2]
+        characterName = statsLoL[arg1][0]
+        statName = statsLoL[0][arg2]
+        statVal = statsLoL[arg1][arg2]
         await ctx.send(characterName + '\'s ' + statName + ' is ' + str(statVal))
 
 #Key given to bot through .env file so bot can run in server
