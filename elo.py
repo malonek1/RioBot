@@ -110,7 +110,53 @@ async def stat(ctx, character: str, stat: str):
             characterName = statsLoL[arg1][0]
             statVal = statsLoL[arg1][arg2]
             await ctx.send(characterName + '\'s ' + statName + ' is ' + str(statVal))
-            
+
+
+
+# message for helping new people figure out Rio
+@bot.command()
+async def rioGuide(ctx):
+    await ctx.send('For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
+
+
+# ball flickering
+@bot.command()
+async def flicker(ctx):
+    await ctx.send('If you notice the ball flickering, you can solve the issue by changing your graphics backend.\n\n'
+    'Open Rio, click graphics, then change the backend. The default is OpenGL. Vulkan or Direct3D11/12 should work, but which one specifically is different for each computer, so you will need to test that on your own')
+
+
+# optimization guide
+@bot.command()
+async def optimize(ctx):
+    await ctx.send('Many settings on Project Rio are already optimized ahead of time; however, there is no one-size-fits-all option for different computers. Here is a guide on optimization to help help you started\n> <https://www.projectrio.online/optimize>')
+
+
+# tell what Rio is
+@bot.command()
+async def rio(ctx):
+    await ctx.send('Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will alos host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
+
+
+# gecko code info
+@bot.command()
+async def gecko(ctx):
+    await ctx.send('Gecko Codes allow modders to inject their own assembly code into the game in order to create all of the mods we use.\n\n'
+    'You can change which gecko codes are active by opening Project Rio and clicking the "Gecko Code" tab on the top of the window. Simply checko off which mods you want to use. You can obtain all of out gecko codes by clicking "Download Codes" at the bottom right corner of the Gecko Codes window.\n\n'
+    '**NOTES**:\n-Do **NOT** disable any code which is labeled as "Required" otherwise many Project Rio functionalites will not work\n-If you run into bugs when using gecko codes, you may have too many turned on. Try turning off the Netplay Event Code\n-The Netplay Event Code is used for making online competitive games easy to set up. It is only required for ranked online games')
+
+
+# guy.jpg
+@bot.command()
+async def guy(ctx):
+    await ctx.send('<:Guy:927712162829451274>')
+
+
+# peacock
+@bot.command()
+async def peacock(ctx):
+    await ctx.send(':peacock:')
+    
 
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('TOKEN'))
