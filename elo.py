@@ -85,10 +85,10 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
 # Stat is the stat you want to grab
 @bot.command()
 async def stat(ctx, character: str, stat: str):
-    arg1 = CharacterStats.findCharacter(character) # returns row index of character
-    arg2 = CharacterStats.findStat(stat) # returns column index of character
     character = character.lower() # ignore case-sensitivity stuff
     stat = stat.lower() # ignore case-sensitivity stuff
+    arg1 = CharacterStats.findCharacter(character) # returns row index of character
+    arg2 = CharacterStats.findStat(stat) # returns column index of character
 
     # check for invalid args
     if arg1 == -1:
