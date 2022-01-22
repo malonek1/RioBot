@@ -51,7 +51,7 @@ def buildStatObjs():
             statsNameList.append(row)
 
     # convert list of lists to kv objects
-    for i in range(0, len(charNameList)):
+    for i in range(0, len(charNameList)): # use ennumerate
         for name in charNameList[i]:
             charNameDict[name] = i
     for i in range(0, len(statsNameList)):
@@ -83,30 +83,31 @@ def statLogic(arg1, arg2, statName, statsLoL):
         nVals = len(statList)
         for info in statList:
             sumVals += info['value']
-        return 'The average ' + statName + ' is ' + str(round(sumVals/nVals, 2))
+        avgStat = str(round(sumVals/nVals, 2))
+        return f'The average {statName} is {avgStat}'
         
     if arg1 == -2: # highest of a stat
         statList.sort(key = sortStats, reverse=True)
-        typeOfSort = " highest "
+        typeOfSort = 'highest'
     
     if arg1 == -3: # lowest of a stat
         statList.sort(key = sortStats)
-        typeOfSort = " lowest "
+        typeOfSort = 'lowest'
     
     # generate message for high and low
-    charGrammarCheck = ' characters '
+    charGrammarCheck = 'characters'
     targetStat = statList[0]['value']
     targetChars = []
     for character in statList:
         if character['value'] == targetStat:
             targetChars.append(character['name'])
-    characterString = ' are '
+    characterString = 'are '
     numOfChars = len(targetChars)
     for iChar in range(0, numOfChars):
         if numOfChars == 1:
-            characterString = ' is '
+            characterString = 'is '
             characterString += targetChars[iChar]
-            charGrammarCheck = ' character '
+            charGrammarCheck = 'character'
         if numOfChars == 2:
             if iChar == 0:
                 characterString += targetChars[iChar] + " & "
@@ -117,4 +118,5 @@ def statLogic(arg1, arg2, statName, statsLoL):
                 characterString += targetChars[iChar] + ", "
             else:
                 characterString += "& " + targetChars[iChar]
-    return 'The' + typeOfSort + statName + ' is ' + str(statList[0]['value']) + '\nThe' + charGrammarCheck + 'with the' + typeOfSort + statName + characterString
+    returnStatVal = str(statList[0]['value'])
+    return f'The {typeOfSort} {statName} is {returnStatVal}\nThe {charGrammarCheck} with the {typeOfSort} {statName} {characterString}'
