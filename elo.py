@@ -1,6 +1,7 @@
 import os
 import asyncio
 from SheetsParser import EloSheetsParser
+import CharacterStats
 #Creation of sheets Object:
 sheetParser = EloSheetsParser('MSSB')
 
@@ -12,10 +13,15 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
 
+statsLoL = []
+
 #Logging message to indicate bot is up and running
+# build stat objects from csv's
 @bot.event
 async def on_ready():
     print('Logged in as {0.user}'.format(bot))
+    CharacterStats.buildStatsLoL(statsLoL)
+    CharacterStats.buildStatObjs()
 
 #Exception handler on user commands to bot
 @bot.event
@@ -72,6 +78,99 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
             elif reaction.emoji == exEmoji:
                 embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
                 await ctx.send(embed=embed)
+
+
+# Stats command
+# Character is either the character who's stat you want or "highest", "lowest", "average"
+# Stat is the stat you want to grab
+@bot.command()
+async def stat(ctx, character: str, stat: str):
+    character = character.lower() # ignore case-sensitivity stuff
+    stat = stat.lower() # ignore case-sensitivity stuff
+    arg1 = CharacterStats.findCharacter(character) # returns row index of character
+    arg2 = CharacterStats.findStat(stat) # returns column index of character
+
+    # check for invalid args
+    if arg1 == -1:
+        embed=discord.Embed(title = 'No matching character found; try alternative spellings.\nRemember, the character\'s name must be one word.', color=0xEA7D07)
+        await ctx.send(embed=embed)
+    elif arg2 == -1:
+        embed=discord.Embed(title = 'No matching stat found; try alternative spellings.\nRemember, the stat\'s name must be one word.', color=0xEA7D07)
+        await ctx.send(embed=embed)
+    
+    # handle valid args
+    else:
+        statName = statsLoL[0][arg2] # grab info from list of lists once valid name
+
+        # handle highest, lowest, and average
+        if arg1 < -1:
+            result = CharacterStats.statLogic(arg1, arg2, statName, statsLoL)
+            embed=discord.Embed(title = result, color=0x1AA3E9)
+            await ctx.send(embed=embed)
+
+        # handle normal stat grabbing
+        else:
+            characterName = statsLoL[arg1][0]
+            statVal = statsLoL[arg1][arg2]
+            embed=discord.Embed(title = characterName + '\'s ' + statName + ' is ' + str(statVal), color=0x1AA3E9)
+            await ctx.send(embed=embed)
+
+
+
+# message for helping new people figure out Rio
+@bot.command()
+async def rioGuide(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RIO GUIDE:', value = 'For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
+    await ctx.send(embed=embed)
+
+
+# ball flickering
+@bot.command()
+async def flicker(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'HOW TO FIX FLICKER ISSUE:', value= 'If you notice the ball flickering, you can solve the issue by changing your graphics backend.\n\n'
+    'Open Rio, click graphics, then change the backend. The default is OpenGL. Vulkan or Direct3D11/12 should work, but which one specifically is different for each computer, so you will need to test that on your own')
+    await ctx.send(embed=embed)
+
+
+# optimization guide
+@bot.command()
+async def optimize(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'OPTIMIZING PROJECT RIO:', value = 'Many settings on Project Rio are already optimized ahead of time; however, there is no one-size-fits-all option for different computers. Here is a guide on optimization to help help you started\n> <https://www.projectrio.online/optimize>')
+    await ctx.send(embed=embed)
+
+
+# tell what Rio is
+@bot.command()
+async def rio(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'PROJECT RIO:', value = 'Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will alos host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
+    await ctx.send(embed=embed)
+
+
+# gecko code info
+@bot.command()
+async def gecko(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'GECKO CODES:', value = 'Gecko Codes allow modders to inject their own assembly code into the game in order to create all of the mods we use.\n\n'
+    'You can change which gecko codes are active by opening Project Rio and clicking the "Gecko Code" tab on the top of the window. Simply checko off which mods you want to use. You can obtain all of out gecko codes by clicking "Download Codes" at the bottom right corner of the Gecko Codes window.\n\n'
+    '**NOTES**:\n-Do **NOT** disable any code which is labeled as "Required" otherwise many Project Rio functionalites will not work\n-If you run into bugs when using gecko codes, you may have too many turned on. Try turning off the Netplay Event Code\n-The Netplay Event Code is used for making online competitive games easy to set up. It is only required for ranked online games')
+    await ctx.send(embed=embed)
+
+
+# guy.jpg
+@bot.command()
+async def guy(ctx):
+    await ctx.send('<:Guy:927712162829451274>')
+
+
+# peacock
+@bot.command()
+async def peacock(ctx):
+    await ctx.send(':peacock:')
+    
 
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('TOKEN'))
