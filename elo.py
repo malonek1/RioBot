@@ -13,6 +13,7 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
 
+#csv initialization
 statsLoL = []
 
 #Logging message to indicate bot is up and running
@@ -27,12 +28,19 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     print(error)
-    embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
-    embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
-    await ctx.send(embed=embed)
+
+    if isinstance(error, commands.CommandOnCooldown):
+        embed=discord.Embed(title=error, color=0xEA7D07)
+        await ctx.send(embed=embed)
+
+    else:
+        embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
+        embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
+        await ctx.send(embed=embed)
 
 #Submit user command that allows a player to submit a game with another player
 @bot.command()
+@commands.cooldown(1, 5, commands.BucketType.user)
 async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member):
     #Check to make sure that runs values input by user are between 0 and 99
     if (submiterScore < 0) or (oppScore < 0) or (submiterScore > 99) or (oppScore > 99):
@@ -55,7 +63,7 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
             return user == oppUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
 
         try:
-            reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=checkConfirm)
+            reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
         except asyncio.TimeoutError:
             #If user doesn't react to message within 1 minute, initial message is deleted
             await botReaction.delete()
@@ -84,6 +92,7 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
 # Character is either the character who's stat you want or "highest", "lowest", "average"
 # Stat is the stat you want to grab
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def stat(ctx, character: str, stat: str):
     character = character.lower() # ignore case-sensitivity stuff
     stat = stat.lower() # ignore case-sensitivity stuff
@@ -119,6 +128,7 @@ async def stat(ctx, character: str, stat: str):
 
 # message for helping new people figure out Rio
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def rioGuide(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'RIO GUIDE:', value = 'For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
@@ -127,6 +137,7 @@ async def rioGuide(ctx):
 
 # ball flickering
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def flicker(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'HOW TO FIX FLICKER ISSUE:', value= 'If you notice the ball flickering, you can solve the issue by changing your graphics backend.\n\n'
@@ -136,6 +147,7 @@ async def flicker(ctx):
 
 # optimization guide
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def optimize(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'OPTIMIZING PROJECT RIO:', value = 'Many settings on Project Rio are already optimized ahead of time; however, there is no one-size-fits-all option for different computers. Here is a guide on optimization to help help you started\n> <https://www.projectrio.online/optimize>')
@@ -144,6 +156,7 @@ async def optimize(ctx):
 
 # tell what Rio is
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def rio(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'PROJECT RIO:', value = 'Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will alos host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
@@ -152,6 +165,7 @@ async def rio(ctx):
 
 # gecko code info
 @bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
 async def gecko(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'GECKO CODES:', value = 'Gecko Codes allow modders to inject their own assembly code into the game in order to create all of the mods we use.\n\n'
