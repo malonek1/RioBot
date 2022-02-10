@@ -19,18 +19,18 @@ class EloSheetsParser:
         str_list = list(filter(None, worksheet.col_values(1)))
         return str(len(str_list)+1)
 
-    def confirmMatch(self, winnerName, loserName, winnerScore, loserScore):
+    def confirmMatch(self, winnerName, loserName, winnerId, loserId, winnerScore, loserScore):
         print('function: confirmMatch entered')
         #Calculate Glicko
         if calcSheet.find(winnerName):
-            winner = glicko2.Player(float(calcSheet.cell(calcSheet.find(winnerName).row, 6).value), float(calcSheet.cell(calcSheet.find(winnerName).row, 8).value))
+            winner = glicko2.Player(float(calcSheet.cell(calcSheet.find(winnerId).row, 6).value), float(calcSheet.cell(calcSheet.find(winnerId).row, 8).value))
             print('Existing winner instantiated')
         else:
             winner = glicko2.Player(1500, 300)
             print('New winner instantiated')
 
         if calcSheet.find(loserName):
-            loser = glicko2.Player(float(calcSheet.cell(calcSheet.find(loserName).row, 6).value), float(calcSheet.cell(calcSheet.find(loserName).row, 8).value))
+            loser = glicko2.Player(float(calcSheet.cell(calcSheet.find(loserId).row, 6).value), float(calcSheet.cell(calcSheet.find(loserId).row, 8).value))
             print('Existing loser instantiated')
         else: 
             loser = glicko2.Player(1500, 300)
@@ -58,10 +58,10 @@ class EloSheetsParser:
         nextRow = self.next_available_row(logSheet)
 
         #A list of all cells on the next row of the logSheet
-        cell_list = [logSheet.acell("A{}".format(nextRow)), logSheet.acell("B{}".format(nextRow)), logSheet.acell("C{}".format(nextRow)), logSheet.acell("D{}".format(nextRow)), logSheet.acell("E{}".format(nextRow)), logSheet.acell("F{}".format(nextRow)), logSheet.acell("G{}".format(nextRow)), logSheet.acell("H{}".format(nextRow)), logSheet.acell("I{}".format(nextRow)), logSheet.acell("J{}".format(nextRow))]
+        cell_list = [logSheet.acell("A{}".format(nextRow)), logSheet.acell("B{}".format(nextRow)), logSheet.acell("C{}".format(nextRow)), logSheet.acell("D{}".format(nextRow)), logSheet.acell("E{}".format(nextRow)), logSheet.acell("F{}".format(nextRow)), logSheet.acell("G{}".format(nextRow)), logSheet.acell("H{}".format(nextRow)), logSheet.acell("I{}".format(nextRow)), logSheet.acell("J{}".format(nextRow)), logSheet.acell("K{}".format(nextRow)), logSheet.acell("L{}".format(nextRow))]
         
         #A list of all values to be added to the cells stored in cell_list
-        value_list = [winnerName, winnerScore, winner.rating, winner.rd, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), int(f'{int(nextRow) - 1}')]
+        value_list = [winnerId, winnerName, winnerScore, winner.rating, winner.rd, loserId, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), int(f'{int(nextRow) - 1}')]
 
         for i, val in enumerate(value_list):
             cell_list[i].value = val
