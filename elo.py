@@ -103,10 +103,10 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                             #Update Spreadsheet
                             if submiterScore > oppScore:
                                 print('Submitter Wins!')
-                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore)
+                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore, 'ON')
                             elif submiterScore < oppScore:
                                 print('Opponent Wins!')
-                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore)
+                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'ON')
                         #Rejection message displays if secondary user reacts with an X mark
                         elif reaction.emoji == exEmoji:
                             embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
@@ -142,10 +142,10 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                             #Update Spreadsheet
                             if submiterScore > oppScore:
                                 print('Submitter Wins!')
-                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore)
+                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore, 'OFF')
                             elif submiterScore < oppScore:
                                 print('Opponent Wins!')
-                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore)
+                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'OFF')
                         #Rejection message displays if secondary user reacts with an X mark
                         elif reaction.emoji == exEmoji:
                             embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)

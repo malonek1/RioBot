@@ -4,12 +4,11 @@ import glicko2
 
 #Creation of gspread objects
 client = gspread.service_account()
-calcSheet = client.open('MSSB Elo').worksheet('Calculations')
-logSheet = client.open('MSSB Elo').worksheet('Logs')
+stars_off_calc_sheet = client.open('MSSB Elo').worksheet('Calculations-OFF')
+stars_off_log_sheet = client.open('MSSB Elo').worksheet('Logs-OFF')
 
-#Creation of pygsheet objects
-#pyg = pygsheets.authorize(service_file='mssb-elo-ac8af23a81f5.json')
-#pygLogSheet = pyg.open('MSSB').worksheet('Logs')
+stars_on_calc_sheet = client.open('MSSB Elo').worksheet('Calculations-ON')
+stars_on_log_sheet = client.open('MSSB Elo').worksheet('Logs-ON')
 
 class EloSheetsParser:
     def __init__(self, name):
@@ -19,18 +18,26 @@ class EloSheetsParser:
         str_list = list(filter(None, worksheet.col_values(1)))
         return str(len(str_list)+1)
 
-    def confirmMatch(self, winnerName, loserName, winnerId, loserId, winnerScore, loserScore):
+    def confirmMatch(self, winner_name, loser_name, winner_id, loser_id, winner_score, loser_score, game_mode):
         print('function: confirmMatch entered')
+
+        if game_mode == 'OFF':
+            calc_sheet = stars_off_calc_sheet
+            log_sheet = stars_off_log_sheet
+        elif game_mode == 'ON':
+            calc_sheet = stars_on_calc_sheet
+            log_sheet = stars_on_log_sheet
+
         #Calculate Glicko
-        if calcSheet.find(winnerName):
-            winner = glicko2.Player(float(calcSheet.cell(calcSheet.find(winnerId).row, 6).value), float(calcSheet.cell(calcSheet.find(winnerId).row, 8).value))
+        if calc_sheet.find(winner_id):
+            winner = glicko2.Player(float(calc_sheet.cell(calc_sheet.find(winner_id).row, 7).value), float(calc_sheet.cell(calc_sheet.find(winner_id).row, 9).value))
             print('Existing winner instantiated')
         else:
             winner = glicko2.Player(1500, 300)
             print('New winner instantiated')
 
-        if calcSheet.find(loserName):
-            loser = glicko2.Player(float(calcSheet.cell(calcSheet.find(loserId).row, 6).value), float(calcSheet.cell(calcSheet.find(loserId).row, 8).value))
+        if calc_sheet.find(loser_id):
+            loser = glicko2.Player(float(calc_sheet.cell(calc_sheet.find(loser_id).row, 7).value), float(calc_sheet.cell(calc_sheet.find(loser_id).row, 9).value))
             print('Existing loser instantiated')
         else: 
             loser = glicko2.Player(1500, 300)
@@ -42,56 +49,29 @@ class EloSheetsParser:
         print("Old Volatility: " + str(winner.vol))
 
         #Initial values for winner and loser
-        winnerRating = winner.rating
-        winnerRd = winner.rd
-        loserRating = loser.rating
-        loserRd = loser.rd
+        winner_rating = winner.rating
+        winner_rd = winner.rd
+        loser_rating = loser.rating
+        loser_rd = loser.rd
 
         #Update Rating and Rd through glicko2 library
-        winner.update_player([loserRating], [loserRd], [1])
-        loser.update_player([winnerRating], [winnerRd], [0])
+        winner.update_player([loser_rating], [loser_rd], [1])
+        loser.update_player([winner_rating], [winner_rd], [0])
 
         print("New Rating: " + str(winner.rating))
         print("New Rating Deviation: " + str(winner.rd))
         print("New Volatility: " + str(winner.vol))
 
-        nextRow = self.next_available_row(logSheet)
+        nextRow = self.next_available_row(log_sheet)
 
-        #A list of all cells on the next row of the logSheet
-        cell_list = [logSheet.acell("A{}".format(nextRow)), logSheet.acell("B{}".format(nextRow)), logSheet.acell("C{}".format(nextRow)), logSheet.acell("D{}".format(nextRow)), logSheet.acell("E{}".format(nextRow)), logSheet.acell("F{}".format(nextRow)), logSheet.acell("G{}".format(nextRow)), logSheet.acell("H{}".format(nextRow)), logSheet.acell("I{}".format(nextRow)), logSheet.acell("J{}".format(nextRow)), logSheet.acell("K{}".format(nextRow)), logSheet.acell("L{}".format(nextRow))]
+        #A list of all cells on the next row of the log_sheet
+        cell_list = [log_sheet.acell("A{}".format(nextRow)), log_sheet.acell("B{}".format(nextRow)), log_sheet.acell("C{}".format(nextRow)), log_sheet.acell("D{}".format(nextRow)), log_sheet.acell("E{}".format(nextRow)), log_sheet.acell("F{}".format(nextRow)), log_sheet.acell("G{}".format(nextRow)), log_sheet.acell("H{}".format(nextRow)), log_sheet.acell("I{}".format(nextRow)), log_sheet.acell("J{}".format(nextRow)), log_sheet.acell("K{}".format(nextRow)), log_sheet.acell("L{}".format(nextRow))]
         
         #A list of all values to be added to the cells stored in cell_list
-        value_list = [winnerId, winnerName, winnerScore, winner.rating, winner.rd, loserId, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), int(f'{int(nextRow) - 1}')]
+        value_list = [winner_id, winner_name, winner_score, winner.rating, winner.rd, loser_id, loser_name, loser_score, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), int(f'{int(nextRow) - 1}')]
 
         for i, val in enumerate(value_list):
             cell_list[i].value = val
 
-        #Add all gathered data to the next row of the logSheet
-        logSheet.update_cells(cell_list)
-
-    def playerStats(self, winnerName, loserName):
-        winnerCell = calcSheet.find(winnerName)
-        loserCell = calcSheet.find(loserName)       
-        #Update Winner
-        if winnerCell:
-            print('--------------')
-            print('Winner exists!')
-            print('Row: ' + f'{winnerCell.row}')
-            print('Column: ' + f'{winnerCell.col}')
-            print('Value: ' + f'{winnerCell.value}')
-            print('Player Wins: ' + f'{calcSheet.cell(winnerCell.row, winnerCell.col + 1).value}')
-
-            playerWins = calcSheet.cell(winnerCell.row, winnerCell.col + 1).value
-            calcSheet.update_cell(winnerCell.row, winnerCell.col + 1, int(playerWins) + 1)
-
-        #Update Loser
-        if loserCell:
-            print('-------------')
-            print('Loser exists!')
-            print('Row: ' + f'{loserCell.row}')
-            print('Column: ' + f'{loserCell.col}')
-            print('Value: ' + f'{loserCell.value}')
-            print('Player Losses: ' + f'{calcSheet.cell(loserCell.row, loserCell.col + 2).value}')
-
-            playerLosses = calcSheet.cell(loserCell.row, loserCell.col + 2).value
-            calcSheet.update_cell(loserCell.row, loserCell.col + 2, int(playerLosses) + 1)
+        #Add all gathered data to the next row of the log_sheet
+        log_sheet.update_cells(cell_list)
