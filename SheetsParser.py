@@ -61,7 +61,7 @@ class EloSheetsParser:
         cell_list = [logSheet.acell("A{}".format(nextRow)), logSheet.acell("B{}".format(nextRow)), logSheet.acell("C{}".format(nextRow)), logSheet.acell("D{}".format(nextRow)), logSheet.acell("E{}".format(nextRow)), logSheet.acell("F{}".format(nextRow)), logSheet.acell("G{}".format(nextRow)), logSheet.acell("H{}".format(nextRow)), logSheet.acell("I{}".format(nextRow)), logSheet.acell("J{}".format(nextRow))]
         
         #A list of all values to be added to the cells stored in cell_list
-        value_list = [winnerName, winnerScore, winner.rating, winner.rd, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), f'{int(nextRow) - 1}']
+        value_list = [winnerName, winnerScore, winner.rating, winner.rd, loserName, loserScore, loser.rating, loser.rd, '{:%b/%d/%Y at %H:%M:%S}'.format(datetime.datetime.now()), int(f'{int(nextRow) - 1}')]
 
         for i, val in enumerate(value_list):
             cell_list[i].value = val
