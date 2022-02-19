@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import asyncio
 from SheetsParser import EloSheetsParser
 import CharacterStats
@@ -9,6 +10,7 @@ sheetParser = EloSheetsParser('MSSB')
 import discord
 from discord.ext import commands
 #Creation of discord bot
+load_dotenv()
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
@@ -247,7 +249,6 @@ async def guy(ctx):
 @bot.command()
 async def peacock(ctx):
     await ctx.send(':peacock:')
-    
 
 #Key given to bot through .env file so bot can run in server
-bot.run(os.getenv('TOKEN'))
+bot.run(os.getenv('DISCORD_TOKEN'))
