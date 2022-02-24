@@ -42,8 +42,12 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
     elif isinstance(error, commands.CommandNotFound):
-        embed=discord.Embed(title= 'The specified error does not exist!', color=0xEA7D07)
+        embed=discord.Embed(title= 'The specified command does not exist!', color=0xEA7D07)
         embed.add_field(name= 'Error:', value= str(error) , inline=True)
+        await ctx.send(embed=embed)
+
+    elif isinstance(error, commands.MissingRole):
+        embed=discord.Embed(title=error, color=0xEA7D07)
         await ctx.send(embed=embed)
 
     else:
@@ -166,6 +170,7 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                             await ctx.send(embed=embed)
 
 @bot.command()
+@commands.has_role("Admins")
 async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord.Member, secondUser: discord.Member):
     # Check to make sure that runs values input by user are between 0 and 99
     if (firstScore < 0) or (secondScore < 0) or (firstScore > 99) or (secondScore > 99):
