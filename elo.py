@@ -336,7 +336,7 @@ async def roles(ctx):
 async def golf(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'AUTO GOLF MODE:', value = 'Auto Golf Mode is the specific type of netcode that Project Rio uses for playing games online. It works giving one player 0 latency (the golfer) while the other player '
-    '(the non-golfer) has an extra latency penalty.\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.')
+    '(the non-golfer) has an extra latency penalty.\n\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.')
     await ctx.send(embed=embed)
 
 
@@ -356,7 +356,7 @@ async def ranked(ctx):
 @commands.cooldown(1, 2, commands.BucketType.user)
 async def nolan(ctx):
     embed=discord.Embed()
-    embed.add_field(name = 'NOLAN DRAFT:', value = 'Nolan Draft is the competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n'
+    embed.add_field(name = 'NOLAN DRAFT:', value = 'Nolan Draft is the competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n\n'
     'After deciding on this, the player with first pick gets one character pick, then playes alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose'
     'a captain after drafting their full team. If playing with superstar characters off, bowser must be captain if chosen.\n\nAn infographic can be seen here: https://discord.com/channels/628353660698624020/945042450483920976/945450479805165568')
     await ctx.send(embed=embed)
@@ -367,7 +367,7 @@ async def nolan(ctx):
 @commands.cooldown(1, 2, commands.BucketType.user)
 async def reset(ctx):
     embed=discord.Embed()
-    embed.add_field(name = 'RESET GAME:', value = 'In the event that a ranked/tournament game crashesor disconnects, players will recreate the game and continue playing from the point of the crash\n'
+    embed.add_field(name = 'RESET GAME:', value = 'In the event that a ranked/tournament game crashes or disconnects, players will recreate the game and continue playing from the point of the crash\n\n'
     'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
     await ctx.send(embed=embed)
 
