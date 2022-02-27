@@ -264,7 +264,7 @@ async def stat(ctx, character: str, stat: str):
 # message for helping new people figure out Rio
 @bot.command()
 @commands.cooldown(1, 2, commands.BucketType.user)
-async def online(ctx):
+async def rioGuide(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'RIO GUIDE:', value = 'For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
     await ctx.send(embed=embed)
@@ -294,7 +294,7 @@ async def optimize(ctx):
 @commands.cooldown(1, 2, commands.BucketType.user)
 async def rio(ctx):
     embed=discord.Embed()
-    embed.add_field(name = 'PROJECT RIO:', value = 'Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will also host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
+    embed.add_field(name = 'PROJECT RIO:', value = 'Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will alos host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
     await ctx.send(embed=embed)
 
 
@@ -319,58 +319,6 @@ async def guy(ctx):
 @bot.command()
 async def peacock(ctx):
     await ctx.send(':peacock:')
-
-
-# inform users about roles
-@bot.command()
-@commands.cooldown(1, 2, commands.BucketType.user)
-async def roles(ctx):
-    embed=discord.Embed()
-    embed.add_field(name = 'ROLES:', value = 'Set roles for yourself in <#945478927214866522>!')
-    await ctx.send(embed=embed)
-
-
-# explain auto golf mode
-@bot.command()
-@commands.cooldown(1, 2, commands.BucketType.user)
-async def golf(ctx):
-    embed=discord.Embed()
-    embed.add_field(name = 'AUTO GOLF MODE:', value = 'Auto Golf Mode is the specific type of netcode that Project Rio uses for playing games online. It works giving one player 0 latency (the golfer) while the other player '
-    '(the non-golfer) has an extra latency penalty.\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.')
-    await ctx.send(embed=embed)
-
-
-# ranked mode
-@bot.command()
-@commands.cooldown(1, 2, commands.BucketType.user)
-async def ranked(ctx):
-    embed=discord.Embed()
-    embed.add_field(name = 'RANKED:', value = 'We run a ranked online ladder through this server. You can find the ranked leaderboards here: https://docs.google.com/spreadsheets/d/1B03IEnfOo3pAG7wBIjDW6jIHP0CTzn7jQJuxlNJebgc/edit?usp=sharing\n\n'
-    'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, head to the <#634046643330613248> channel and look for games. Make sure ranked mode is enabled in the netplay lobby by checking the Ranked Box.\n'
-    'After the game completes, use <#863831563341660170> to submit the game result to our leaderboard. Use the following command format:\n!submit <your score> <opponent\'s score> <@opponent\'s discord>')
-    await ctx.send(embed=embed)
-
-
-# nolan draft
-@bot.command()
-@commands.cooldown(1, 2, commands.BucketType.user)
-async def nolan(ctx):
-    embed=discord.Embed()
-    embed.add_field(name = 'NOLAN DRAFT:', value = 'Nolan Draft is the competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n'
-    'After deciding on this, the player with first pick gets one character pick, then playes alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose'
-    'a captain after drafting their full team. If playing with superstar characters off, bowser must be captain if chosen.\n\nAn infographic can be seen here: https://discord.com/channels/628353660698624020/945042450483920976/945450479805165568')
-    await ctx.send(embed=embed)
-
-
-# reset a crashed game
-@bot.command()
-@commands.cooldown(1, 2, commands.BucketType.user)
-async def reset(ctx):
-    embed=discord.Embed()
-    embed.add_field(name = 'RESET GAME:', value = 'In the event that a ranked/tournament game crashesor disconnects, players will recreate the game and continue playing from the point of the crash\n'
-    'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
-    await ctx.send(embed=embed)
-
 
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('DISCORD_TOKEN'))
