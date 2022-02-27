@@ -20,7 +20,9 @@ def findCharacter(characterArg):
 def findStat(statArg):
     if 'chem' in statArg:
         chemStr = statArg.replace('chem', '', 1) # remove first instance of 'chem'
-        return findCharacter(chemStr) + 22
+        chemStr = statArg.replace('-', '')
+        chemStr = statArg.replace('_', '')
+        return findCharacter(chemStr) + 26
     else:
         for stat in statNameDict.keys():
             if stat == statArg:
@@ -73,10 +75,10 @@ def statLogic(arg1, arg2, statName, statsLoL):
     for iRow in range(1, len(statsLoL)): # skip first row; labels
         statVal = statsLoL[iRow][arg2]
         try:
-            int(statVal)
+            float(statVal)
         except ValueError:
             return 'That operation is not possile with this stat.'
-        statList.append({'name':statsLoL[iRow][0], 'value':int(statVal)})
+        statList.append({'name':statsLoL[iRow][0], 'value':float(statVal)})
 
     if arg1 == -4: # average
         sumVals = 0

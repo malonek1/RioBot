@@ -12,11 +12,15 @@ bunt,buntpower,bunt-power,bunt_power,bunting
 traj,trajectory
 speed
 throw,arm,throwing,throwingpower,throwing-power,throwing_power,throwingarm,throwing-arm,throwing_arm
-class,type,characterclass,character-class,character_class,charactertype,character-type,character_type
+class,type,characterclass,character-class,character_class,charactertype,character-type,character_type,charclass,char-class,char_class,chartype,char-type,char_type
 weight
 starswing,star-swing,star_swing
 starpitch,star-pitch,star_pitch
-cb,cssbat,css-bat,css_bat,cssbatting,css-batting,css_batting
-cp,csspitch,css-pitch,css_pitch,csspitching,css-pitching,css_pitching
-cs,cr,cssspeed,css-speed,css_speed,cssrun,css-run,css_run,cssrunning,css-running,css_running
-cf,cssfield,css-field,css_field,cssfielding,css-fielding,css_fielding
+cb,cssbat,css-bat,css_bat,cssbatting,css-batting,css_batting,batting,bat
+cp,csspitch,css-pitch,css_pitch,csspitching,css-pitching,css_pitching,pitching, pitch
+cs,cr,cssspeed,css-speed,css_speed,cssrun,css-run,css_run,cssrunning,css-running,css_running,running,run
+cf,cssfield,css-field,css_field,cssfielding,css-fielding,css_fielding,fielding,field
+radiusair,radius-air,radius_air,airradius,air-radius,air_radius
+radiusground,radius-groud,radius_ground,groundradius,ground-radius,groud_radius
+height
+dive,diverange,dive-range,dive_range
