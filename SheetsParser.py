@@ -19,7 +19,7 @@ class EloSheetsParser:
         return str(len(str_list)+1)
 
     def confirmMatch(self, winner_name, loser_name, winner_id, loser_id, winner_score, loser_score, game_mode):
-        print('\n' + str(datetime.datetime.now))
+        print('\n' + str(datetime.datetime.now()))
         print('function: confirmMatch entered')
 
         if game_mode == 'OFF':
