@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import asyncio
 from SheetsParser import EloSheetsParser
 import CharacterStats
@@ -9,6 +10,7 @@ sheetParser = EloSheetsParser('MSSB')
 import discord
 from discord.ext import commands
 #Creation of discord bot
+load_dotenv()
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description='simple command bot', intents=intents)
@@ -24,7 +26,7 @@ async def on_ready():
     CharacterStats.buildStatsLoL(statsLoL)
     CharacterStats.buildStatObjs()
 
-#Exception handler on user commands to bot
+# Exception handler on user commands to bot
 @bot.event
 async def on_command_error(ctx, error):
     print(error)
@@ -33,68 +35,193 @@ async def on_command_error(ctx, error):
         embed=discord.Embed(title=error, color=0xEA7D07)
         await ctx.send(embed=embed)
 
-    else:
+    elif isinstance(error, commands.UserInputError):
         embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
         embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
+        embed.add_field(name='Error:', value=str(error), inline=True)
         await ctx.send(embed=embed)
 
-#Submit user command that allows a player to submit a game with another player
+    elif isinstance(error, commands.CommandNotFound):
+        embed=discord.Embed(title= 'The specified command does not exist!', color=0xEA7D07)
+        embed.add_field(name= 'Error:', value= str(error) , inline=True)
+        await ctx.send(embed=embed)
+
+    elif isinstance(error, commands.MissingRole):
+        embed=discord.Embed(title=error, color=0xEA7D07)
+        await ctx.send(embed=embed)
+
+    else:
+        embed=discord.Embed(title= 'Something went wrong!', color=0xEA7D07)
+        embed.add_field(name='Error:', value=str(error), inline=True)
+        await ctx.send(embed=embed)
+
+
+# Submit user command that allows a player to submit a game with another player
 @bot.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member):
-    #Check to make sure that runs values input by user are between 0 and 99
+    # Check to make sure that runs values input by user are between 0 and 99
     if (submiterScore < 0) or (oppScore < 0) or (submiterScore > 99) or (oppScore > 99):
         embed=discord.Embed(title= 'Scores must be between 0 and 100!', color=0xEA7D07)
         await ctx.send(embed=embed)
     else:
         #Initial bot message displayed for game submitted by primary user
         submiterUser = ctx.author
-        if (submiterUser == oppUser):
+        if submiterUser == oppUser:
             embed=discord.Embed(title= 'You cannot submit a game against yourself!', color=0xEA7D07)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title= f'{oppUser.name} confirm these results by reacting with :white_check_mark: or reject the results with :x: ', color=0xC496EF)
-            embed.add_field(name= f'{submiterUser.name}:', value= submiterScore, inline=False)
-            embed.add_field(name= f'{oppUser.name}:', value= oppScore, inline=True)
-            botReaction = await ctx.send(embed=embed)
-            checkEmoji = "\U00002705"
-            exEmoji = "\U0000274C"
+            embed=discord.Embed(title= 'Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?', color=0xC496EF)
+            embed.add_field(name='STARS-ON', value=':star:', inline=True)
+            embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
+            botStarReaction = await ctx.send(embed=embed)
+            starEmoji = "\U00002B50"
+            goatEmoji = "\U0001F410"
+            await botStarReaction.add_reaction(starEmoji)
+            await botStarReaction.add_reaction(goatEmoji)
 
-            print(ctx.author.id)
-            print(oppUser.id)
-
-            await botReaction.add_reaction(checkEmoji)
-            await botReaction.add_reaction(exEmoji)
-
-            #Check for bot to see if a user confirmed or denied the results submitted by another user
-            def checkConfirm(reaction, user):
-                return user == oppUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
+            def checkStar(reaction, user):
+                return user == submiterUser and (str(reaction.emoji) in [starEmoji] or str(reaction.emoji) in [goatEmoji])
 
             try:
-                reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
+                reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkStar)
             except asyncio.TimeoutError:
                 #If user doesn't react to message within 1 minute, initial message is deleted
-                await botReaction.delete()
+                await botStarReaction.delete()
                 embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!' , color=0xFF5733)
                 await ctx.send(embed=embed)
             else:
-                #Confirmation message displays if secondary user reacts with check mark
-                if reaction.emoji == checkEmoji:
-                    embed=discord.Embed(title= 'Confirmed match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
-                    await ctx.send(embed=embed)
+                if reaction.emoji == starEmoji:
+                    embed=discord.Embed(title= f'{oppUser.name}, confirm the results of your Stars-On :star: game by reacting with :white_check_mark: or reject the results with :x: ', color=0xC496EF)
+                    embed.add_field(name= f'{submiterUser.name} score:', value= submiterScore, inline=True)
+                    embed.add_field(name= f'{oppUser.name} score:', value= oppScore, inline=True)
+                    botReaction = await ctx.send(embed=embed)
+                    checkEmoji = "\U00002705"
+                    exEmoji = "\U0000274C"
+                    await botReaction.add_reaction(checkEmoji)
+                    await botReaction.add_reaction(exEmoji)
 
-                    #Update Spreadsheet
-                    if submiterScore > oppScore:
-                        print('Submitter Wins!')
-                        sheetParser.confirmMatch(f'{submiterUser}', f'{oppUser}', submiterScore, oppScore)
-                    elif submiterScore < oppScore:
-                        print('Opponent Wins!')
-                        sheetParser.confirmMatch(f'{oppUser}', f'{submiterUser}', oppScore, submiterScore)
-                #Rejection message displays if secondary user reacts with an X mark
-                elif reaction.emoji == exEmoji:
-                    embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
-                    await ctx.send(embed=embed)
+                    #Check for bot to see if a user confirmed or denied the results submitted by another user
+                    def checkConfirm(reaction, user):
+                        return user == oppUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
 
+                    try:
+                        reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
+                    except asyncio.TimeoutError:
+                        #If user doesn't react to message within 1 minute, initial message is deleted
+                        await botReaction.delete()
+                        embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!' , color=0xFF5733)
+                        await ctx.send(embed=embed)
+                    else:
+                        #Confirmation message displays if secondary user reacts with check mark
+                        if reaction.emoji == checkEmoji:
+                            embed=discord.Embed(title= 'Confirmed match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
+                            await ctx.send(embed=embed)
+
+                            #Update Spreadsheet
+                            if submiterScore > oppScore:
+                                print('Submitter Wins!')
+                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore, 'ON')
+                            elif submiterScore < oppScore:
+                                print('Opponent Wins!')
+                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'ON')
+                        #Rejection message displays if secondary user reacts with an X mark
+                        elif reaction.emoji == exEmoji:
+                            embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
+                            await ctx.send(embed=embed)
+
+                elif reaction.emoji == goatEmoji:
+                    embed=discord.Embed(title= f'{oppUser.name}, confirm the results of your Stars-Off :goat: game by reacting with :white_check_mark: or reject the results with :x: ', color=0xC496EF)
+                    embed.add_field(name= f'{submiterUser.name} score:', value= submiterScore, inline=False)
+                    embed.add_field(name= f'{oppUser.name} score:', value= oppScore, inline=True)
+                    botReaction = await ctx.send(embed=embed)
+                    checkEmoji = "\U00002705"
+                    exEmoji = "\U0000274C"
+                    await botReaction.add_reaction(checkEmoji)
+                    await botReaction.add_reaction(exEmoji)
+
+                    #Check for bot to see if a user confirmed or denied the results submitted by another user
+                    def checkConfirm(reaction, user):
+                        return user == oppUser and (str(reaction.emoji) in [checkEmoji] or str(reaction.emoji) in [exEmoji])
+
+                    try:
+                        reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
+                    except asyncio.TimeoutError:
+                        #If user doesn't react to message within 1 minute, initial message is deleted
+                        await botReaction.delete()
+                        embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!' , color=0xFF5733)
+                        await ctx.send(embed=embed)
+                    else:
+                        #Confirmation message displays if secondary user reacts with check mark
+                        if reaction.emoji == checkEmoji:
+                            embed=discord.Embed(title= 'Confirmed match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
+                            await ctx.send(embed=embed)
+
+                            #Update Spreadsheet
+                            if submiterScore > oppScore:
+                                print('Submitter Wins!')
+                                sheetParser.confirmMatch(f'{submiterUser.name}', f'{oppUser.name}', f'{submiterUser.id}', f'{oppUser.id}', submiterScore, oppScore, 'OFF')
+                            elif submiterScore < oppScore:
+                                print('Opponent Wins!')
+                                sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'OFF')
+                        #Rejection message displays if secondary user reacts with an X mark
+                        elif reaction.emoji == exEmoji:
+                            embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
+                            await ctx.send(embed=embed)
+
+@bot.command()
+@commands.has_role("Admins")
+async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord.Member, secondUser: discord.Member):
+    # Check to make sure that runs values input by user are between 0 and 99
+    if (firstScore < 0) or (secondScore < 0) or (firstScore > 99) or (secondScore > 99):
+        embed=discord.Embed(title= 'Scores must be between 0 and 100!', color=0xEA7D07)
+        await ctx.send(embed=embed)
+    else:
+        embed=discord.Embed(title= 'Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?', color=0xC496EF)
+        embed.add_field(name='STARS-ON', value=':star:', inline=True)
+        embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
+        botStarReaction = await ctx.send(embed=embed)
+        starEmoji = "\U00002B50"
+        goatEmoji = "\U0001F410"
+        await botStarReaction.add_reaction(starEmoji)
+        await botStarReaction.add_reaction(goatEmoji)
+
+        def checkStar(reaction, user):
+            return user == ctx.author and (str(reaction.emoji) in [starEmoji] or str(reaction.emoji) in [goatEmoji])
+
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkStar)
+        except asyncio.TimeoutError:
+            # If user doesn't react to message within 1 minute, initial message is deleted
+            await botStarReaction.delete()
+            embed = discord.Embed(
+                title='Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!',
+                color=0xFF5733)
+            await ctx.send(embed=embed)
+
+        if reaction.emoji == starEmoji:
+            embed = discord.Embed(title='Confirmed match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
+            await ctx.send(embed=embed)
+            if firstScore > secondScore:
+                print('Submitter Wins!')
+                sheetParser.confirmMatch(f'{firstUser.name}', f'{secondUser.name}', f'{firstUser.id}',
+                                         f'{secondUser.id}', firstScore, secondScore, 'ON')
+            elif firstScore < secondScore:
+                print('Opponent Wins!')
+                sheetParser.confirmMatch(f'{secondUser.name}', f'{firstUser.name}', f'{secondUser.id}',
+                                         f'{firstUser.id}', secondScore, firstScore, 'ON')
+
+        elif reaction.emoji == goatEmoji:
+            embed = discord.Embed(title='Confirmed match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
+            await ctx.send(embed=embed)
+            if firstScore > secondScore:
+                print('Submitter Wins!')
+                sheetParser.confirmMatch(f'{firstUser.name}', f'{secondUser.name}', f'{firstUser.id}',
+                                         f'{secondUser.id}', firstScore, secondScore, 'OFF')
+            elif firstScore < secondScore:
+                print('Opponent Wins!')
+                sheetParser.confirmMatch(f'{secondUser.name}', f'{firstUser.name}', f'{secondUser.id}',
+                                         f'{firstUser.id}', secondScore, firstScore, 'OFF')
 
 # Stats command
 # Character is either the character who's stat you want or "highest", "lowest", "average"
@@ -192,7 +319,6 @@ async def guy(ctx):
 @bot.command()
 async def peacock(ctx):
     await ctx.send(':peacock:')
-    
 
 #Key given to bot through .env file so bot can run in server
-bot.run(os.getenv('TOKEN'))
+bot.run(os.getenv('DISCORD_TOKEN'))
