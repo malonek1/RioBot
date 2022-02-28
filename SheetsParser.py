@@ -19,6 +19,7 @@ class EloSheetsParser:
         return str(len(str_list)+1)
 
     def confirmMatch(self, winner_name, loser_name, winner_id, loser_id, winner_score, loser_score, game_mode):
+        print('\n' + str(datetime.datetime.now()))
         print('function: confirmMatch entered')
 
         if game_mode == 'OFF':
@@ -61,6 +62,7 @@ class EloSheetsParser:
         print("New Rating: " + str(winner.rating))
         print("New Rating Deviation: " + str(winner.rd))
         print("New Volatility: " + str(winner.vol))
+        print("---------------------------------------------\n")
 
         nextRow = self.next_available_row(log_sheet)
 
