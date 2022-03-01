@@ -256,7 +256,7 @@ async def stat(ctx, character: str, stat: str):
         else:
             characterName = statsLoL[arg1][0]
             statVal = statsLoL[arg1][arg2]
-            embed=discord.Embed(title = characterName + '\'s ' + statName + ' is ' + str(statVal), color=0x1AA3E9)
+            embed=discord.Embed(title = f"{characterName}\'s {statName} is {statVal}", color=0x1AA3E9)
             await ctx.send(embed=embed)
 
 
