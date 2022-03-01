@@ -372,5 +372,25 @@ async def reset(ctx):
     await ctx.send(embed=embed)
 
 
+# datamined stats
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def datamine(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'DATAMINED STATS:', value = 'We have uncovered many hidden stats in the game through datamining. See our full datamined stat spreadsheet here:\n'
+    'https://docs.google.com/spreadsheets/d/16cEcCq-Gkudx5ESfqzS0MJlQI7WTvSIWsHVZS8jv750/edit?usp=sharing')
+    await ctx.send(embed=embed)
+
+
+# about rio stat files
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def stats(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RIO STATS:', value = 'By default, Project Rio records stats throughout a game and generates a stat json file to your compute.\n\n'
+    'You can view these that files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
+    await ctx.send(embed=embed)
+
+
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('DISCORD_TOKEN'))
