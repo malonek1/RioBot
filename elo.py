@@ -346,8 +346,8 @@ async def golf(ctx):
 async def ranked(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'RANKED:', value = 'We run a ranked online ladder through this server. You can find the ranked leaderboards here: https://docs.google.com/spreadsheets/d/1B03IEnfOo3pAG7wBIjDW6jIHP0CTzn7jQJuxlNJebgc/edit?usp=sharing\n\n'
-    'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, head to the <#634046643330613248> channel and look for games. Make sure ranked mode is enabled in the netplay lobby by checking the Ranked Box.\n'
-    'After the game completes, use <#863831563341660170> to submit the game result to our leaderboard. Use the following command format:\n!submit <your score> <opponent\'s score> <@opponent\'s discord>')
+    'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, head to the <#948321928760918087> channel and look for games. Make sure ranked mode is enabled in the netplay lobby by checking the Ranked Box.\n'
+    'After the game completes, use <#947699610921599006> to submit the game result to our leaderboard. Use the following command format:\n!submit <your score> <opponent\'s score> <@opponent\'s discord>')
     await ctx.send(embed=embed)
 
 
@@ -357,7 +357,7 @@ async def ranked(ctx):
 async def nolan(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'NOLAN DRAFT:', value = 'Nolan Draft is the competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n\n'
-    'After deciding on this, the player with first pick gets one character pick, then playes alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose'
+    'After deciding on this, the player with first pick gets one character pick, then playes alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose '
     'a captain after drafting their full team. If playing with superstar characters off, bowser must be captain if chosen.\n\nAn infographic can be seen here: https://discord.com/channels/628353660698624020/945042450483920976/945450479805165568')
     await ctx.send(embed=embed)
 
