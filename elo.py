@@ -36,10 +36,21 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
     elif isinstance(error, commands.UserInputError):
-        embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
-        embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
-        embed.add_field(name='Error:', value=str(error), inline=True)
-        await ctx.send(embed=embed)
+        if str(error) == "stat is a required argument that is missing.":
+            embed = discord.Embed(title='You need to specify the stat you are looking up!', color=0xEA7D07)
+            embed.add_field(name='Example:', value='!stat bowser power', inline=False)
+            embed.add_field(name='Error:', value=str(error), inline=False)
+            await ctx.send(embed=embed)
+        elif str(error) == "character is a required argument that is missing.":
+            embed = discord.Embed(title='You need to specify the character you are looking up!', color=0xEA7D07)
+            embed.add_field(name='Example:', value='!stat bowser power', inline=False)
+            embed.add_field(name='Error:', value=str(error), inline=False)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title= 'Please specify your score, your opponents score, and tag your opponent', color=0xEA7D07)
+            embed.add_field(name= 'Example:', value= '!submit 12 5 @user' , inline=True)
+            embed.add_field(name='Error:', value=str(error), inline=True)
+            await ctx.send(embed=embed)
 
     elif isinstance(error, commands.CommandNotFound):
         embed=discord.Embed(title= 'The specified command does not exist!', color=0xEA7D07)
@@ -72,13 +83,13 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
             await ctx.send(embed=embed)
         else:
             embed=discord.Embed(title= 'Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?', color=0xC496EF)
-            embed.add_field(name='STARS-ON', value=':star:', inline=True)
             embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
+            embed.add_field(name='STARS-ON', value=':star:', inline=True)
             botStarReaction = await ctx.send(embed=embed)
             starEmoji = "\U00002B50"
             goatEmoji = "\U0001F410"
-            await botStarReaction.add_reaction(starEmoji)
             await botStarReaction.add_reaction(goatEmoji)
+            await botStarReaction.add_reaction(starEmoji)
 
             def checkStar(reaction, user):
                 return user == submiterUser and (str(reaction.emoji) in [starEmoji] or str(reaction.emoji) in [goatEmoji])
@@ -109,13 +120,16 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                         reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
                     except asyncio.TimeoutError:
                         #If user doesn't react to message within 1 minute, initial message is deleted
+                        await botStarReaction.delete()
                         await botReaction.delete()
                         embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!' , color=0xFF5733)
                         await ctx.send(embed=embed)
                     else:
                         #Confirmation message displays if secondary user reacts with check mark
                         if reaction.emoji == checkEmoji:
-                            embed=discord.Embed(title= 'Confirmed match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
+                            await botStarReaction.delete()
+                            await botReaction.delete()
+                            embed=discord.Embed(title= 'Confirmed Stars-ON match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
                             await ctx.send(embed=embed)
 
                             #Update Spreadsheet
@@ -127,6 +141,8 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                                 sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'ON')
                         #Rejection message displays if secondary user reacts with an X mark
                         elif reaction.emoji == exEmoji:
+                            await botStarReaction.delete()
+                            await botReaction.delete()
                             embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
                             await ctx.send(embed=embed)
 
@@ -148,13 +164,16 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                         reaction, user = await bot.wait_for('reaction_add', timeout=300.0, check=checkConfirm)
                     except asyncio.TimeoutError:
                         #If user doesn't react to message within 1 minute, initial message is deleted
+                        await botStarReaction.delete()
                         await botReaction.delete()
                         embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + ' for not reacting in time!' , color=0xFF5733)
                         await ctx.send(embed=embed)
                     else:
                         #Confirmation message displays if secondary user reacts with check mark
                         if reaction.emoji == checkEmoji:
-                            embed=discord.Embed(title= 'Confirmed match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
+                            await botStarReaction.delete()
+                            await botReaction.delete()
+                            embed=discord.Embed(title= 'Confirmed Stars-OFF match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0x138F13)
                             await ctx.send(embed=embed)
 
                             #Update Spreadsheet
@@ -166,11 +185,13 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
                                 sheetParser.confirmMatch(f'{oppUser.name}', f'{submiterUser.name}', f'{oppUser.id}', f'{submiterUser.id}', oppScore, submiterScore, 'OFF')
                         #Rejection message displays if secondary user reacts with an X mark
                         elif reaction.emoji == exEmoji:
+                            await botStarReaction.delete()
+                            await botReaction.delete()
                             embed=discord.Embed(title= 'Cancelled match between ' + f'{submiterUser.name}' + ' and ' + f'{oppUser.name}' + '!' , color=0xFF5733)
                             await ctx.send(embed=embed)
 
 @bot.command()
-@commands.has_role("Admins")
+@commands.has_any_role("Admins", "Bot Developer")
 async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord.Member, secondUser: discord.Member):
     # Check to make sure that runs values input by user are between 0 and 99
     if (firstScore < 0) or (secondScore < 0) or (firstScore > 99) or (secondScore > 99):
@@ -178,13 +199,13 @@ async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord
         await ctx.send(embed=embed)
     else:
         embed=discord.Embed(title= 'Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?', color=0xC496EF)
-        embed.add_field(name='STARS-ON', value=':star:', inline=True)
         embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
+        embed.add_field(name='STARS-ON', value=':star:', inline=True)
         botStarReaction = await ctx.send(embed=embed)
         starEmoji = "\U00002B50"
         goatEmoji = "\U0001F410"
-        await botStarReaction.add_reaction(starEmoji)
         await botStarReaction.add_reaction(goatEmoji)
+        await botStarReaction.add_reaction(starEmoji)
 
         def checkStar(reaction, user):
             return user == ctx.author and (str(reaction.emoji) in [starEmoji] or str(reaction.emoji) in [goatEmoji])
@@ -200,7 +221,8 @@ async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord
             await ctx.send(embed=embed)
 
         if reaction.emoji == starEmoji:
-            embed = discord.Embed(title='Confirmed match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
+            await botStarReaction.delete()
+            embed = discord.Embed(title='Confirmed Stars-ON match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
             await ctx.send(embed=embed)
             if firstScore > secondScore:
                 print('Submitter Wins!')
@@ -212,7 +234,8 @@ async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord
                                          f'{firstUser.id}', secondScore, firstScore, 'ON')
 
         elif reaction.emoji == goatEmoji:
-            embed = discord.Embed(title='Confirmed match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
+            await botStarReaction.delete()
+            embed = discord.Embed(title='Confirmed Stars-OFF match between ' + f'{secondUser.name}' + ' and ' + f'{firstUser.name}' + '!', color=0x138F13)
             await ctx.send(embed=embed)
             if firstScore > secondScore:
                 print('Submitter Wins!')
@@ -256,7 +279,7 @@ async def stat(ctx, character: str, stat: str):
         else:
             characterName = statsLoL[arg1][0]
             statVal = statsLoL[arg1][arg2]
-            embed=discord.Embed(title = characterName + '\'s ' + statName + ' is ' + str(statVal), color=0x1AA3E9)
+            embed=discord.Embed(title = f"{characterName}\'s {statName} is {statVal}", color=0x1AA3E9)
             await ctx.send(embed=embed)
 
 
@@ -319,6 +342,78 @@ async def guy(ctx):
 @bot.command()
 async def peacock(ctx):
     await ctx.send(':peacock:')
+
+
+# inform users about roles
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def roles(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'ROLES:', value = 'Set roles for yourself in <#945478927214866522>!')
+    await ctx.send(embed=embed)
+
+
+# explain auto golf mode
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def golf(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'AUTO GOLF MODE:', value = 'Auto Golf Mode is the specific type of netcode that Project Rio uses for playing games online. It works giving one player 0 latency (the golfer) while the other player '
+    '(the non-golfer) has an extra latency penalty.\n\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.')
+    await ctx.send(embed=embed)
+
+
+# ranked mode
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def ranked(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RANKED:', value = 'We run a ranked online ladder through this server. You can find the ranked leaderboards here: https://docs.google.com/spreadsheets/d/1B03IEnfOo3pAG7wBIjDW6jIHP0CTzn7jQJuxlNJebgc/edit?usp=sharing\n\n'
+    'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, head to the <#634046643330613248> channel and look for games. Make sure ranked mode is enabled in the netplay lobby by checking the Ranked Box.\n'
+    'After the game completes, use <#863831563341660170> to submit the game result to our leaderboard. Use the following command format:\n!submit <your score> <opponent\'s score> <@opponent\'s discord>')
+    await ctx.send(embed=embed)
+
+
+# nolan draft
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def nolan(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'NOLAN DRAFT:', value = 'Nolan Draft is the competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n\n'
+    'After deciding on this, the player with first pick gets one character pick, then playes alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose'
+    'a captain after drafting their full team. If playing with superstar characters off, bowser must be captain if chosen.\n\nAn infographic can be seen here: https://discord.com/channels/628353660698624020/945042450483920976/945450479805165568')
+    await ctx.send(embed=embed)
+
+
+# reset a crashed game
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def reset(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RESET GAME:', value = 'In the event that a ranked/tournament game crashes or disconnects, players will recreate the game and continue playing from the point of the crash\n\n'
+    'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
+    await ctx.send(embed=embed)
+
+
+# datamined stats
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def datamine(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'DATAMINED STATS:', value = 'We have uncovered many hidden stats in the game through datamining. See our full datamined stat spreadsheet here:\n'
+    'https://docs.google.com/spreadsheets/d/16cEcCq-Gkudx5ESfqzS0MJlQI7WTvSIWsHVZS8jv750/edit?usp=sharing')
+    await ctx.send(embed=embed)
+
+
+# about rio stat files
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def stats(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RIO STATS:', value = 'By default, Project Rio records stats throughout a game and generates a stat json file to your compute.\n\n'
+    'You can view these that files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
+    await ctx.send(embed=embed)
+
 
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('DISCORD_TOKEN'))
