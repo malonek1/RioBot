@@ -10,7 +10,7 @@ byl,babyluigi,bluigi
 bw,bowser
 w,wario
 wl,walu,waluigi
-rk,rkt,koopa(r),r!koopa,redkoopa,rkoopa
+gk,koopa(g),g!koopa,greenkoopa,gkoopa,koopa
 rt,toad,toad(r),r!toad,redtoad,rtoad
 b,boo
 te,toadette
@@ -40,7 +40,7 @@ py,petey
 dx,dix,dixie
 g,goomba
 pg,paragoomba
-gk,koopa(g),g!koopa,greenkoopa,gkoopa,koopa
+rk,rkt,koopa(r),r!koopa,redkoopa,rkoopa
 gpt,paratroopa(g),para(g),g!paratroopa,g!para,greenpara,greenparatroopa,gpara,gparatroopa
 bsg,shyguy(b),b!shyguy,blueshyguy,bshyguy
 ysg,shyguy(y),y!shyguy,yellowshyguy,yshyguy
