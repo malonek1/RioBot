@@ -358,6 +358,11 @@ async def guy(ctx):
 async def peacock(ctx):
     await ctx.send(':peacock:')
 
+# peacock
+@bot.command()
+async def dingus(ctx):
+    await ctx.send('<:goombo:949873896910368779>')
+
 
 # inform users about roles
 @bot.command()
@@ -427,6 +432,76 @@ async def stats(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'RIO STATS:', value = 'By default, Project Rio records stats throughout a game and generates a stat json file to your compute.\n\n'
     'You can view these that files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
+    await ctx.send(embed=embed)
+
+# chemistry link chart
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def chemistry(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'CHARACTER CHEMISTRY CHART', value = 'The following image displays the chemistry links between all characters with a value of 0 being the worst and 100 being the best:\n')
+    embed.set_image(url="https://media.discordapp.net/attachments/628354009865912350/815693119348932628/image0.png?width=678&height=676")
+    await ctx.send(embed=embed)
+
+# stadium boundary chart
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def stadium(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'STADIUM BOUNDARY CHART', value = 'The following image displays the boundaries of all stadiums:\n')
+    embed.set_image(url="https://media.discordapp.net/attachments/628354009865912350/943980502510104636/unknown.png")
+    await ctx.send(embed=embed)
+
+
+
+# displays server rules
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def rule(ctx, rule:int):
+    embed=discord.Embed()
+    if rule == 1:
+        embed.add_field(name = "Hate Speech", value = "• Includes but is not limited to: racism, homophobia, transphobia, ableism, threats\n"
+                                                      "• This includes profile pictures, usernames and custom statuses")
+    elif rule == 2:
+        embed.add_field(name="Posting NSFW Content", value="• This includes pictures, long text copy pastas, spam pinging, posting discord links, having sexual and or graphic conversations in voice or text channels, or other disruptive content.\n"
+                                                           "• NSFW topics include but are not limited to: pornographic, excessively disturbing, sexually suggestive, or topics concerning past sexual experiences, sexual desires, gore, disturbing conversations about abuse, images of scantily clad people, images that make any allusion to sexual fetishes (vore, etc.), images of sex toys, or using trigger words.\n"
+                                                           "• Extremely edgy content is content that is ‘excessively dark, often overbearingly depressive in nature could be considered humorous, or posts related to recent tragedies.\n"
+                                                           "• This includes profile pictures, usernames and custom statuses.")
+    elif rule == 3:
+        embed.add_field(name = "Posting harmful or malicious links", value = "This includes posting links to malicious websites.\n"
+                                                          "• Any post that crashes or attempts to crash Discord or a user's computer.\n"
+                                                          "• Any post that pretends to or does send malware to a user will be met with a ban, no questions asked.")
+    elif rule == 4:
+        embed.add_field(name = "Doxxing", value = "• Do not post personal details or identifying information of any users without that user's express permission.\n"
+                                                  "• Do not post pictures of other people without their consent")
+    elif rule == 5:
+        embed.add_field(name="Spamming", value="• Keep discussions on topic to their respective channels\n"
+                                               "• Messages in <#628353660698624024> must follow all other rules in the server\n"
+                                               "• Self-promotion outside of the self-promotion channel is not permitted\n"
+                                               "• Please only use Pings for their intended purpose. This includes @Netplayers and @New Netplayers for finding games in <#948321928760918087>")
+    elif rule == 6:
+        embed.add_field(name="Instigating Fights", value="• Intentional and continuous drama baiting/instigating is not allowed. Drama baiting/instigating is defined as constantly flaming/being toxic to users after being informally/formally warned.\n"
+                                                         "• Members of the server must also be fair and understanding to those with different opinions.\n"
+                                                         "• Mods or Admins may ask the discussion to end if it gets too heated.")
+    elif rule == 7:
+        embed.add_field(name='No "Crossing The Line"', value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
+                                                             "• Bullying and berating someone will not be tolerated. \n"
+                                                             "• If you're unsure your communication is appropriate, then ask a moderator first. \n"
+                                                             "• Please only use Pings for their intended purpose. This includes @Netplayers and @New Netplayers for finding games in <#948321928760918087>")
+    elif rule == 8:
+        embed.add_field(name="Having Non-English Conversations", value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
+                                                                       "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.")
+    elif rule == 9:
+        embed.add_field(name="Posting Excessively Loud Videos", value="• Excessively loud videos are not allowed in media channels.")
+
+    elif rule == 10:
+        embed.add_field(name="Asking for an ISO / ROM", value="• Asking for an ISO / ROM of any game is prohibited.\n"
+                                                              "• Users must obtain these files on their own accord")
+    elif rule == 11:
+        embed.add_field(name="Netplay Specific Rules", value="• Users can only submit games to the ranked leaderboards from one account.  No smurfing.\n"
+                                                             "• Dropping out of active tournaments will result in action from the moderation team depending on circumstances. Multiple offenses are more likely to result in bans from future tournaments.")
+    elif rule == 12:
+        embed.add_field(name="No politics", value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
     await ctx.send(embed=embed)
 
 #Key given to bot through .env file so bot can run in server
