@@ -468,7 +468,7 @@ async def rule(ctx, rule:int):
                                                            "• Extremely edgy content is content that is ‘excessively dark, often overbearingly depressive in nature could be considered humorous, or posts related to recent tragedies.\n"
                                                            "• This includes profile pictures, usernames and custom statuses.")
     elif rule == 3:
-        embed.add_field(name = "Posting harmful or malicious links", value = "This includes posting links to malicious websites.\n"
+        embed.add_field(name = "Posting harmful or malicious links", value = "• This includes posting links to malicious websites.\n"
                                                           "• Any post that crashes or attempts to crash Discord or a user's computer.\n"
                                                           "• Any post that pretends to or does send malware to a user will be met with a ban, no questions asked.")
     elif rule == 4:
@@ -486,8 +486,7 @@ async def rule(ctx, rule:int):
     elif rule == 7:
         embed.add_field(name='No "Crossing The Line"', value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
                                                              "• Bullying and berating someone will not be tolerated. \n"
-                                                             "• If you're unsure your communication is appropriate, then ask a moderator first. \n"
-                                                             "• Please only use Pings for their intended purpose. This includes @Netplayers and @New Netplayers for finding games in <#948321928760918087>")
+                                                             "• If you're unsure your communication is appropriate, then ask a moderator first.")
     elif rule == 8:
         embed.add_field(name="Having Non-English Conversations", value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
                                                                        "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.")
