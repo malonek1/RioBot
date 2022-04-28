@@ -201,7 +201,7 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
 
 
 @bot.command()
-@commands.has_any_role("Admins", "Bot Developer")
+@commands.has_any_role("Admins", "Moderator", "Bot Developer")
 async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord.Member, secondUser: discord.Member):
     if ctx.channel.id == 947699610921599006:
         # Check to make sure that runs values input by user are between 0 and 99
@@ -361,7 +361,7 @@ async def peacock(ctx):
 # peacock
 @bot.command()
 async def dingus(ctx):
-    await ctx.send('<:goombo:949873896910368779>')
+    await ctx.send('<:goombo:951561065580331108>')
 
 
 # inform users about roles
