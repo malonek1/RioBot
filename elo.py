@@ -307,6 +307,13 @@ async def rioGuide(ctx):
     embed.add_field(name = 'RIO GUIDE:', value = 'For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
     await ctx.send(embed=embed)
 
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def rayveean(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RAYVEEAN HURT MY FEELINGS:', value = "Rayveean changed my name to dignus and it really hurts my feelings inside. But I won't admit that to him because that would be embarassing")
+    await ctx.send(embed=embed)
+
 
 # ball flickering
 @bot.command()
