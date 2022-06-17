@@ -358,10 +358,10 @@ async def guy(ctx):
 async def peacock(ctx):
     await ctx.send(':peacock:')
 
-# peacock
+# goombo
 @bot.command()
 async def dingus(ctx):
-    await ctx.send('<:goombo:949873896910368779>')
+    await ctx.send('<:goombo:987231921916510228>')
 
 
 # inform users about roles
