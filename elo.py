@@ -503,5 +503,13 @@ async def rule(ctx, rule:int):
         embed.add_field(name="No politics", value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
     await ctx.send(embed=embed)
 
+# washed copypasta
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def washed(ctx):
+    embed=discord.Embed()
+    embed.add_field(value = "I would've won if i hadnt taken a break for a long time, scored more runs than you, played only top tier competition, didn't waste my time, gave up less runs than you, and I can beat remkey again anyway, and i did it for the people, and i only play top players so i don't know this matchup")
+    await ctx.send(embed=embed)
+
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('DISCORD_TOKEN'))
