@@ -511,5 +511,20 @@ async def washed(ctx):
     embed.add_field(value = "I would've won if i hadnt taken a break for a long time, scored more runs than you, played only top tier competition, didn't waste my time, gave up less runs than you, and I can beat remkey again anyway, and i did it for the people, and i only play top players so i don't know this matchup")
     await ctx.send(embed=embed)
 
+# gamecube controller issues
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def gcc(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = "Setting up a GameCube Controller",value = '''
+To use a GameCube Controller with Rio, follow these steps:
+- Install the proper drivers <https://wiki.dolphin-emu.org/index.php?title=How_to_use_the_Official_GameCube_Controller_Adapter_for_Wii_U_in_Dolphin#Avoid_vJoy>
+- Change the controller port to "GameCube Adapter for WiiU" in the Controller settings
+- If your adapter has a switch, set it to WiiU mode instead of PC mode
+- Use port 1; only player 1 can control the menus in Mario Baseball
+- Make sure no other Dolphin/Rio tabs are open at the same time. The controller can only connect to one window at a time
+    ''')
+    await ctx.send(embed=embed)
+
 #Key given to bot through .env file so bot can run in server
 bot.run(os.getenv('DISCORD_TOKEN'))
