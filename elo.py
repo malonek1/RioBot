@@ -365,10 +365,10 @@ async def guy(ctx):
 async def peacock(ctx):
     await ctx.send(':peacock:')
 
-# peacock
+# goombo
 @bot.command()
 async def dingus(ctx):
-    await ctx.send('<:goombo:951561065580331108>')
+    await ctx.send('<:goombo:987231921916510228>')
 
 
 # inform users about roles
@@ -508,6 +508,29 @@ async def rule(ctx, rule:int):
                                                              "• Dropping out of active tournaments will result in action from the moderation team depending on circumstances. Multiple offenses are more likely to result in bans from future tournaments.")
     elif rule == 12:
         embed.add_field(name="No politics", value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
+    await ctx.send(embed=embed)
+
+# washed copypasta
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def washed(ctx):
+    embed=discord.Embed()
+    embed.add_field(value = "I would've won if i hadnt taken a break for a long time, scored more runs than you, played only top tier competition, didn't waste my time, gave up less runs than you, and I can beat remkey again anyway, and i did it for the people, and i only play top players so i don't know this matchup")
+    await ctx.send(embed=embed)
+
+# gamecube controller issues
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def gcc(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = "Setting up a GameCube Controller",value = '''
+To use a GameCube Controller with Rio, follow these steps:
+- Install the proper drivers <https://wiki.dolphin-emu.org/index.php?title=How_to_use_the_Official_GameCube_Controller_Adapter_for_Wii_U_in_Dolphin#Avoid_vJoy>
+- Change the controller port to "GameCube Adapter for WiiU" in the Controller settings
+- If your adapter has a switch, set it to WiiU mode instead of PC mode
+- Use port 1; only player 1 can control the menus in Mario Baseball
+- Make sure no other Dolphin/Rio tabs are open at the same time. The controller can only connect to one window at a time
+    ''')
     await ctx.send(embed=embed)
 
 #Key given to bot through .env file so bot can run in server
