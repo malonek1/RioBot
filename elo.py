@@ -201,7 +201,7 @@ async def submit(ctx, submiterScore: int, oppScore: int, oppUser: discord.Member
 
 
 @bot.command()
-@commands.has_any_role("Admins", "Bot Developer")
+@commands.has_any_role("Admins", "Moderator", "Bot Developer")
 async def forceSubmit(ctx, firstScore: int, secondScore: int, firstUser: discord.Member, secondUser: discord.Member):
     if ctx.channel.id == 947699610921599006:
         # Check to make sure that runs values input by user are between 0 and 99
@@ -305,6 +305,13 @@ async def stat(ctx, character: str, stat: str):
 async def rioGuide(ctx):
     embed=discord.Embed()
     embed.add_field(name = 'RIO GUIDE:', value = 'For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
+    await ctx.send(embed=embed)
+
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def rayveean(ctx):
+    embed=discord.Embed()
+    embed.add_field(name = 'RAYVEEAN HURT MY FEELINGS:', value = "Rayveean changed my name to dignus and it really hurts my feelings inside. But I won't admit that to him because that would be embarassing")
     await ctx.send(embed=embed)
 
 
