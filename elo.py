@@ -515,7 +515,7 @@ async def rule(ctx, rule:int):
 @commands.cooldown(1, 2, commands.BucketType.user)
 async def washed(ctx):
     embed=discord.Embed()
-    embed.add_field(value = "I would've won if i hadnt taken a break for a long time, scored more runs than you, played only top tier competition, didn't waste my time, gave up less runs than you, and I can beat remkey again anyway, and i did it for the people, and i only play top players so i don't know this matchup")
+    embed.add_field(name = "WASHED", value = "I would've won if i hadn't taken a break for a long time, scored more runs than you, played only top tier competition, didn't waste my time, gave up less runs than you, and I can beat remkey again anyway, and i did it for the people, and i only play top players so i don't know this matchup")
     await ctx.send(embed=embed)
 
 # gamecube controller issues
