@@ -452,7 +452,82 @@ async def stadium(ctx):
     embed.set_image(url="https://media.discordapp.net/attachments/628354009865912350/943980502510104636/unknown.png")
     await ctx.send(embed=embed)
 
+# Bat command
+# Character is the character whose bat you want to see
+BAT_URLS = [
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676504752275630/Mario_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676502894186536/Luigi_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676458887557220/DK_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676458044502107/Diddy_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676544782704691/Peach_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676419268149308/Daisy_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676595131125881/Yoshi_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676419914088518/Baby_Mario_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676419565948948/Baby_Luigi_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676420933287987/Bowser_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676594770411580/Wario_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676594460045352/Waluigi_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676502546071593/KoopaR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676580174250156/ToadR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676420610342912/Boo_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676577489887283/Toadette_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676578555244657/Shy_GuyR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676420228644904/Birdo_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676505205252196/Monty_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676421453402232/Bowser_Jr_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007745583777321091/ParatroopaR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676545621557288/PiantaB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676546036801657/PiantaR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676546535927909/PiantaY_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676505549189210/NokiB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676542723301436/NokiR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676502155993109/NokiG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676422510358538/BroH_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676594124492830/Toadsworth_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676579167617154/ToadB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676580501401670/ToadY_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676579561873418/ToadG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676579880636476/ToadP_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676503280058509/MagikoopaB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676503997288468/MagikoopaR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676503619817563/MagikoopaG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676504408326196/MagikoopaY_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676461756465153/King_Boo_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676545214713877/Petey_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676458505883728/Dixie_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676461181849620/Goomba_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676543272747068/Paragoomba_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676457562153073/KoopaG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676543847378954/ParatroopaG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007745584121270313/Shy_GuyB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676578869805116/Shy_GuyY_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676578240680086/Shy_GuyG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676577926086756/Shy_GuyBk_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676460301033492/Dry_BonesGy_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676459923542086/Dry_BonesG_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676460699488336/Dry_BonesR_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676459520905327/Dry_BonesB_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676422137073724/BroF_bat.png",
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676421793136720/BroB_bat.png"
+]
+@bot.command()
+@commands.cooldown(1, 2, commands.BucketType.user)
+async def bat(ctx, character: str):
+    character = character.lower() # ignore case-sensitivity stuff
+    stat = stat.lower() # ignore case-sensitivity stuff
+    arg1 = CharacterStats.findCharacter(character) # returns row index of character
 
+    # check for invalid args
+    if arg1 <= -1:
+        embed=discord.Embed(title = 'No matching character found; try alternative spellings.\nRemember, the character\'s name must be one word.', color=0xEA7D07)
+        await ctx.send(embed=embed)
+
+    # handle valid args
+    else:
+        characterName = statsLoL[arg1][0]
+        embed=discord.Embed(title = f"{characterName}\'s Bat", color=0x1AA3E9)
+        embed.set_image(url=BAT_URLS[arg1])
+        await ctx.send(embed=embed)
 
 # displays server rules
 @bot.command()
