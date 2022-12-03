@@ -2,7 +2,7 @@ import datetime
 import resources.gspread_client as gs
 import glicko2
 
-ELO_SHEET_NAME = "Elo Test"
+ELO_SHEET_NAME = "MSSB Elo"
 
 # Creation of gspread objects
 stars_off_calc_sheet = gs.client.open(ELO_SHEET_NAME).worksheet('Calculations-OFF')
