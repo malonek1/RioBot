@@ -213,7 +213,9 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
 
     if 900 < time.time() - queue[user_id]["Time"] < 915:
         user = await bot.fetch_user(user_id)
-        await user.send(
-            "You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
+        try:
+            await user.send("You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
+        except discord.Forbidden:
+            print("DM forbidden")
 
     return False
