@@ -112,7 +112,10 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
 # @bot.command(name="dequeue", aliases=["dq"], help="Exit queue")
 async def exit_queue(interaction):
     if str(interaction.user.id) in queue:
-        del queue[str(interaction.user.id)]
+        try:
+            del queue[str(interaction.user.id)]
+        except KeyError:
+            print("Key error")
     await update_queue_status()
 
 
@@ -178,32 +181,38 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
           round(time.time() - queue[user_id]["Time"]), "Rating Range", min_rating, max_rating)
     channel = bot.get_channel(MATCH_CHANNEL_ID)
     if len(queue) >= 2:
-        best_match = False
-        for player in queue:
-            if max_rating >= queue[player]["Rating"] >= min_rating and \
-                    player != user_id and time.time() - queue[player]["Time"] > min_time and \
-                    queue[player]["Game Type"] == queue[user_id]["Game Type"]:
-                if not best_match or abs(queue[best_match]["Rating"] - queue[user_id]["Rating"]) > abs(queue[player]["Rating"] - queue[user_id]["Rating"]):
-                    best_match = player
+        try:
+            best_match = False
+            for player in queue:
+                if max_rating >= queue[player]["Rating"] >= min_rating and \
+                        player != user_id and time.time() - queue[player]["Time"] > min_time and \
+                        queue[player]["Game Type"] == queue[user_id]["Game Type"]:
+                    if not best_match or abs(queue[best_match]["Rating"] - queue[user_id]["Rating"]) > abs(
+                            queue[player]["Rating"] - queue[user_id]["Rating"]):
+                        best_match = player
 
-        if best_match:
-            global match_count
-            try:
+            if best_match:
+                global match_count
+                log_text = str(match_count[queue[user_id]["Game Type"]]) + " " + queue[user_id][
+                    "Game Type"] + " match: " + queue[user_id]["Name"] + " " + str(queue[user_id]["Rating"]) + " vs " + queue[best_match][
+                    "Name"] + " " + str(queue[best_match]["Rating"])
+                print(log_text)
                 with open("match_log.txt", "w") as file:
-                    file.write(str(match_count[queue[user_id]["Game Type"]]) + " " + queue[user_id]["Game Type"] + " match: " +
-                        queue[user_id]["Name"] + " " + str(queue[user_id]["Rating"]) + " vs " + queue[best_match]["Name"] + " " + str(queue[best_match]["Rating"]))
+                    file.write(log_text)
                 await channel.send("We have a " + queue[user_id][
                     "Game Type"] + " match! <@" + user_id + "> vs <@" + str(
                     best_match) + ">. Find matches in <#" + str(
                     BUTTON_CHANNEL_ID) + ">")
-            except KeyError:
-                print("Double match")
-            match_count[queue[user_id]["Game Type"]] += 1
-            if best_match in queue:
-                del queue[best_match]
-            if user_id in queue:
-                del queue[user_id]
-            return True
+                match_count[queue[user_id]["Game Type"]] += 1
+                if best_match in queue:
+                    del queue[best_match]
+                if user_id in queue:
+                    del queue[user_id]
+                return True
+        except KeyError:
+            print("Double match")
+        except RuntimeError:
+            print("Timing error")
 
     if 300 <= time.time() - queue[user_id]["Time"] < 315:
         role_id = "<@&998791156794150943>"
@@ -214,7 +223,8 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
     if 900 < time.time() - queue[user_id]["Time"] < 915:
         user = await bot.fetch_user(user_id)
         try:
-            await user.send("You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
+            await user.send(
+                "You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
         except discord.Forbidden:
             print("DM forbidden")
 
