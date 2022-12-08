@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from resources import CharacterStats
+from resources.CharacterBats import BAT_URLS
 
 stats_lol = []
 CharacterStats.build_stats_lol(stats_lol)
@@ -63,6 +64,26 @@ class GameStatLookup(commands.Cog):
             url="https://media.discordapp.net/attachments/628354009865912350/815693119348932628/image0.png?width=678&height=676")
         await ctx.send(embed=embed)
 
+    @commands.command()
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def bat(ctx, character: str, stat: str):
+        character = character.lower()  # ignore case-sensitivity stuff
+        stat = stat.lower()  # ignore case-sensitivity stuff
+        arg1 = CharacterStats.findCharacter(character)  # returns row index of character
+
+        # check for invalid args
+        if arg1 <= -1:
+            embed = discord.Embed(
+                title='No matching character found; try alternative spellings.\nRemember, the character\'s name must be one word.',
+                color=0xEA7D07)
+            await ctx.send(embed=embed)
+
+        # handle valid args
+        else:
+            characterName = stats_lol[arg1][0]
+            embed = discord.Embed(title=f"{characterName}\'s Bat", color=0x1AA3E9)
+            embed.set_image(url=BAT_URLS[arg1])
+            await ctx.send(embed=embed)
 
 async def setup(client):
     await client.add_cog(GameStatLookup(client))
