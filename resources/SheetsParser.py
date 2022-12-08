@@ -28,17 +28,19 @@ def confirm_match(winner_name, loser_name, winner_id, loser_id, winner_score, lo
         log_sheet = stars_on_log_sheet
 
     # Calculate Glicko
-    if calc_sheet.find(winner_id):
-        winner = glicko2.Player(float(calc_sheet.cell(calc_sheet.find(winner_id).row, 7).value),
-                                float(calc_sheet.cell(calc_sheet.find(winner_id).row, 9).value))
+    winner = calc_sheet.find(winner_id)
+    if winner:
+        winner_row = calc_sheet.row_values(winner.row)
+        winner = glicko2.Player(float(winner_row[6]), float(winner_row[8]))
         print('Existing winner instantiated')
     else:
         winner = glicko2.Player(1500, 300)
         print('New winner instantiated')
 
-    if calc_sheet.find(loser_id):
-        loser = glicko2.Player(float(calc_sheet.cell(calc_sheet.find(loser_id).row, 7).value),
-                               float(calc_sheet.cell(calc_sheet.find(loser_id).row, 9).value))
+    loser = calc_sheet.find(loser_id)
+    if loser:
+        loser_row = calc_sheet.row_values(loser.row)
+        loser = glicko2.Player(float(loser_row[6]), float(loser_row[8]))
         print('Existing loser instantiated')
     else:
         loser = glicko2.Player(1500, 300)
