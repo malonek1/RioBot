@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 from resources import CharacterStats
-from resources.CharacterBats import BAT_URLS
+from resources.characters import BAT_URLS
 
 stats_lol = []
 CharacterStats.build_stats_lol(stats_lol)
@@ -66,10 +66,9 @@ class GameStatLookup(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 2, commands.BucketType.user)
-    async def bat(ctx, character: str, stat: str):
+    async def bat(self, ctx, character: str):
         character = character.lower()  # ignore case-sensitivity stuff
-        stat = stat.lower()  # ignore case-sensitivity stuff
-        arg1 = CharacterStats.findCharacter(character)  # returns row index of character
+        arg1 = CharacterStats.find_character(character)  # returns row index of character
 
         # check for invalid args
         if arg1 <= -1:
@@ -82,7 +81,7 @@ class GameStatLookup(commands.Cog):
         else:
             characterName = stats_lol[arg1][0]
             embed = discord.Embed(title=f"{characterName}\'s Bat", color=0x1AA3E9)
-            embed.set_image(url=BAT_URLS[arg1])
+            embed.set_image(url=BAT_URLS[arg1 - 1])
             await ctx.send(embed=embed)
 
 async def setup(client):
