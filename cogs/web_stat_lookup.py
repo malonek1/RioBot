@@ -109,7 +109,7 @@ async def ostat_user(ctx, user: str):
     ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
     desc = "**Char** (PA): AVG / OBP / SLG, cOPS+"
     title = "\n" + user + " (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
-        obp) + " / " + "{:.3f}".format(slg) + ", " + str(ops_plus) + " OPS+"
+        obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " OPS+"
 
     del user_dict["all"]
     try:
