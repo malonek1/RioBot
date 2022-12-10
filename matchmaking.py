@@ -11,14 +11,16 @@ mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On 
 # Constant for starting percentile range for matchmaking search
 PERCENTILE_RANGE = 0.15
 # Constant to tell the bot where the matchmaking buttons appear
-BUTTON_CHANNEL_ID = 971164238888468520
+BUTTON_CHANNEL_ID = 841761307245281320
 # Prod: 841761307245281320
 # Test: 971164238888468520
+# Test2: 1050244651187179630
 
 # Constant to tell the bot where to post matchmaking updates
-MATCH_CHANNEL_ID = 971164132063727636
+MATCH_CHANNEL_ID = 948321928760918087
 # Prod: 948321928760918087
 # Test: 971164132063727636
+# Test2: 874071272835919956
 
 # The matchmaking queue
 queue = {}
@@ -42,7 +44,10 @@ async def init_buttons(bot: commands.Bot):
         async def press(interaction, mode=mode_list[i]):
             await interaction.response.defer()
             await enter_queue(interaction, bot, mode)
-            await interaction.followup.send("You have entered the " + mode + " queue.", ephemeral=True)
+            embed = discord.Embed()
+            embed.add_field(name='Queue Status:',
+                            value="You have entered the " + mode + " queue.")
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
         button.callback = press
         new_view.add_item(button)
@@ -52,7 +57,10 @@ async def init_buttons(bot: commands.Bot):
     async def dequeue_press(interaction):
         await interaction.response.defer()
         await exit_queue(interaction)
-        await interaction.followup.send("You have left the matchmaking queue.", ephemeral=True)
+        embed = discord.Embed()
+        embed.add_field(name='Queue Status:',
+                        value="You have left the matchmaking queue.")
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     dequeue_button.callback = dequeue_press
 
@@ -67,7 +75,10 @@ async def init_buttons(bot: commands.Bot):
         if msg.author == bot.user:
             await msg.delete()
 
-    mm_message = await channel.send("Matchmaking queue initialized! Press buttons below to search for a game.",
+    embed = discord.Embed()
+    embed.add_field(name="Matchmaking queue initialized! Press buttons below to search for a game.",
+                    value="Queue details will appear here when a user has entered the queue")
+    mm_message = await channel.send(embed=embed,
                                     view=new_view)
 
 
@@ -140,12 +151,14 @@ async def update_queue_status():
     for user in queue:
         queue_numbers[queue[user]["Game Type"]] += 1
 
-    new_message = "There are " + str(len(queue)) + " users in the matchmaking queue ("
+    details = ""
+    new_message = str(len(queue)) + " player(s) in the matchmaking queue:"
     for mode in mode_list:
-        new_message += str(queue_numbers[mode]) + " " + mode + ", "
-    new_message = new_message[:-2] + ")"
-    # print(queue)
-    await mm_message.edit(content=new_message)
+        details += mode + ": " + str(queue_numbers[mode]) + "\n"
+    embed = discord.Embed()
+    embed.add_field(name=new_message,
+                    value=details)
+    await mm_message.edit(embed=embed)
 
 
 # params: player's rating and what percentile you want your search range to cover
@@ -199,10 +212,12 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 print(log_text)
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
-                await channel.send("We have a " + queue[user_id][
-                    "Game Type"] + " match! <@" + user_id + "> vs <@" + str(
-                    best_match) + ">. Find matches in <#" + str(
-                    BUTTON_CHANNEL_ID) + ">")
+                embed = discord.Embed()
+                embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                                value="<@" + user_id + "> vs <@" + str(
+                                        best_match) + ">\n\n Find matches in <#" + str(
+                                        BUTTON_CHANNEL_ID) + ">")
+                await channel.send(embed=embed)
                 match_count[queue[user_id]["Game Type"]] += 1
                 if best_match in queue:
                     del queue[best_match]
