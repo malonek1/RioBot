@@ -214,10 +214,11 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                     file.write(log_text)
                 embed = discord.Embed()
                 embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
-                                value="<@" + user_id + "> vs <@" + str(
-                                        best_match) + ">\n\n Find matches in <#" + str(
+                                value=queue[user_id]["Name"] + " vs " + str(
+                                        queue[best_match]["Name"]) + "\n\n Find matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
-                await channel.send(embed=embed)
+                await channel.send("<@" + user_id + "> <@" + str(
+                                        best_match) + ">", embed=embed)
                 match_count[queue[user_id]["Game Type"]] += 1
                 if best_match in queue:
                     del queue[best_match]
@@ -233,13 +234,19 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
         role_id = "<@&998791156794150943>"
         if queue[user_id]["Game Type"] == "Superstars-On Ranked":
             role_id = "<@&998791464630898808>"
-        await channel.send("There is a player looking for a match in queue! " + role_id)
+        embed = discord.Embed()
+        embed.add_field(name="ATTENTION GAMERS",
+                        value="There is a player looking for a match in queue!")
+        await channel.send(role_id, embed=embed)
 
     if 900 < time.time() - queue[user_id]["Time"] < 915:
         user = await bot.fetch_user(user_id)
         try:
-            await user.send(
-                "You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
+            embed = discord.Embed()
+            embed.add_field(name="AFK Reminder",
+                            value="You have been in the queue for 15 minutes. "
+                                  "Please leave the queue if you have found a match or are no longer looking.")
+            await user.send(embed=embed)
         except discord.Forbidden:
             print("DM forbidden")
 
