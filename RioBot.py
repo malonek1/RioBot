@@ -32,7 +32,7 @@ async def on_ready():
     mm.refresh_queue.start(bot)
     gspread_client.refresh_api_data.start()
 
-    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes"]
+    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes", "records"]
 
     for cog in cog_files:
         await bot.load_extension("cogs." + cog)

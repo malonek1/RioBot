@@ -75,3 +75,11 @@ def confirm_match(winner_name, loser_name, winner_id, loser_id, winner_score, lo
 
     # Add all gathered data to the next row of the log_sheet
     log_sheet.append_row(value_list)
+
+def get_record(player_1, player_2):
+    print("Entering get_record function")
+    player_1_matches = stars_off_log_sheet.findall(player_1)
+    player_2_matches = stars_off_log_sheet.findall(player_2)
+    print(type(player_1_matches))
+    print(player_2_matches)
+    return [player_1_matches, player_2_matches]
