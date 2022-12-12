@@ -232,10 +232,12 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
 
     if 300 <= time.time() - queue[user_id]["Time"] < 315:
         role_id = "<@&998791156794150943>"
+        role_name = "STARS-OFF"
         if queue[user_id]["Game Type"] == "Superstars-On Ranked":
             role_id = "<@&998791464630898808>"
+            role_name = "STARS-ON"
         embed = discord.Embed()
-        embed.add_field(name="ATTENTION GAMERS",
+        embed.add_field(name=f'ATTENTION {role_name} GAMERS',
                         value="There is a player looking for a match in queue!")
         await channel.send(role_id, embed=embed)
 
