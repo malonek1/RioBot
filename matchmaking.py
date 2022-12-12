@@ -127,38 +127,50 @@ async def exit_queue(interaction):
             del queue[str(interaction.user.id)]
         except KeyError:
             print("Key error")
+        except RuntimeError:
+            print("Runtime error")
     await update_queue_status()
 
 
 # refresh to see if a match can now be created with players waiting in the queue
 @tasks.loop(seconds=15)
 async def refresh_queue(bot: commands.Bot):
-    for player in queue:
-        time_in_queue = time.time() - queue[player]["Time"]
-        new_range = PERCENTILE_RANGE + (PERCENTILE_RANGE * time_in_queue / 180)
-        min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], new_range)
-        if await check_for_match(bot, player, min_rating, max_rating, 120):
-            await update_queue_status()
-            break
+    try:
+        for player in queue:
+            time_in_queue = time.time() - queue[player]["Time"]
+            new_range = PERCENTILE_RANGE + (PERCENTILE_RANGE * time_in_queue / 180)
+            min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], new_range)
+            if await check_for_match(bot, player, min_rating, max_rating, 120):
+                await update_queue_status()
+                break
+    except KeyError:
+        print("Key error")
+    except RuntimeError:
+        print("Runtime error")
 
 
 # Update message with the current queue status
 async def update_queue_status():
-    global mm_message
-    queue_numbers = {}
-    for mode in mode_list:
-        queue_numbers[mode] = 0
-    for user in queue:
-        queue_numbers[queue[user]["Game Type"]] += 1
+    try:
+        global mm_message
+        queue_numbers = {}
+        for mode in mode_list:
+            queue_numbers[mode] = 0
+        for user in queue:
+            queue_numbers[queue[user]["Game Type"]] += 1
 
-    details = ""
-    new_message = str(len(queue)) + " player(s) in the matchmaking queue:"
-    for mode in mode_list:
-        details += mode + ": " + str(queue_numbers[mode]) + "\n"
-    embed = discord.Embed()
-    embed.add_field(name=new_message,
-                    value=details)
-    await mm_message.edit(embed=embed)
+        details = ""
+        new_message = str(len(queue)) + " player(s) in the matchmaking queue:"
+        for mode in mode_list:
+            details += mode + ": " + str(queue_numbers[mode]) + "\n"
+        embed = discord.Embed()
+        embed.add_field(name=new_message,
+                        value=details)
+        await mm_message.edit(embed=embed)
+    except KeyError:
+        print("Key error")
+    except RuntimeError:
+        print("Runtime error")
 
 
 # params: player's rating and what percentile you want your search range to cover
