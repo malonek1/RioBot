@@ -31,6 +31,10 @@ match_count = {}
 for m in mode_list:
     match_count[m] = 1
 
+last_ping_time = {}
+for m in mode_list:
+    last_ping_time[m] = 0.0
+
 
 async def init_buttons(bot: commands.Bot):
     # Initialize matchmaking buttons
@@ -242,7 +246,8 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
         except RuntimeError:
             print("Timing error")
 
-    if 300 <= time.time() - queue[user_id]["Time"] < 315:
+    global last_ping_time
+    if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 900:
         role_id = "<@&998791156794150943>"
         role_name = "STARS-OFF"
         if queue[user_id]["Game Type"] == "Superstars-On Ranked":
@@ -250,7 +255,8 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
             role_name = "STARS-ON"
         embed = discord.Embed()
         embed.add_field(name=f'ATTENTION {role_name} GAMERS',
-                        value="There is a player looking for a match in queue!")
+                        value="There is a player looking for a " + queue[user_id]["Game Type"] + " match in queue!")
+        last_ping_time[queue[user_id]["Game Type"]] = time.time()
         await channel.send(role_id, embed=embed)
 
     if 900 < time.time() - queue[user_id]["Time"] < 915:
