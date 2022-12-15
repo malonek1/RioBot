@@ -1,8 +1,9 @@
 import datetime
 import resources.gspread_client as gs
 import glicko2
+from resources import EnvironmentVariables as ev
 
-ELO_SHEET_NAME = "MSSB Elo"
+ELO_SHEET_NAME = ev.get_var("google_sheet")
 
 # Creation of gspread objects
 stars_off_calc_sheet = gs.client.open(ELO_SHEET_NAME).worksheet('Calculations-OFF')

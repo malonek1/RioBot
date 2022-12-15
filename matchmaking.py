@@ -4,6 +4,7 @@ from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
 
+from resources import EnvironmentVariables as ev
 from resources import gspread_client as gs
 
 mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On Ranked"]
@@ -11,14 +12,10 @@ mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On 
 # Constant for starting percentile range for matchmaking search
 PERCENTILE_RANGE = 0.15
 # Constant to tell the bot where the matchmaking buttons appear
-BUTTON_CHANNEL_ID = 971164238888468520
-# Prod: 841761307245281320
-# Test: 971164238888468520
+BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 
 # Constant to tell the bot where to post matchmaking updates
-MATCH_CHANNEL_ID = 971164132063727636
-# Prod: 948321928760918087
-# Test: 971164132063727636
+MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
 
 # The matchmaking queue
 queue = {}
@@ -28,6 +25,10 @@ mm_message: discord.Message
 match_count = {}
 for m in mode_list:
     match_count[m] = 1
+
+last_ping_time = {}
+for m in mode_list:
+    last_ping_time[m] = 0.0
 
 
 async def init_buttons(bot: commands.Bot):
@@ -42,7 +43,10 @@ async def init_buttons(bot: commands.Bot):
         async def press(interaction, mode=mode_list[i]):
             await interaction.response.defer()
             await enter_queue(interaction, bot, mode)
-            await interaction.followup.send("You have entered the " + mode + " queue.", ephemeral=True)
+            embed = discord.Embed()
+            embed.add_field(name='Queue Status:',
+                            value="You have entered the " + mode + " queue.")
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
         button.callback = press
         new_view.add_item(button)
@@ -52,7 +56,10 @@ async def init_buttons(bot: commands.Bot):
     async def dequeue_press(interaction):
         await interaction.response.defer()
         await exit_queue(interaction)
-        await interaction.followup.send("You have left the matchmaking queue.", ephemeral=True)
+        embed = discord.Embed()
+        embed.add_field(name='Queue Status:',
+                        value="You have left the matchmaking queue.")
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     dequeue_button.callback = dequeue_press
 
@@ -67,7 +74,10 @@ async def init_buttons(bot: commands.Bot):
         if msg.author == bot.user:
             await msg.delete()
 
-    mm_message = await channel.send("Matchmaking queue initialized! Press buttons below to search for a game.",
+    embed = discord.Embed()
+    embed.add_field(name="Matchmaking queue initialized! Press buttons below to search for a game.",
+                    value="Queue details will appear here when a user has entered the queue")
+    mm_message = await channel.send(embed=embed,
                                     view=new_view)
 
 
@@ -116,36 +126,50 @@ async def exit_queue(interaction):
             del queue[str(interaction.user.id)]
         except KeyError:
             print("Key error")
+        except RuntimeError:
+            print("Runtime error")
     await update_queue_status()
 
 
 # refresh to see if a match can now be created with players waiting in the queue
 @tasks.loop(seconds=15)
 async def refresh_queue(bot: commands.Bot):
-    for player in queue:
-        time_in_queue = time.time() - queue[player]["Time"]
-        new_range = PERCENTILE_RANGE + (PERCENTILE_RANGE * time_in_queue / 180)
-        min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], new_range)
-        if await check_for_match(bot, player, min_rating, max_rating, 120):
-            await update_queue_status()
-            break
+    try:
+        for player in queue:
+            time_in_queue = time.time() - queue[player]["Time"]
+            new_range = PERCENTILE_RANGE + (PERCENTILE_RANGE * time_in_queue / 180)
+            min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], new_range)
+            if await check_for_match(bot, player, min_rating, max_rating, 120):
+                await update_queue_status()
+                break
+    except KeyError:
+        print("Key error")
+    except RuntimeError:
+        print("Runtime error")
 
 
 # Update message with the current queue status
 async def update_queue_status():
-    global mm_message
-    queue_numbers = {}
-    for mode in mode_list:
-        queue_numbers[mode] = 0
-    for user in queue:
-        queue_numbers[queue[user]["Game Type"]] += 1
+    try:
+        global mm_message
+        queue_numbers = {}
+        for mode in mode_list:
+            queue_numbers[mode] = 0
+        for user in queue:
+            queue_numbers[queue[user]["Game Type"]] += 1
 
-    new_message = "There are " + str(len(queue)) + " users in the matchmaking queue ("
-    for mode in mode_list:
-        new_message += str(queue_numbers[mode]) + " " + mode + ", "
-    new_message = new_message[:-2] + ")"
-    # print(queue)
-    await mm_message.edit(content=new_message)
+        details = ""
+        new_message = str(len(queue)) + " player(s) in the matchmaking queue:"
+        for mode in mode_list:
+            details += mode + ": " + str(queue_numbers[mode]) + "\n"
+        embed = discord.Embed()
+        embed.add_field(name=new_message,
+                        value=details)
+        await mm_message.edit(embed=embed)
+    except KeyError:
+        print("Key error")
+    except RuntimeError:
+        print("Runtime error")
 
 
 # params: player's rating and what percentile you want your search range to cover
@@ -199,10 +223,13 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 print(log_text)
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
-                await channel.send("We have a " + queue[user_id][
-                    "Game Type"] + " match! <@" + user_id + "> vs <@" + str(
-                    best_match) + ">. Find matches in <#" + str(
-                    BUTTON_CHANNEL_ID) + ">")
+                embed = discord.Embed()
+                embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                                value=queue[user_id]["Name"] + " vs " + str(
+                                        queue[best_match]["Name"]) + "\n\n Find matches in <#" + str(
+                                        BUTTON_CHANNEL_ID) + ">")
+                await channel.send("<@" + user_id + "> <@" + str(
+                                        best_match) + ">", embed=embed)
                 match_count[queue[user_id]["Game Type"]] += 1
                 if best_match in queue:
                     del queue[best_match]
@@ -214,17 +241,27 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
         except RuntimeError:
             print("Timing error")
 
-    if 300 <= time.time() - queue[user_id]["Time"] < 315:
+    global last_ping_time
+    if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 900:
         role_id = "<@&998791156794150943>"
+        role_name = "STARS-OFF"
         if queue[user_id]["Game Type"] == "Superstars-On Ranked":
             role_id = "<@&998791464630898808>"
-        await channel.send("There is a player looking for a match in queue! " + role_id)
+            role_name = "STARS-ON"
+        embed = discord.Embed()
+        embed.add_field(name=f'ATTENTION {role_name} GAMERS',
+                        value="There is a player looking for a " + queue[user_id]["Game Type"] + " match in queue!")
+        last_ping_time[queue[user_id]["Game Type"]] = time.time()
+        await channel.send(role_id, embed=embed)
 
     if 900 < time.time() - queue[user_id]["Time"] < 915:
         user = await bot.fetch_user(user_id)
         try:
-            await user.send(
-                "You have been in the queue for 15 minutes. Please leave the queue if you have found a match or are no longer looking.")
+            embed = discord.Embed()
+            embed.add_field(name="AFK Reminder",
+                            value="You have been in the queue for 15 minutes. "
+                                  "Please leave the queue if you have found a match or are no longer looking.")
+            await user.send(embed=embed)
         except discord.Forbidden:
             print("DM forbidden")
 

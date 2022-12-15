@@ -4,11 +4,10 @@ import discord
 from discord.ext import commands
 
 from resources import SheetsParser
+from resources import EnvironmentVariables as ev
 
 # Channel ID for #ranked-bot result submission channel
-RANKED_BOT_CHANNEL_ID = 947699610921599006
-# Prod: 947699610921599006
-
+RANKED_BOT_CHANNEL_ID = int(ev.get_var("ranked_bot_channel_id"))
 
 class SubmitResults(commands.Cog):
     def __init__(self, client):

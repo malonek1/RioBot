@@ -4,3 +4,4 @@ __pycache__/
 match_log.txt
 client_secret.json
 *.iml
+resources/test.json
