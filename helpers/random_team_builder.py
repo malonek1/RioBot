@@ -105,6 +105,7 @@ def pickFromBrackets(team_one, team_two, brackets):
     shuffle(brackets)
     tier = brackets.pop()
     if len(tier) > 1:
+        shuffle(tier)
         team_one.append(tier.pop())
         team_two.append(tier.pop())
         if len(tier) > 1:
