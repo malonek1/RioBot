@@ -8,6 +8,7 @@ from resources import SheetsParser
 # Channel ID for #ranked-bot result submission channel
 RANKED_BOT_CHANNEL_ID = 947699610921599006
 # Prod: 947699610921599006
+# Pokebunny test: 968987148357349399
 
 
 class SubmitResults(commands.Cog):
