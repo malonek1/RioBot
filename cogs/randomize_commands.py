@@ -33,11 +33,12 @@ class RandomizeCommands(commands.Cog):
         self.client = client
 
     @commands.command(name="random", help="Random Baseball Functions. Please use `!random help` for more info")
-    @commands.cooldown(1, 20, commands.BucketType.default)
+    @commands.cooldown(1, 15, commands.BucketType.default)
     async def random(self, ctx, command, qualifier=""):
         command = command.lower()
         qualifier = qualifier.lower()
         if "help" in command:
+            ctx.command.reset_cooldown(ctx)
             embed = discord.Embed(title="Random Commands Help", description=random_help_string)
             await ctx.send(embed=embed)
         elif command == "character" or command == "chara" or command == "char":
@@ -86,6 +87,7 @@ class RandomizeCommands(commands.Cog):
                 # await ctx.send(title, file=discord.File(fp=image_binary, filename='image.png'))
 
         else:
+            ctx.command.reset_cooldown(ctx)
             embed = discord.Embed(description="Alas poor random command; I do not know thee well", color=hex_y)
             await ctx.send(embed=embed)
     # End random
