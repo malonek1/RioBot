@@ -33,7 +33,7 @@ class RandomizeCommands(commands.Cog):
         self.client = client
 
     @commands.command(name="random", help="Random Baseball Functions. Please use `!random help` for more info")
-    @commands.cooldown(1, 15, commands.BucketType.user)
+    @commands.cooldown(1, 20, commands.BucketType.default)
     async def random(self, ctx, command, qualifier=""):
         command = command.lower()
         qualifier = qualifier.lower()
