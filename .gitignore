@@ -3,4 +3,4 @@ __pycache__/
 .idea
 match_log.txt
 client_secret.json
-test.json
+resources/test.json

@@ -4,8 +4,8 @@ from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
 
+from resources import EnvironmentVariables as ev
 from resources import gspread_client as gs
-import EnvironmentVariables as ev
 
 mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On Ranked"]
 
