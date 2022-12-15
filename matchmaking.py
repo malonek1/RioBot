@@ -5,22 +5,17 @@ from discord.ui import View, Button
 import time
 
 from resources import gspread_client as gs
+import EnvironmentVariables as ev
 
 mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On Ranked"]
 
 # Constant for starting percentile range for matchmaking search
 PERCENTILE_RANGE = 0.15
 # Constant to tell the bot where the matchmaking buttons appear
-BUTTON_CHANNEL_ID = 841761307245281320
-# Prod: 841761307245281320
-# Test: 971164238888468520
-# Test2: 1050244651187179630
+BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 
 # Constant to tell the bot where to post matchmaking updates
-MATCH_CHANNEL_ID = 948321928760918087
-# Prod: 948321928760918087
-# Test: 971164132063727636
-# Test2: 874071272835919956
+MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
 
 # The matchmaking queue
 queue = {}
