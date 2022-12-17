@@ -1,6 +1,6 @@
 # file: RioBot.py
-# author: Nick Taber / Pokebunny
-# version: 11/26/22
+# authors: Kevin Malone / Cactus, Nick Taber / Pokebunny
+# version: 12/17/22
 
 import os
 
