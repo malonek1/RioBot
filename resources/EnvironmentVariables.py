@@ -6,9 +6,10 @@ dev_env = 'resources/test.json'
 
 
 def get_var(var_input: str):
-    env = prod_env
-    if exists(dev_env):
-        env = dev_env
+    with open('resources/prod.json') as config:
+        env = prod_env
+        if exists(dev_env):
+            env = dev_env
 
     with open(env) as config:
         env_vars = json.loads(config.read())
