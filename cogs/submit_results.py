@@ -54,9 +54,13 @@ class SubmitResults(commands.Cog):
                         await ctx.send(embed=embed)
                     else:
                         if reaction.emoji == star_emoji or reaction.emoji == goat_emoji:
-                            mode = 'OFF' if reaction.emoji == goat_emoji else 'ON'
+                            if reaction.emoji == goat_emoji:
+                                mode = 'OFF', ':goat:'
+                            else:
+                                mode = 'ON', ':star:'
                             embed = discord.Embed(
-                                title=f'{opp_user.name}, confirm the results of your Stars-{mode} :star: game by reacting with :white_check_mark: or reject the results with :x: ',
+                                title=f'{opp_user.name}, confirm the results of your Stars-{mode[0]} {mode[1]} '
+                                      f'game by reacting with :white_check_mark: or reject the results with :x: ',
                                 color=0xC496EF)
                             embed.add_field(name=f'{submitter_user.name} score:', value=submitter_score, inline=True)
                             embed.add_field(name=f'{opp_user.name} score:', value=opp_score, inline=True)
@@ -82,7 +86,7 @@ class SubmitResults(commands.Cog):
                                 await game_mode_message.delete()
                                 await confirm_message.delete()
                                 embed = discord.Embed(
-                                    title=f'Cancelled Stars-{mode} match between {submitter_user.name} and {opp_user.name} for not reacting in time!',
+                                    title=f'Cancelled Stars-{mode[0]} match between {submitter_user.name} and {opp_user.name} for not reacting in time!',
                                     color=0xFF5733)
                                 await ctx.send(embed=embed)
                             else:
@@ -91,7 +95,7 @@ class SubmitResults(commands.Cog):
                                     await game_mode_message.delete()
                                     await confirm_message.delete()
                                     embed = discord.Embed(
-                                        title=f'Confirmed Stars-{mode} match between {submitter_user.name} and {opp_user.name}!',
+                                        title=f'Confirmed Stars-{mode[0]} match between {submitter_user.name} and {opp_user.name}!',
                                         color=0x138F13)
                                     await ctx.send(embed=embed)
 
@@ -101,18 +105,18 @@ class SubmitResults(commands.Cog):
                                         SheetsParser.confirm_match(f'{submitter_user.name}', f'{opp_user.name}',
                                                                    f'{submitter_user.id}', f'{opp_user.id}',
                                                                    submitter_score,
-                                                                   opp_score, mode)
+                                                                   opp_score, mode[0])
                                     elif submitter_score < opp_score:
                                         print('Opponent Wins!')
                                         SheetsParser.confirm_match(f'{opp_user.name}', f'{submitter_user.name}',
                                                                    f'{opp_user.id}', f'{submitter_user.id}', opp_score,
-                                                                   submitter_score, mode)
+                                                                   submitter_score, mode[0])
                                 # Rejection message displays if secondary user reacts with an X mark
                                 elif reaction.emoji == ex_emoji:
                                     await game_mode_message.delete()
                                     await confirm_message.delete()
                                     embed = discord.Embed(
-                                        title=f'Cancelled Stars-{mode} match between {submitter_user.name} and {opp_user.name}!',
+                                        title=f'Cancelled Stars-{mode[0]} match between {submitter_user.name} and {opp_user.name}!',
                                         color=0xFF5733)
                                     await ctx.send(embed=embed)
 
