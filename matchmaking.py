@@ -4,10 +4,14 @@ from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
 
+from helpers.image_builder import buildTeamImageHighlightCaptain
+from helpers.team_sorter import sortTeamsByTier
 from resources import EnvironmentVariables as ev
 from resources import gspread_client as gs
+from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
+from io import BytesIO
 
-mode_list = ["Superstars-Off Ranked", "Superstars-Off Unranked", "Superstars-On Ranked"]
+mode_list = ["Superstars-Off Ranked", "Superstars-On Ranked", "Superstars-Off Random Teams"]
 
 # Constant for starting percentile range for matchmaking search
 PERCENTILE_RANGE = 0.15
@@ -180,7 +184,7 @@ def calc_search_range(rating, game_type, percentile):
     else:
         rating_list_copy = gs.off_rating_list.copy()
     if game_type != "Superstars-Off Ranked":
-        percentile = percentile * 2
+        percentile = 5.00
     rating_list_copy.append(rating)
     rating_list_copy.append(0)
     rating_list_copy.append(3000)
@@ -224,12 +228,39 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
                 embed = discord.Embed()
-                embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
-                                value=queue[user_id]["Name"] + " vs " + str(
-                                        queue[best_match]["Name"]) + "\n\n Find matches in <#" + str(
+
+                # RANDOMS LOGIC
+                if queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
+                    team_list = rfRandomTeamsWithoutDupes()
+                    captain_list = [team_list[0][0], team_list[1][0]]
+                    team_list = sortTeamsByTier(team_list)
+
+                    teams_image = buildTeamImageHighlightCaptain(team_list, captain_list)
+
+                    with BytesIO() as image_binary:
+                        teams_image.save(image_binary, 'PNG')
+                        image_binary.seek(0)
+                        file = discord.File(fp=image_binary, filename='image.png')
+                        embed.set_image(url="attachment://image.png")
+                        stadium = rfRandomStadium()
+                        if rfFlipCoin == "Heads":
+                            away = queue[user_id]["Name"]
+                            home = queue[best_match]["Name"]
+                        else:
+                            away = queue[best_match]["Name"]
+                            home = queue[user_id]["Name"]
+                        embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                                        value=away + " (top team, away)\n" + home + " (bottom team, home)")
+                        embed.add_field(name="Stadium", value=stadium)
+                        await channel.send("<@" + user_id + "> <@" + str(
+                            best_match) + ">", embed=embed, file=file)
+                else:
+                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                                    value=queue[user_id]["Name"] + " vs " + str(
+                                        queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
-                await channel.send("<@" + user_id + "> <@" + str(
-                                        best_match) + ">", embed=embed)
+                    await channel.send("<@" + user_id + "> <@" + str(
+                                            best_match) + ">", embed=embed)
                 match_count[queue[user_id]["Game Type"]] += 1
                 if best_match in queue:
                     del queue[best_match]
