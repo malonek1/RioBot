@@ -1,7 +1,7 @@
 from random import shuffle, randint, choice, sample
 
 from helpers.random_team_builder import randomTeamsWithoutDupes, randomTeamsWtihDupes, randomBalancedTeams, \
-    randomPowerTeams
+    randomPowerTeams, randomTeeBallTeams
 from resources.characters import Char
 
 
@@ -82,3 +82,7 @@ def rfRandomBalancedTeams():
 # Return two power teams
 def rfRandomPowerTeams():
     return randomPowerTeams()
+
+
+def rfRandomTeeBallTeams():
+    return randomTeeBallTeams()
