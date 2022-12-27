@@ -1,10 +1,9 @@
-import asyncio
-
 import discord
 from discord import ButtonStyle
 from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
+import asyncio
 
 from helpers.image_builder import buildTeamImageHighlightCaptain
 from helpers.team_sorter import sortTeamsByTier
