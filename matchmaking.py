@@ -232,7 +232,6 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
 
                 # RANDOMS LOGIC
                 if queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
-                    print(queue[user_id])
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
                     team_list = sortTeamsByTier(team_list)
