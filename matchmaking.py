@@ -4,6 +4,8 @@ from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
 import asyncio
+import datetime as dt
+import pytz
 
 from helpers.image_builder import buildTeamImageHighlightCaptain
 from helpers.team_sorter import sortTeamsByTier
@@ -94,32 +96,43 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1400
     player_id = str(interaction.user.id)
     player_name = interaction.user.name
-    if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
-        # TODO: Avoid accessing the API every time someone queues
-        matches = gs.on_log_sheet.findall(player_id)
-        if matches:
-            player_rating = round(float(gs.on_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+    channel = bot.get_channel(MATCH_CHANNEL_ID)
+    account_age = interaction.user.created_at
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=7)
+    if account_age < sysdate:
+        if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
+            # TODO: Avoid accessing the API every time someone queues
+            matches = gs.on_log_sheet.findall(player_id)
+            if matches:
+                player_rating = round(float(gs.on_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+        else:
+            # TODO: Avoid accessing the API every time someone queues
+            matches = gs.off_log_sheet.findall(player_id)
+            if matches:
+                player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+
+        # put player in queue
+        queue[player_id] = {
+            "Name": player_name,
+            "Rating": player_rating,
+            "Time": time.time(),
+            "Game Type": game_type
+        }
+
+        # calculate search range
+        min_rating, max_rating = calc_search_range(player_rating, game_type, PERCENTILE_RANGE)
+
+        # check for match
+        await check_for_match(bot, player_id, min_rating, max_rating, 0)
+
+        await update_queue_status()
+
     else:
-        # TODO: Avoid accessing the API every time someone queues
-        matches = gs.off_log_sheet.findall(player_id)
-        if matches:
-            player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
-
-    # put player in queue
-    queue[player_id] = {
-        "Name": player_name,
-        "Rating": player_rating,
-        "Time": time.time(),
-        "Game Type": game_type
-    }
-
-    # calculate search range
-    min_rating, max_rating = calc_search_range(player_rating, game_type, PERCENTILE_RANGE)
-
-    # check for match
-    await check_for_match(bot, player_id, min_rating, max_rating, 0)
-
-    await update_queue_status()
+        print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(account_age))
+        embed = discord.Embed(
+            title=f'Suspicious account with discord id: {str(player_id)} tried joining the queue',
+            color=0xFF5733)
+        await channel.send('<@&1058101829268946964>',embed=embed)
 
 
 # Command for a player to remove themselves from the queue
