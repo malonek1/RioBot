@@ -30,7 +30,7 @@ class SubmitResults(commands.Cog):
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(
-                        title='Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?',
+                        title='Are you submitting to the Stars-Off leaderboards or the Stars-On leaderboards?',
                         color=0xC496EF)
                     embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
                     embed.add_field(name='STARS-ON', value=':star:', inline=True)
@@ -136,7 +136,7 @@ class SubmitResults(commands.Cog):
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    title='Are you submitting to the Stars-On leaderboards or the Stars-Off leaderboards?',
+                    title='Are you submitting to the Stars-Off leaderboards or the Stars-On leaderboards?',
                     color=0xC496EF)
                 embed.add_field(name='STARS-OFF', value=':goat:', inline=True)
                 embed.add_field(name='STARS-ON', value=':star:', inline=True)

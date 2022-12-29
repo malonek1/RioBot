@@ -3,6 +3,7 @@ from discord import ButtonStyle
 from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
+import asyncio
 
 from helpers.image_builder import buildTeamImageHighlightCaptain
 from helpers.team_sorter import sortTeamsByTier
@@ -267,6 +268,7 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 if user_id in queue:
                     del queue[user_id]
                 return True
+            asyncio.sleep(5)
         except KeyError:
             print("Double match")
         except RuntimeError:
