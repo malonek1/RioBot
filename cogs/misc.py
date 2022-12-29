@@ -45,38 +45,44 @@ class Misc(commands.Cog):
             embed.add_field(name="Doxxing",
                             value="• Do not post personal details or identifying information of any users without that user's express permission.\n"
                                   "• Do not post pictures of other people without their consent")
+
         elif rule == 5:
+            embed.add_field(name="Money Matching",
+                            value="• Money-matching (playing in a match in exchange for money) or other forms of gambling are not permitted. \n"
+                                  "• Do not approach other users of this server in DMs for the purpose of playing for money.")
+
+        elif rule == 6:
             embed.add_field(name="Spamming",
                             value="• Keep discussions on topic to their respective channels\n"
                                   "• Messages in <#628353660698624024> must follow all other rules in the server\n"
                                   "• Self-promotion outside of the self-promotion channel is not permitted\n"
                                   "• Please only use Pings for their intended purpose. This includes @Netplayers and @New Netplayers for finding games in <#948321928760918087>")
-        elif rule == 6:
+        elif rule == 7:
             embed.add_field(name="Instigating Fights",
                             value="• Intentional and continuous drama baiting/instigating is not allowed. Drama baiting/instigating is defined as constantly flaming/being toxic to users after being informally/formally warned.\n"
                                   "• Members of the server must also be fair and understanding to those with different opinions.\n"
                                   "• Mods or Admins may ask the discussion to end if it gets too heated.")
-        elif rule == 7:
+        elif rule == 8:
             embed.add_field(name='No "Crossing The Line"',
                             value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
                                   "• Bullying and berating someone will not be tolerated. \n"
                                   "• If you're unsure your communication is appropriate, then ask a moderator first.")
-        elif rule == 8:
+        elif rule == 9:
             embed.add_field(name="Having Non-English Conversations",
                             value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
                                   "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.")
-        elif rule == 9:
+        elif rule == 10:
             embed.add_field(name="Posting Excessively Loud Videos",
                             value="• Excessively loud videos are not allowed in media channels.")
-        elif rule == 10:
+        elif rule == 11:
             embed.add_field(name="Asking for an ISO / ROM",
                             value="• Asking for an ISO / ROM of any game is prohibited.\n"
                                   "• Users must obtain these files on their own accord")
-        elif rule == 11:
+        elif rule == 12:
             embed.add_field(name="Netplay Specific Rules",
                             value="• Users can only submit games to the ranked leaderboards from one account.  No smurfing.\n"
                                   "• Dropping out of active tournaments will result in action from the moderation team depending on circumstances. Multiple offenses are more likely to result in bans from future tournaments.")
-        elif rule == 12:
+        elif rule == 13:
             embed.add_field(name="No politics",
                             value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
         await ctx.send(embed=embed)
