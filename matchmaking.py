@@ -268,7 +268,7 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 if user_id in queue:
                     del queue[user_id]
                 return True
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
         except KeyError:
             print("Double match")
         except RuntimeError:
