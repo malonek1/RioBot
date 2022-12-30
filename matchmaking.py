@@ -23,6 +23,8 @@ BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 
 # Constant to tell the bot where to post matchmaking updates
 MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
+MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
+MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
 
 # The matchmaking queue
 queue = {}
@@ -96,9 +98,11 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1400
     player_id = str(interaction.user.id)
     player_name = interaction.user.name
-    channel = bot.get_channel(MATCH_CHANNEL_ID)
-    account_age = interaction.user.created_at
+    mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
+    mod_channel = bot.get_channel(MOD_CHANNEL_ID)
+    account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=7)
+    print(account_age)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
             # TODO: Avoid accessing the API every time someone queues
@@ -129,10 +133,19 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
 
     else:
         print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(account_age))
-        embed = discord.Embed(
-            title=f'Suspicious account with discord id: {str(player_id)} tried joining the queue',
+        mm_embed = discord.Embed(
+            title=f"User {player_name} hasn't been in the server long enough to join the queue!",
             color=0xFF5733)
-        await channel.send('<@&1058101829268946964>',embed=embed)
+
+        mod_embed = discord.Embed(
+            title=f'Suspicious activity detected!',
+            color=0xFF5733)
+        mod_embed.add_field(name=f'Discord User Name:', value=player_name, inline=False)
+        mod_embed.add_field(name=f'Discord User ID:', value=player_id, inline=False)
+        mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
+        mod_embed.add_field(name=f'Channel Activity:', value=f'<#{MATCH_CHANNEL_ID}>', inline=False)
+        await mm_channel.send(embed=mm_embed)
+        await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
 
 
 # Command for a player to remove themselves from the queue

@@ -10,6 +10,8 @@ from resources import EnvironmentVariables as ev
 
 # Channel ID for #ranked-bot result submission channel
 RANKED_BOT_CHANNEL_ID = int(ev.get_var("ranked_bot_channel_id"))
+MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
+MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
 
 class SubmitResults(commands.Cog):
     def __init__(self, client):
@@ -19,8 +21,10 @@ class SubmitResults(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def submit(self, ctx, submitter_score: int, opp_score: int, opp_user: discord.Member):
-        account_age = ctx.author.created_at
+        account_age = ctx.author.joined_at
         sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=7)
+        rb_channel = self.client.get_channel(RANKED_BOT_CHANNEL_ID)
+        mod_channel = self.client.get_channel(MOD_CHANNEL_ID)
         if account_age < sysdate:
             if ctx.channel.id == RANKED_BOT_CHANNEL_ID:
                 # Check to make sure that runs values input by user are between 0 and 99
@@ -131,10 +135,19 @@ class SubmitResults(commands.Cog):
                 await ctx.send(embed=embed)
         else:
             print("User " + str(ctx.author.name) + " tried submitting a game with an invalid discord account age of " + str(account_age))
-            embed = discord.Embed(
-                title=f'Suspicious account with discord id: {str(ctx.author.id)} tried submitting a game',
+            rb_embed = discord.Embed(
+                title=f"User {ctx.author.name} hasn't been in the server long enough to submit games!",
                 color=0xFF5733)
-            await ctx.send('<@&1058101829268946964>',embed=embed)
+
+            mod_embed = discord.Embed(
+                title=f'Suspicious activity detected!',
+                color=0xFF5733)
+            mod_embed.add_field(name=f'Discord User Name:', value=str(ctx.author.name), inline=False)
+            mod_embed.add_field(name=f'Discord User ID:', value=str(ctx.author.id), inline=False)
+            mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
+            mod_embed.add_field(name=f'Channel Activity:', value=f'<#{RANKED_BOT_CHANNEL_ID}>', inline=False)
+            await rb_channel.send(embed=rb_embed)
+            await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
     @commands.command()
     @commands.has_any_role("Admins", "Moderator", "Bot Developer")
     async def forceSubmit(self, ctx, first_score: int, second_score: int, first_user: discord.Member,
