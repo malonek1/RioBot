@@ -22,7 +22,7 @@ class SubmitResults(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def submit(self, ctx, submitter_score: int, opp_score: int, opp_user: discord.Member):
         account_age = ctx.author.joined_at
-        sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=7)
+        sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=2)
         rb_channel = self.client.get_channel(RANKED_BOT_CHANNEL_ID)
         mod_channel = self.client.get_channel(MOD_CHANNEL_ID)
         if account_age < sysdate:

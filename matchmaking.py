@@ -101,7 +101,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
     mod_channel = bot.get_channel(MOD_CHANNEL_ID)
     account_age = interaction.user.joined_at
-    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=7)
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=2)
     print(account_age)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
