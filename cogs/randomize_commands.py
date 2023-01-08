@@ -131,24 +131,12 @@ class RandomizeCommands(commands.Cog):
             await ctx.send(embed=embed)
     # End shuffle
 
-    @commands.command(name="coin")
+    @commands.command(name="coin", aliase=["flip", "flipcoin"], help="coin, flip, flipcoin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
         embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
         await ctx.send(embed=embed)
     # End coin
-
-    @commands.command(name="flip")
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    async def flip(self, ctx, to_flip=""):
-        to_flip = to_flip.lower()
-        if to_flip == "" or to_flip == "coin":
-            embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
-        elif to_flip == "table" or to_flip == "tables":
-            embed = discord.Embed(title="Please respect tables! ┬─┬ノ(ಠ_ಠノ)")
-
-        await ctx.send(embed=embed)
-    # End flip
 
     @commands.command(name="roll", help="Roll an N-sided die")
     @commands.cooldown(1, 5, commands.BucketType.user)
