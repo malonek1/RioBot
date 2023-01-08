@@ -23,7 +23,7 @@ random_help_string = "Here is a list of random commands you can use and their fu
                 + "`!pick options...` - Picks an option randomly" + NL \
                 + "`!pickmany N options...` - Picks N options randomly" + NL \
                 + "`!shuffle options...` - Shuffles options and returns them" + NL \
-                + "`!coin` - Flip a coin" + NL \
+                + "`!coin` or `!flip` - Flip a coin" + NL \
                 + "`!roll N` - Roll a die of N sides"
 
 
@@ -131,12 +131,24 @@ class RandomizeCommands(commands.Cog):
             await ctx.send(embed=embed)
     # End shuffle
 
-    @commands.command(name="coin", help="Toss a coin to your witcher")
+    @commands.command(name="coin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
         embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
         await ctx.send(embed=embed)
     # End coin
+
+    @commands.command(name="flip")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def flip(self, ctx, to_flip=""):
+        to_flip = to_flip.lower()
+        if to_flip == "" or to_flip == "coin":
+            embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
+        elif to_flip == "table" or to_flip == "tables":
+            embed = discord.Embed(title="Please respect tables! ┬─┬ノ(ಠ_ಠノ)")
+
+        await ctx.send(embed=embed)
+    # End flip
 
     @commands.command(name="roll", help="Roll an N-sided die")
     @commands.cooldown(1, 5, commands.BucketType.user)
