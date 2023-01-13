@@ -4,6 +4,8 @@ from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
 import asyncio
+import datetime as dt
+import pytz
 
 from helpers.image_builder import buildTeamImageHighlightCaptain
 from helpers.team_sorter import sortTeamsByTier
@@ -21,6 +23,8 @@ BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 
 # Constant to tell the bot where to post matchmaking updates
 MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
+MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
+MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
 
 # The matchmaking queue
 queue = {}
@@ -94,32 +98,54 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1400
     player_id = str(interaction.user.id)
     player_name = interaction.user.name
-    if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
-        # TODO: Avoid accessing the API every time someone queues
-        matches = gs.on_log_sheet.findall(player_id)
-        if matches:
-            player_rating = round(float(gs.on_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+    mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
+    mod_channel = bot.get_channel(MOD_CHANNEL_ID)
+    account_age = interaction.user.joined_at
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=2)
+    print(account_age)
+    if account_age < sysdate:
+        if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
+            # TODO: Avoid accessing the API every time someone queues
+            matches = gs.on_log_sheet.findall(player_id)
+            if matches:
+                player_rating = round(float(gs.on_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+        else:
+            # TODO: Avoid accessing the API every time someone queues
+            matches = gs.off_log_sheet.findall(player_id)
+            if matches:
+                player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+
+        # put player in queue
+        queue[player_id] = {
+            "Name": player_name,
+            "Rating": player_rating,
+            "Time": time.time(),
+            "Game Type": game_type
+        }
+
+        # calculate search range
+        min_rating, max_rating = calc_search_range(player_rating, game_type, PERCENTILE_RANGE)
+
+        # check for match
+        await check_for_match(bot, player_id, min_rating, max_rating, 0)
+
+        await update_queue_status()
+
     else:
-        # TODO: Avoid accessing the API every time someone queues
-        matches = gs.off_log_sheet.findall(player_id)
-        if matches:
-            player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+        print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(account_age))
+        mm_embed = discord.Embed(
+            title=f"User {player_name} hasn't been in the server long enough to join the queue!",
+            color=0xFF5733)
 
-    # put player in queue
-    queue[player_id] = {
-        "Name": player_name,
-        "Rating": player_rating,
-        "Time": time.time(),
-        "Game Type": game_type
-    }
-
-    # calculate search range
-    min_rating, max_rating = calc_search_range(player_rating, game_type, PERCENTILE_RANGE)
-
-    # check for match
-    await check_for_match(bot, player_id, min_rating, max_rating, 0)
-
-    await update_queue_status()
+        mod_embed = discord.Embed(
+            title=f'Suspicious activity detected!',
+            color=0xFF5733)
+        mod_embed.add_field(name=f'Discord User Name:', value=player_name, inline=False)
+        mod_embed.add_field(name=f'Discord User ID:', value=player_id, inline=False)
+        mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
+        mod_embed.add_field(name=f'Channel Activity:', value=f'<#{MATCH_CHANNEL_ID}>', inline=False)
+        await mm_channel.send(embed=mm_embed)
+        await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
 
 
 # Command for a player to remove themselves from the queue
@@ -268,7 +294,7 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 if user_id in queue:
                     del queue[user_id]
                 return True
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
         except KeyError:
             print("Double match")
         except RuntimeError:
