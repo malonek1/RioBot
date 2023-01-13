@@ -131,7 +131,7 @@ class RandomizeCommands(commands.Cog):
 
     # End shuffle
 
-    @commands.command(name="coin", aliase=["flip", "flipcoin"], help="coin, flip, flipcoin")
+    @commands.command(name="coin", aliases=["flip", "flipcoin"], help="coin, flip, flipcoin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
         embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
