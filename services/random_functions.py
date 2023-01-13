@@ -49,7 +49,7 @@ def rfRandomCharacter():
 
 # Picks a random stadium
 def rfRandomStadium():
-    stadiums = ["Mario Stadium", "Peach Garden", "Wario Palace", "Yoshi Park", "Donkey Kong Jungle", "Bowser Castle"]
+    stadiums = ["Mario Stadium", "Peach Garden", "Wario Palace", "Yoshi Park", "Gharial Stadium", "Bowser Castle"]
     shuffle(stadiums)
     return stadiums.pop()
 

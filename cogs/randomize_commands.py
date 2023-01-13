@@ -23,7 +23,7 @@ random_help_string = "Here is a list of random commands you can use and their fu
                      + "`!pick options...` - Picks an option randomly" + NL \
                      + "`!pickmany N options...` - Picks N options randomly" + NL \
                      + "`!shuffle options...` - Shuffles options and returns them" + NL \
-                     + "`!coin` - Flip a coin" + NL \
+                     + "`!coin` or `!flip` - Flip a coin" + NL \
                      + "`!roll N` - Roll a die of N sides"
 
 
@@ -131,7 +131,7 @@ class RandomizeCommands(commands.Cog):
 
     # End shuffle
 
-    @commands.command(name="coin", help="Toss a coin to your witcher")
+    @commands.command(name="coin", aliase=["flip", "flipcoin"], help="coin, flip, flipcoin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
         embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
