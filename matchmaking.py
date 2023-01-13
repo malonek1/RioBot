@@ -7,11 +7,10 @@ import asyncio
 import datetime as dt
 import pytz
 
-from helpers.image_builder import buildTeamImageHighlightCaptain
-from helpers.team_sorter import sortTeamsByTier
 from resources import EnvironmentVariables as ev
 from resources import gspread_client as gs
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
+from services.image_functions import ifBuildTeamImageFile
 from io import BytesIO
 
 mode_list = ["Superstars-Off Ranked", "Superstars-On Ranked", "Superstars-Off Random Teams"]
@@ -260,27 +259,21 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                 if queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
-                    team_list = sortTeamsByTier(team_list)
 
-                    teams_image = buildTeamImageHighlightCaptain(team_list, captain_list)
-
-                    with BytesIO() as image_binary:
-                        teams_image.save(image_binary, 'PNG')
-                        image_binary.seek(0)
-                        file = discord.File(fp=image_binary, filename='image.png')
-                        embed.set_image(url="attachment://image.png")
-                        stadium = rfRandomStadium()
-                        if rfFlipCoin == "Heads":
-                            away = queue[user_id]["Name"]
-                            home = queue[best_match]["Name"]
-                        else:
-                            away = queue[best_match]["Name"]
-                            home = queue[user_id]["Name"]
-                        embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
-                                        value=away + " (top team, away)\n" + home + " (bottom team, home)")
-                        embed.add_field(name="Stadium", value=stadium)
-                        await channel.send("<@" + user_id + "> <@" + str(
-                            best_match) + ">", embed=embed, file=file)
+                    file = ifBuildTeamImageFile(team_list, captain_list)
+                    embed.set_image(url="attachment://image.png")
+                    stadium = rfRandomStadium()
+                    if rfFlipCoin == "Heads":
+                        away = queue[user_id]["Name"]
+                        home = queue[best_match]["Name"]
+                    else:
+                        away = queue[best_match]["Name"]
+                        home = queue[user_id]["Name"]
+                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                                    value=away + " (top team, away)\n" + home + " (bottom team, home)")
+                    embed.add_field(name="Stadium", value=stadium)
+                    await channel.send("<@" + user_id + "> <@" + str(
+                        best_match) + ">", embed=embed, file=file)
                 else:
                     embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
                                     value=queue[user_id]["Name"] + " vs " + str(

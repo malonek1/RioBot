@@ -3,28 +3,28 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from helpers.image_builder import buildTeamImageHighlightCaptain
+from services.image_functions import ifBuildTeamImageFile
 from services.random_functions import *
-from helpers.team_sorter import sortTeamsByTier
 
 # Random Cog Properties
-hex_y = 0xE8E337        # Error message
-hex_r = 0xF46D75        # Success message
+hex_y = 0xE8E337  # Error message
+hex_r = 0xF46D75  # Success message
 
 NL = "\n"
 random_help_string = "Here is a list of random commands you can use and their functions:" + NL \
-                + "`!random teams` - Generate two random teams with no dupes but random variants" + NL \
-                + "`!random teams dupes` - Generate two random teams with dupes enabled" + NL \
-                + "`!random teams balanced` - Generate two broadly balanced teams" + NL \
-                + "`!random teams power` - Generate two teams with top tier characters and distributed pitching" + NL \
-                + "`!random stadium` - Returns a random stadium" + NL \
-                + "`!random character` - Returns a random character" + NL \
-                + "`!random mode` - Returns a random game type for you to play" + NL \
-                + "`!pick options...` - Picks an option randomly" + NL \
-                + "`!pickmany N options...` - Picks N options randomly" + NL \
-                + "`!shuffle options...` - Shuffles options and returns them" + NL \
-                + "`!coin` or `!flip` - Flip a coin" + NL \
-                + "`!roll N` - Roll a die of N sides"
+                     + "`!random teams` - Generate two random teams with no dupes but random variants" + NL \
+                     + "`!random teams dupes` - Generate two random teams with dupes enabled" + NL \
+                     + "`!random teams balanced` - Generate two broadly balanced teams" + NL \
+                     + "`!random teams teeball` - Generate two tee-ball teams using the tee-ball roster" + NL \
+                     + "`!random teams power` - Generate two teams with top tier characters and distributed pitching" + NL \
+                     + "`!random stadium` - Returns a random stadium" + NL \
+                     + "`!random character` - Returns a random character" + NL \
+                     + "`!random mode` - Returns a random game type for you to play" + NL \
+                     + "`!pick options...` - Picks an option randomly" + NL \
+                     + "`!pickmany N options...` - Picks N options randomly" + NL \
+                     + "`!shuffle options...` - Shuffles options and returns them" + NL \
+                     + "`!coin` or `!flip` - Flip a coin" + NL \
+                     + "`!roll N` - Roll a die of N sides"
 
 
 # Cog Class
@@ -68,28 +68,25 @@ class RandomizeCommands(commands.Cog):
                 team_list = rfRandomPowerTeams()
                 title = "**Random Power Teams**"
                 description = "Random teams made from top characters exclusively. Duplicates are enabled. Each team " \
-                              "is guaranteed one meta pitcher. Captains are highlighted. "
+                              "is guaranteed one meta pitcher. Captains are highlighted."
+            elif "teeball" in qualifier:
+                team_list = rfRandomTeeBallTeams()
+                title = "**Random Tee-Ball Teams**"
+                description = "Random teams made from the Tee-Ball roster. This excludes the top 9 characters " \
+                              "as well as diddy & dixie."
 
             captain_list = [team_list[0][0], team_list[1][0]]
-            team_list = sortTeamsByTier(team_list)
 
-            teams_image = buildTeamImageHighlightCaptain(team_list, captain_list)
-
-            with BytesIO() as image_binary:
-                teams_image.save(image_binary, 'PNG')
-                image_binary.seek(0)
-
-                file = discord.File(fp=image_binary, filename='image.png')
-                embed = discord.Embed(title=title, description=description, color=hex_r)
-                embed.set_image(url="attachment://image.png")
-                await ctx.send(file=file, embed=embed)
-
-                # await ctx.send(title, file=discord.File(fp=image_binary, filename='image.png'))
+            file = ifBuildTeamImageFile(team_list, captain_list)
+            embed = discord.Embed(title=title, description=description, color=hex_r)
+            embed.set_image(url="attachment://image.png")
+            await ctx.send(file=file, embed=embed)
 
         else:
             ctx.command.reset_cooldown(ctx)
             embed = discord.Embed(description="Alas poor random command; I do not know thee well", color=hex_y)
             await ctx.send(embed=embed)
+
     # End random
 
     @commands.command(name="pick", help="Pick one item from a list")
@@ -101,6 +98,7 @@ class RandomizeCommands(commands.Cog):
         else:
             embed = discord.Embed(description="Please give me more options than that", color=hex_y)
             await ctx.send(embed=embed)
+
     # End pick
 
     @commands.command(name="pickmany", help="Pick N items from a list")
@@ -118,6 +116,7 @@ class RandomizeCommands(commands.Cog):
             embed = discord.Embed(description="Give me a number of choices to make. For example: `!pickmany 2 red "
                                               "blue green`", color=hex_y)
             await ctx.send(embed=embed)
+
     # End pick many
 
     @commands.command(name="shuffle", help="Shuffle the order of a list")
@@ -129,13 +128,15 @@ class RandomizeCommands(commands.Cog):
         else:
             embed = discord.Embed(description="No sense in shuffling that", color=hex_y)
             await ctx.send(embed=embed)
+
     # End shuffle
 
-    @commands.command(name="coin", aliase=["flip", "flipcoin"], help="coin, flip, flipcoin")
+    @commands.command(name="coin", aliases=["flip", "flipcoin"], help="coin, flip, flipcoin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
         embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
         await ctx.send(embed=embed)
+
     # End coin
 
     @commands.command(name="roll", help="Roll an N-sided die")
