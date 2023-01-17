@@ -165,3 +165,20 @@ def randomPowerTeams():
     pureRandomTeams(first_team, second_team, copy.deepcopy(power_characters), copy.deepcopy(power_captains), copy.deepcopy(power_pitchers))
     return [first_team, second_team]
 # END randomPowerTeams
+
+
+# Tee Ball Team Definitions
+teeball_characters = [Char.MARIO, Char.LUIGI, Char.WALUIGI, Char.WARIO, Char.TOADSWORTH, Char.PIANTA_R, Char.NOKI_G, Char.PARATROOPA_G,
+                      Char.PEACH, Char.DAISY, Char.PIANTA_Y, Char.PIANTA_B, Char.DRY_BONES_G, Char.DRY_BONES_GY, Char.TOADETTE,
+                      Char.TOAD_R, Char.SHY_GUY_BK, Char.SHY_GUY_R, Char.NOKI_B, Char.NOKI_R, Char.TOAD_P, Char.BOWSER_JR,
+                      Char.KOOPA_R, Char.TOAD_B, Char.TOAD_G, Char.TOAD_Y, Char.SHY_GUY_B, Char.SHY_GUY_G, Char.SHY_GUY_Y,
+                      Char.PARAGOOMBA, Char.GOOMBA, Char.BABY_MARIO, Char.BABY_LUIGI, Char.DRY_BONES_B, Char.DRY_BONES_R,
+                      Char.MONTY, Char.KOOPA_G, Char.PARATROOPA_R]
+teeball_captains = [Char.MARIO, Char.LUIGI, Char.WALUIGI, Char.WARIO, Char.PEACH, Char.DAISY, Char.BOWSER_JR]
+
+
+def randomTeeBallTeams():
+    first_team = []
+    second_team = []
+    pureRandomTeams(first_team, second_team, copy.deepcopy(teeball_characters), copy.deepcopy(teeball_captains))
+    return [first_team, second_team]

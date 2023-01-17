@@ -1,3 +1,6 @@
+from io import BytesIO
+
+import discord
 import requests
 from PIL import Image, ImageOps
 from resources.characters import images
@@ -65,3 +68,12 @@ def buildTeamImageHighlightCaptain(teams, captains):
 
     return teams_image
 # END buildTeamImage
+
+
+def convertImageToFile(team_image):
+    with BytesIO() as image_binary:
+        team_image.save(image_binary, 'PNG')
+        image_binary.seek(0)
+        file = discord.File(fp=image_binary, filename='image.png')
+        return file
+# End convertImageToFile
