@@ -12,7 +12,8 @@ CharacterStats.build_stats_lol(stats_lol)
 CharacterStats.build_stat_objs()
 
 NL = "\n"
-stat_help_string = "Here is a list of stat commands you can use and their functions:" + NL + NL \
+stat_help_string = "This command lists out stat commands you can use and their functions." + NL \
+                     + "Note that `<character>` can also be replaced by the following in some cases: `<best>` `<worst>` `<avg>`" + NL + NL \
                      + "**BATTING STATS**:" + NL \
                      + "`!stat <character> charge` ------- Returns the numeric charge hit power for that character" + NL \
                      + "`!stat <character> contact` ------ Returns the numeric slap hit power for that character" + NL \
