@@ -7,7 +7,7 @@ class Misc(commands.Cog):
         self.client = client
 
     # gamecube controller issues
-    @commands.command()
+    @commands.command(help = "details for setting up a gamecube controller with project rio")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gcc(self, ctx):
         embed = discord.Embed()
@@ -22,7 +22,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # displays server rules
-    @commands.command()
+    @commands.command(help = "type !rule followed by numbers 1-13 to see server rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rule(self, ctx, rule: int):
         embed = discord.Embed()
@@ -88,7 +88,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # stadium boundary chart
-    @commands.command()
+    @commands.command(help = "returns image of stadium boundaries")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stadium(self, ctx):
         embed = discord.Embed()
@@ -99,17 +99,17 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # about rio stat files
-    @commands.command()
+    @commands.command(help = "describes how to access project rio stat files")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stats(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RIO STATS:',
-                        value='By default, Project Rio records stats throughout a game and generates a stat json file to your compute.\n\n'
-                              'You can view these that files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
+                        value='By default, Project Rio records stats throughout a game and generates a stat json file to your computer.\n\n'
+                              'You can view these stat files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
         await ctx.send(embed=embed)
 
     # datamined stats
-    @commands.command()
+    @commands.command(help = "returns spreadsheet of datamined stats")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def datamine(self, ctx):
         embed = discord.Embed()
@@ -119,7 +119,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # reset a crashed game
-    @commands.command()
+    @commands.command(help = "describes what to do to reset a game that wasn't completed")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def reset(self, ctx):
         embed = discord.Embed()
@@ -129,7 +129,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # nolan draft
-    @commands.command()
+    @commands.command(help = "description of nolan draft")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def nolan(self, ctx):
         embed = discord.Embed()
@@ -141,7 +141,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # ranked mode
-    @commands.command()
+    @commands.command(help = "includes all info needed before playing ranked mssb")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ranked(self, ctx):
         embed = discord.Embed()
@@ -152,7 +152,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # explain auto golf mode
-    @commands.command()
+    @commands.command(help = "description for auto golf mode")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def golf(self, ctx):
         embed = discord.Embed()
@@ -162,7 +162,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # message for helping new people figure out Rio
-    @commands.command()
+    @commands.command(help = "guide for getting project rio client setup")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rioGuide(self, ctx):
         embed = discord.Embed()
@@ -171,7 +171,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # ball flickering
-    @commands.command()
+    @commands.command(help = "how to fix 'ball flicker' glitch in project rio client")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def flicker(self, ctx):
         embed = discord.Embed()
@@ -181,7 +181,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # optimization guide
-    @commands.command()
+    @commands.command(help = "guide for optimizing project rio client")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def optimize(self, ctx):
         embed = discord.Embed()
@@ -190,7 +190,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # tell what Rio is
-    @commands.command()
+    @commands.command(help = "project rio description and download")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rio(self, ctx):
         embed = discord.Embed()
@@ -199,7 +199,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # gecko code info
-    @commands.command()
+    @commands.command(help = "description of gecko codes")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gecko(self, ctx):
         embed = discord.Embed()
@@ -210,11 +210,21 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # inform users about roles
-    @commands.command()
+    @commands.command(help = "info on user roles")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def roles(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='ROLES:', value='Set roles for yourself in <#945478927214866522>!')
+        await ctx.send(embed=embed)
+
+    # mario superstar baseball wiki
+    @commands.command(help = "returns link for mssb wikipedia page")
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def wiki(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='MARIO SUPERSTAR BASEBALL WIKI:',
+                        value='The link below takes you to the official mario superstar baseball wikipedia page that our dedicated community is actively making additions to!\n\n'
+                              'https://mario-superstar-baseball.fandom.com/wiki/Mario_Superstar_Baseball_Wiki')
         await ctx.send(embed=embed)
 
 
