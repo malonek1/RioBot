@@ -227,6 +227,15 @@ class Misc(commands.Cog):
                               'https://mario-superstar-baseball.fandom.com/wiki/Mario_Superstar_Baseball_Wiki')
         await ctx.send(embed=embed)
 
+    # feeback link
+    @commands.command(help = "returns link to suggestion form for RioBot features")
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def feedback(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Send your RioBot ideas here:',
+                        value='https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link')
+        await ctx.send(embed=embed)
+
 
 async def setup(client):
     await client.add_cog(Misc(client))

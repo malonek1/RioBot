@@ -144,7 +144,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
         mod_embed.add_field(name=f'Channel Activity:', value=f'<#{MATCH_CHANNEL_ID}>', inline=False)
         await mm_channel.send(embed=mm_embed)
-        await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
+        await mod_channel.send(embed=mod_embed)
 
 
 # Command for a player to remove themselves from the queue
