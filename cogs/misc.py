@@ -128,17 +128,24 @@ class Misc(commands.Cog):
                               'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
         await ctx.send(embed=embed)
 
-    # nolan draft
-    @commands.command(help = "description of nolan draft")
+    # ranked drafting details
+    @commands.command(help = "Returns the current ranked draft rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
-    async def nolan(self, ctx):
-        embed = discord.Embed()
-        embed.add_field(name='NOLAN DRAFT:',
-                        value='Nolan Draft is a competitive drafting format.\nStart with a coin flip. Winner gets choice of either choosing between being the home/away team or having the first/second pick.\n\n'
-                              'After deciding on this, the player with first pick gets one character pick, then players alternate with picks of 2 until both teams are filled out. Under Nolan Draft, you do not have to pick a captain first. Players also choose'
-                              'a captain after drafting their full team. If playing with superstar characters off, Bowser must be captain if chosen.\n\nAn infographic can be seen here:')
-        embed.set_image(url="https://cdn.discordapp.com/attachments/945042450483920976/945450478899171408/IMG_3200.png")
-        await ctx.send(embed=embed)
+    async def draft(self, ctx, *draft_type):
+        if 'off' in draft_type:
+            embed = discord.Embed(title= 'Stars-Off Draft Rules:')
+            embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065765515856986133/DraftRules.png")
+            await ctx.send(embed=embed)
+        elif 'on' in draft_type:
+            embed = discord.Embed(title= 'Stars-On Draft Rules:')
+            embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065779869780299786/Season4StarsOnDraft.png")
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(color=0xEA7D07)
+            embed.add_field(name='Please use the following options to see draft rules:',
+                            value='`!draft off` - For draft ruleset in ranked stars-off\n'
+                                  '`!draft on` - For draft ruleset in ranked stars-on')
+            await ctx.send(embed=embed)
 
     # ranked mode
     @commands.command(help = "includes all info needed before playing ranked mssb")
