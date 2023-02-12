@@ -100,7 +100,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
     mod_channel = bot.get_channel(MOD_CHANNEL_ID)
     account_age = interaction.user.joined_at
-    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     print(account_age)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
@@ -134,6 +134,8 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(account_age))
         mm_embed = discord.Embed(
             title=f"User {player_name} hasn't been in the server long enough to join the queue!",
+            description="New server members must wait 1 hour before being able to join the Queue. In the meantime "
+                        "feel free to ping `@LFGNewNetPlayer` in order to find a game.",
             color=0xFF5733)
 
         mod_embed = discord.Embed(
@@ -294,12 +296,15 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
             print("Timing error")
 
     global last_ping_time
-    if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 900:
+    if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 1200:
         role_id = "<@&998791156794150943>"
         role_name = "STARS-OFF"
         if queue[user_id]["Game Type"] == "Superstars-On Ranked":
             role_id = "<@&998791464630898808>"
             role_name = "STARS-ON"
+        elif queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
+            role_id = "<@998791698433986641>"
+            role_name = "RANDOM-TEAM"
         embed = discord.Embed()
         embed.add_field(name=f'ATTENTION {role_name} GAMERS',
                         value="There is a player looking for a " + queue[user_id]["Game Type"] + " match in queue!")

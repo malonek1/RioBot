@@ -125,7 +125,8 @@ class Misc(commands.Cog):
         embed = discord.Embed()
         embed.add_field(name='RESET GAME:',
                         value='In the event that a ranked/tournament game crashes or disconnects, players will recreate the game and continue playing from the point of the crash\n\n'
-                              'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
+                              'Here\'s a guide on how to proceed:')
+        embed.set_image(url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png")
         await ctx.send(embed=embed)
 
     # ranked drafting details
