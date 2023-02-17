@@ -135,7 +135,7 @@ class Misc(commands.Cog):
     async def draft(self, ctx, *draft_type):
         if 'off' in draft_type:
             embed = discord.Embed(title= 'Stars-Off Draft Rules:')
-            embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065765515856986133/DraftRules.png")
+            embed.set_image(url="https://cdn.discordapp.com/attachments/823805174811197470/1066092568712073286/DraftRules.png")
             await ctx.send(embed=embed)
         elif 'on' in draft_type:
             embed = discord.Embed(title= 'Stars-On Draft Rules:')
