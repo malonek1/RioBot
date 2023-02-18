@@ -11,12 +11,12 @@ from resources import EnvironmentVariables as ev
 from resources import gspread_client as gs
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
 from services.image_functions import ifBuildTeamImageFile
-from io import BytesIO
 
+# TODO: Fetch mode list from Rio Web
 mode_list = ["Superstars-Off Ranked", "Superstars-On Ranked", "Superstars-Off Random Teams"]
 
 # Constant for starting percentile range for matchmaking search
-PERCENTILE_RANGE = 0.15
+BASE_PERCENTILE_RANGE = 0.5
 # Constant to tell the bot where the matchmaking buttons appear
 BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 
@@ -37,6 +37,10 @@ for m in mode_list:
 last_ping_time = {}
 for m in mode_list:
     last_ping_time[m] = 0.0
+
+recent_matches = {}
+for m in mode_list:
+    recent_matches[m] = []
 
 
 async def init_buttons(bot: commands.Bot):
@@ -101,7 +105,6 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     mod_channel = bot.get_channel(MOD_CHANNEL_ID)
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
-    print(account_age)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
             # TODO: Avoid accessing the API every time someone queues
@@ -123,10 +126,10 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         }
 
         # calculate search range
-        min_rating, max_rating = calc_search_range(player_rating, game_type, PERCENTILE_RANGE)
+        min_rating, max_rating = calc_search_range(player_rating, game_type, 0)
 
         # check for match
-        await check_for_match(bot, player_id, min_rating, max_rating, 0)
+        await check_for_match(bot, player_id, min_rating, max_rating)
 
         await update_queue_status()
 
@@ -164,12 +167,16 @@ async def exit_queue(interaction):
 # refresh to see if a match can now be created with players waiting in the queue
 @tasks.loop(seconds=15)
 async def refresh_queue(bot: commands.Bot):
+    t = time.time() - 3600
+    for m in mode_list:
+        recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
+        print("Recent", m, "matches", recent_matches[m])
+
     try:
         for player in queue:
             time_in_queue = time.time() - queue[player]["Time"]
-            new_range = PERCENTILE_RANGE + (PERCENTILE_RANGE * time_in_queue / 180)
-            min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], new_range)
-            if await check_for_match(bot, player, min_rating, max_rating, 120):
+            min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], time_in_queue)
+            if await check_for_match(bot, player, min_rating, max_rating):
                 await update_queue_status()
                 break
     except KeyError:
@@ -204,13 +211,14 @@ async def update_queue_status():
 
 # params: player's rating and what percentile you want your search range to cover
 # return: min and max rating the player can match against
-def calc_search_range(rating, game_type, percentile):
+def calc_search_range(rating, game_type, time_in_queue):
+    percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
+    percentile += (percentile * time_in_queue / 180)
+    print(percentile)
     if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
         rating_list_copy = gs.on_rating_list.copy()
     else:
         rating_list_copy = gs.off_rating_list.copy()
-    if game_type != "Superstars-Off Ranked":
-        percentile = 5.00
     rating_list_copy.append(rating)
     rating_list_copy.append(0)
     rating_list_copy.append(3000)
@@ -229,8 +237,8 @@ def calc_search_range(rating, game_type, percentile):
 
 
 # Checks if there is an available match for a user.
-# Uses their user_id, search range (min-max ratings), and the min time an opponent must be searching to be matched.
-async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, min_time):
+# Uses their user_id, search range (min-max ratings).
+async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating):
     print("Player:", queue[user_id]["Name"], "Rating:", queue[user_id]["Rating"], "Time:",
           round(time.time() - queue[user_id]["Time"]), "Rating Range", min_rating, max_rating)
     channel = bot.get_channel(MATCH_CHANNEL_ID)
@@ -239,12 +247,12 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
             best_match = False
             for player in queue:
                 if max_rating >= queue[player]["Rating"] >= min_rating and \
-                        player != user_id and time.time() - queue[player]["Time"] > min_time and \
-                        queue[player]["Game Type"] == queue[user_id]["Game Type"]:
+                        player != user_id and queue[player]["Game Type"] == queue[user_id]["Game Type"]:
                     if not best_match or abs(queue[best_match]["Rating"] - queue[user_id]["Rating"]) > abs(
                             queue[player]["Rating"] - queue[user_id]["Rating"]):
                         best_match = player
 
+            # If match is found
             if best_match:
                 global match_count
                 log_text = str(match_count[queue[user_id]["Game Type"]]) + " " + queue[user_id][
@@ -281,7 +289,13 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                                         BUTTON_CHANNEL_ID) + ">")
                     await channel.send("<@" + user_id + "> <@" + str(
                                             best_match) + ">", embed=embed)
+
+                # Increment total match count
                 match_count[queue[user_id]["Game Type"]] += 1
+
+                # Add to recent matches list
+                recent_matches[queue[user_id]["Game Type"]].append(time.time())
+
                 if best_match in queue:
                     del queue[best_match]
                 if user_id in queue:
