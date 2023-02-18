@@ -27,6 +27,8 @@ MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
 
 # The matchmaking queue
 queue = {}
+for m in mode_list:
+    queue[m] = {}
 # The message with the matchmaking bot stuff
 mm_message: discord.Message
 
@@ -118,23 +120,23 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
                 player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
 
         # put player in queue
-        queue[player_id] = {
+        queue[game_type][player_id] = {
             "Name": player_name,
             "Rating": player_rating,
-            "Time": time.time(),
-            "Game Type": game_type
+            "Time": time.time()
         }
 
         # calculate search range
         min_rating, max_rating = calc_search_range(player_rating, game_type, 0)
 
         # check for match
-        await check_for_match(bot, player_id, min_rating, max_rating)
+        await check_for_match(bot, game_type, player_id, min_rating, max_rating)
 
         await update_queue_status()
 
     else:
-        print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(account_age))
+        print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(
+            account_age))
         mm_embed = discord.Embed(
             title=f"User {player_name} hasn't been in the server long enough to join the queue!",
             color=0xFF5733)
@@ -154,13 +156,14 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
 # If they aren't in the queue, it will just post a message with the queue status
 # @bot.command(name="dequeue", aliases=["dq"], help="Exit queue")
 async def exit_queue(interaction):
-    if str(interaction.user.id) in queue:
-        try:
-            del queue[str(interaction.user.id)]
-        except KeyError:
-            print("Key error")
-        except RuntimeError:
-            print("Runtime error")
+    for m in mode_list:
+        if str(interaction.user.id) in queue[m]:
+            try:
+                del queue[m][str(interaction.user.id)]
+            except KeyError:
+                print("Key error")
+            except RuntimeError:
+                print("Runtime error")
     await update_queue_status()
 
 
@@ -172,12 +175,13 @@ async def refresh_queue(bot: commands.Bot):
         recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
 
     try:
-        for player in queue:
-            time_in_queue = time.time() - queue[player]["Time"]
-            min_rating, max_rating = calc_search_range(queue[player]["Rating"], queue[player]["Game Type"], time_in_queue)
-            if await check_for_match(bot, player, min_rating, max_rating):
-                await update_queue_status()
-                break
+        for m in mode_list:
+            for player in queue[m]:
+                time_in_queue = time.time() - queue[m][player]["Time"]
+                min_rating, max_rating = calc_search_range(queue[m][player]["Rating"], m, time_in_queue)
+                if await check_for_match(bot, m, player, min_rating, max_rating):
+                    await update_queue_status()
+                    break
     except KeyError:
         print("Key error")
     except RuntimeError:
@@ -188,16 +192,13 @@ async def refresh_queue(bot: commands.Bot):
 async def update_queue_status():
     try:
         global mm_message
-        queue_numbers = {}
-        for mode in mode_list:
-            queue_numbers[mode] = 0
-        for user in queue:
-            queue_numbers[queue[user]["Game Type"]] += 1
-
         details = ""
-        new_message = str(len(queue)) + " player(s) in the matchmaking queue:"
-        for mode in mode_list:
-            details += mode + ": " + str(queue_numbers[mode]) + "\n"
+        total = 0
+        for m in mode_list:
+            total += len(queue[m])
+            details += m + ": " + str(len(queue[m])) + "\n"
+
+        new_message = str(total) + " player(s) in the matchmaking queue:"
         embed = discord.Embed()
         embed.add_field(name=new_message,
                         value=details)
@@ -213,7 +214,7 @@ async def update_queue_status():
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
     percentile += (percentile * time_in_queue / 180)
-    if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
+    if "Superstars-On" in game_type:
         rating_list_copy = gs.on_rating_list.copy()
     else:
         rating_list_copy = gs.off_rating_list.copy()
@@ -236,33 +237,32 @@ def calc_search_range(rating, game_type, time_in_queue):
 
 # Checks if there is an available match for a user.
 # Uses their user_id, search range (min-max ratings).
-async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating):
-    print("Player:", queue[user_id]["Name"], "Rating:", queue[user_id]["Rating"], "Time:",
-          round(time.time() - queue[user_id]["Time"]), "Rating Range", min_rating, max_rating)
+async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max_rating):
+    print("Player:", queue[game_type][user_id]["Name"], "Rating:", queue[game_type][user_id]["Rating"], "Time:",
+          round(time.time() - queue[game_type][user_id]["Time"]), "Rating Range", min_rating, max_rating)
     channel = bot.get_channel(MATCH_CHANNEL_ID)
-    if len(queue) >= 2:
+    if len(queue[game_type]) >= 2:
         try:
             best_match = False
-            for player in queue:
-                if max_rating >= queue[player]["Rating"] >= min_rating and \
-                        player != user_id and queue[player]["Game Type"] == queue[user_id]["Game Type"]:
-                    if not best_match or abs(queue[best_match]["Rating"] - queue[user_id]["Rating"]) > abs(
-                            queue[player]["Rating"] - queue[user_id]["Rating"]):
+            for player in queue[game_type]:
+                if max_rating >= queue[game_type][player]["Rating"] >= min_rating and player != user_id:
+                    if not best_match or abs(queue[game_type][best_match]["Rating"] - queue[game_type][user_id]["Rating"]) \
+                            > abs(queue[game_type][player]["Rating"] - queue[user_id]["Rating"]):
                         best_match = player
 
             # If match is found
             if best_match:
                 global match_count
-                log_text = str(match_count[queue[user_id]["Game Type"]]) + " " + queue[user_id][
-                    "Game Type"] + " match: " + queue[user_id]["Name"] + " " + str(queue[user_id]["Rating"]) + " vs " + queue[best_match][
-                    "Name"] + " " + str(queue[best_match]["Rating"])
+                log_text = str(match_count[game_type]) + " " + game_type + " match: " + \
+                           queue[game_type][user_id]["Name"] + " " + str(queue[game_type][user_id]["Rating"]) + " vs " + \
+                           queue[game_type][best_match]["Name"] + " " + str(queue[game_type][best_match]["Rating"])
                 print(log_text)
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
                 embed = discord.Embed()
 
                 # RANDOMS LOGIC
-                if queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
+                if "Random" in game_type:
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
 
@@ -270,34 +270,35 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating):
                     embed.set_image(url="attachment://image.png")
                     stadium = rfRandomStadium()
                     if rfFlipCoin == "Heads":
-                        away = queue[user_id]["Name"]
-                        home = queue[best_match]["Name"]
+                        away = queue[game_type][user_id]["Name"]
+                        home = queue[game_type][best_match]["Name"]
                     else:
-                        away = queue[best_match]["Name"]
-                        home = queue[user_id]["Name"]
-                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                        away = queue[game_type][best_match]["Name"]
+                        home = queue[game_type][user_id]["Name"]
+                    embed.add_field(name=game_type + " match found!",
                                     value=away + " (top team, away)\n" + home + " (bottom team, home)")
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
                 else:
-                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
-                                    value=queue[user_id]["Name"] + " vs " + str(
-                                        queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
+                    embed.add_field(name=game_type + " match found!",
+                                    value=queue[game_type][user_id]["Name"] + " vs " + str(
+                                        queue[game_type][best_match]["Name"]) + "\n\nFind matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
                     await channel.send("<@" + user_id + "> <@" + str(
-                                            best_match) + ">", embed=embed)
+                        best_match) + ">", embed=embed)
 
                 # Increment total match count
-                match_count[queue[user_id]["Game Type"]] += 1
+                match_count[game_type] += 1
 
                 # Add to recent matches list
-                recent_matches[queue[user_id]["Game Type"]].append(time.time())
+                recent_matches[game_type].append(time.time())
 
-                if best_match in queue:
-                    del queue[best_match]
-                if user_id in queue:
-                    del queue[user_id]
+                for m in mode_list:
+                    if best_match in queue[m]:
+                        del queue[m][best_match]
+                    if user_id in queue[m]:
+                        del queue[m][user_id]
                 return True
             await asyncio.sleep(5)
         except KeyError:
@@ -306,19 +307,22 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating):
             print("Timing error")
 
     global last_ping_time
-    if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 900:
-        role_id = "<@&998791156794150943>"
-        role_name = "STARS-OFF"
-        if queue[user_id]["Game Type"] == "Superstars-On Ranked":
+    if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 900:
+        role_id = "<@&998791698433986641>"
+        role_name = "MSSB"
+        if game_type == "Superstars-Off Ranked":
+            role_id = "<@&998791156794150943>"
+            role_name = "STARS-OFF"
+        if game_type == "Superstars-On Ranked":
             role_id = "<@&998791464630898808>"
             role_name = "STARS-ON"
         embed = discord.Embed()
         embed.add_field(name=f'ATTENTION {role_name} GAMERS',
-                        value="There is a player looking for a " + queue[user_id]["Game Type"] + " match in queue!")
-        last_ping_time[queue[user_id]["Game Type"]] = time.time()
+                        value="There is a player looking for a " + game_type + " match in queue!")
+        last_ping_time[game_type] = time.time()
         await channel.send(role_id, embed=embed)
 
-    if 1800 < time.time() - queue[user_id]["Time"] < 1815:
+    if 1800 < time.time() - queue[game_type][user_id]["Time"] < 1815:
         user = await bot.fetch_user(user_id)
         try:
             embed = discord.Embed()
