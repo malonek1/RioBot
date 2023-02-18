@@ -106,7 +106,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
     mod_channel = bot.get_channel(MOD_CHANNEL_ID)
     account_age = interaction.user.joined_at
-    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
             # TODO: Avoid accessing the API every time someone queues
@@ -139,6 +139,8 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
             account_age))
         mm_embed = discord.Embed(
             title=f"User {player_name} hasn't been in the server long enough to join the queue!",
+            description="New server members must wait 1 hour before being able to join the Queue. In the meantime "
+                        "feel free to ping `@LFGNewNetPlayer` in order to find a game.",
             color=0xFF5733)
 
         mod_embed = discord.Embed(
@@ -307,9 +309,9 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
             print("Timing error")
 
     global last_ping_time
-    if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 900:
+    if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1200:
         role_id = "<@&998791698433986641>"
-        role_name = "MSSB"
+        role_name = "RANDOM-TEAM"
         if game_type == "Superstars-Off Ranked":
             role_id = "<@&998791156794150943>"
             role_name = "STARS-OFF"

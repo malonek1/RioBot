@@ -7,7 +7,7 @@ class Misc(commands.Cog):
         self.client = client
 
     # gamecube controller issues
-    @commands.command(help = "details for setting up a gamecube controller with project rio")
+    @commands.command(help="details for setting up a gamecube controller with project rio")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gcc(self, ctx):
         embed = discord.Embed()
@@ -22,7 +22,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # displays server rules
-    @commands.command(help = "type !rule followed by numbers 1-13 to see server rules")
+    @commands.command(help="type !rule followed by numbers 1-13 to see server rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rule(self, ctx, rule: int):
         embed = discord.Embed()
@@ -88,7 +88,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # stadium boundary chart
-    @commands.command(help = "returns image of stadium boundaries")
+    @commands.command(help="returns image of stadium boundaries")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stadium(self, ctx):
         embed = discord.Embed()
@@ -99,7 +99,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # about rio stat files
-    @commands.command(help = "describes how to access project rio stat files")
+    @commands.command(help="describes how to access project rio stat files")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stats(self, ctx):
         embed = discord.Embed()
@@ -109,7 +109,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # datamined stats
-    @commands.command(help = "returns spreadsheet of datamined stats")
+    @commands.command(help="returns spreadsheet of datamined stats")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def datamine(self, ctx):
         embed = discord.Embed()
@@ -119,25 +119,26 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # reset a crashed game
-    @commands.command(help = "describes what to do to reset a game that wasn't completed")
+    @commands.command(help="describes what to do to reset a game that wasn't completed")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def reset(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RESET GAME:',
                         value='In the event that a ranked/tournament game crashes or disconnects, players will recreate the game and continue playing from the point of the crash\n\n'
-                              'Here\'s a guide on how to proceed: https://discord.com/channels/628353660698624020/634046643330613248/947262817344585748')
+                              'Here\'s a guide on how to proceed:')
+        embed.set_image(url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png")
         await ctx.send(embed=embed)
 
     # ranked drafting details
-    @commands.command(help = "Returns the current ranked draft rules")
+    @commands.command(help="Returns the current ranked draft rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def draft(self, ctx, *draft_type):
         if 'off' in draft_type:
-            embed = discord.Embed(title= 'Stars-Off Draft Rules:')
-            embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065765515856986133/DraftRules.png")
+            embed = discord.Embed(title='Stars-Off Draft Rules:')
+            embed.set_image(url="https://cdn.discordapp.com/attachments/823805174811197470/1066092568712073286/DraftRules.png")
             await ctx.send(embed=embed)
         elif 'on' in draft_type:
-            embed = discord.Embed(title= 'Stars-On Draft Rules:')
+            embed = discord.Embed(title='Stars-On Draft Rules:')
             embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065779869780299786/Season4StarsOnDraft.png")
             await ctx.send(embed=embed)
         else:
@@ -148,7 +149,7 @@ class Misc(commands.Cog):
             await ctx.send(embed=embed)
 
     # ranked mode
-    @commands.command(help = "includes all info needed before playing ranked mssb")
+    @commands.command(help="includes all info needed before playing ranked mssb")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ranked(self, ctx):
         embed = discord.Embed()
@@ -159,7 +160,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # explain auto golf mode
-    @commands.command(help = "description for auto golf mode")
+    @commands.command(help="description for auto golf mode")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def golf(self, ctx):
         embed = discord.Embed()
@@ -169,7 +170,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # message for helping new people figure out Rio
-    @commands.command(help = "guide for getting project rio client setup")
+    @commands.command(help="guide for getting project rio client setup")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rioGuide(self, ctx):
         embed = discord.Embed()
@@ -178,7 +179,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # ball flickering
-    @commands.command(help = "how to fix 'ball flicker' glitch in project rio client")
+    @commands.command(help="how to fix 'ball flicker' glitch in project rio client")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def flicker(self, ctx):
         embed = discord.Embed()
@@ -188,7 +189,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # optimization guide
-    @commands.command(help = "guide for optimizing project rio client")
+    @commands.command(help="guide for optimizing project rio client")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def optimize(self, ctx):
         embed = discord.Embed()
@@ -197,7 +198,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # tell what Rio is
-    @commands.command(help = "project rio description and download")
+    @commands.command(help="project rio description and download")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rio(self, ctx):
         embed = discord.Embed()
@@ -206,7 +207,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # gecko code info
-    @commands.command(help = "description of gecko codes")
+    @commands.command(help="description of gecko codes")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gecko(self, ctx):
         embed = discord.Embed()
@@ -217,7 +218,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # inform users about roles
-    @commands.command(help = "info on user roles")
+    @commands.command(help="info on user roles")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def roles(self, ctx):
         embed = discord.Embed()
@@ -225,7 +226,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # mario superstar baseball wiki
-    @commands.command(help = "returns link for mssb wikipedia page")
+    @commands.command(help="returns link for mssb wikipedia page")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def wiki(self, ctx):
         embed = discord.Embed()
@@ -235,7 +236,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
     # feeback link
-    @commands.command(help = "returns link to suggestion form for RioBot features")
+    @commands.command(help="returns link to suggestion form for RioBot features")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def feedback(self, ctx):
         embed = discord.Embed()
