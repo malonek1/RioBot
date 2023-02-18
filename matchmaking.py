@@ -170,7 +170,6 @@ async def refresh_queue(bot: commands.Bot):
     t = time.time() - 3600
     for m in mode_list:
         recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
-        print("Recent", m, "matches", recent_matches[m])
 
     try:
         for player in queue:
@@ -214,7 +213,6 @@ async def update_queue_status():
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
     percentile += (percentile * time_in_queue / 180)
-    print(percentile)
     if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
         rating_list_copy = gs.on_rating_list.copy()
     else:
