@@ -18,11 +18,11 @@ class SubmitResults(commands.Cog):
         self.client = client
 
     # Submit user command that allows a player to submit a game with another player
-    @commands.command()
+    @commands.command(help = "type !submit <your score> <opponent score> @<your opponent>")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def submit(self, ctx, submitter_score: int, opp_score: int, opp_user: discord.Member):
         account_age = ctx.author.joined_at
-        sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=2)
+        sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
         rb_channel = self.client.get_channel(RANKED_BOT_CHANNEL_ID)
         mod_channel = self.client.get_channel(MOD_CHANNEL_ID)
         if account_age < sysdate:
@@ -148,7 +148,7 @@ class SubmitResults(commands.Cog):
             mod_embed.add_field(name=f'Channel Activity:', value=f'<#{RANKED_BOT_CHANNEL_ID}>', inline=False)
             await rb_channel.send(embed=rb_embed)
             await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
-    @commands.command()
+    @commands.command(help = "moderator tool to manually submit games")
     @commands.has_any_role("Admins", "Moderator", "Bot Developer")
     async def forceSubmit(self, ctx, first_score: int, second_score: int, first_user: discord.Member,
                           second_user: discord.Member):

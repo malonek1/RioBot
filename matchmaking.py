@@ -100,7 +100,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
     mod_channel = bot.get_channel(MOD_CHANNEL_ID)
     account_age = interaction.user.joined_at
-    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=2)
+    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
     print(account_age)
     if account_age < sysdate:
         if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
@@ -144,7 +144,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
         mod_embed.add_field(name=f'Channel Activity:', value=f'<#{MATCH_CHANNEL_ID}>', inline=False)
         await mm_channel.send(embed=mm_embed)
-        await mod_channel.send(f'<@&{MOD_ROLE_ID}>', embed=mod_embed)
+        await mod_channel.send(embed=mod_embed)
 
 
 # Command for a player to remove themselves from the queue
@@ -306,12 +306,12 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
         last_ping_time[queue[user_id]["Game Type"]] = time.time()
         await channel.send(role_id, embed=embed)
 
-    if 900 < time.time() - queue[user_id]["Time"] < 915:
+    if 1800 < time.time() - queue[user_id]["Time"] < 1815:
         user = await bot.fetch_user(user_id)
         try:
             embed = discord.Embed()
             embed.add_field(name="AFK Reminder",
-                            value="You have been in the queue for 15 minutes. "
+                            value="You have been in the queue for 30 minutes. "
                                   "Please leave the queue if you have found a match or are no longer looking.")
             await user.send(embed=embed)
         except discord.Forbidden:
