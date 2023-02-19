@@ -246,17 +246,23 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                         best_match = player
 
             if best_match:
+                match_queue = {user_id: queue[user_id], best_match: queue[best_match]}
+                if best_match in queue:
+                    del queue[best_match]
+                if user_id in queue:
+                    del queue[user_id]
+
                 global match_count
-                log_text = str(match_count[queue[user_id]["Game Type"]]) + " " + queue[user_id][
-                    "Game Type"] + " match: " + queue[user_id]["Name"] + " " + str(queue[user_id]["Rating"]) + " vs " + queue[best_match][
-                    "Name"] + " " + str(queue[best_match]["Rating"])
+                log_text = str(match_count[match_queue[user_id]["Game Type"]]) + " " + match_queue[user_id][
+                    "Game Type"] + " match: " + match_queue[user_id]["Name"] + " " + str(match_queue[user_id]["Rating"]) + " vs " + match_queue[best_match][
+                    "Name"] + " " + str(match_queue[best_match]["Rating"])
                 print(log_text)
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
                 embed = discord.Embed()
 
                 # RANDOMS LOGIC
-                if queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
+                if match_queue[user_id]["Game Type"] == "Superstars-Off Random Teams":
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
 
@@ -264,34 +270,35 @@ async def check_for_match(bot: commands.Bot, user_id, min_rating, max_rating, mi
                     embed.set_image(url="attachment://image.png")
                     stadium = rfRandomStadium()
                     if rfFlipCoin == "Heads":
-                        away = queue[user_id]["Name"]
-                        home = queue[best_match]["Name"]
+                        away = match_queue[user_id]["Name"]
+                        home = match_queue[best_match]["Name"]
                     else:
-                        away = queue[best_match]["Name"]
-                        home = queue[user_id]["Name"]
-                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
+                        away = match_queue[best_match]["Name"]
+                        home = match_queue[user_id]["Name"]
+                    embed.add_field(name=match_queue[user_id]["Game Type"] + " match found!",
                                     value=away + " (top team, away)\n" + home + " (bottom team, home)")
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
                 else:
-                    embed.add_field(name=queue[user_id]["Game Type"] + " match found!",
-                                    value=queue[user_id]["Name"] + " vs " + str(
-                                        queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
+                    embed.add_field(name=match_queue[user_id]["Game Type"] + " match found!",
+                                    value=match_queue[user_id]["Name"] + " vs " + str(
+                                        match_queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
                     await channel.send("<@" + user_id + "> <@" + str(
                                             best_match) + ">", embed=embed)
-                match_count[queue[user_id]["Game Type"]] += 1
-                if best_match in queue:
-                    del queue[best_match]
-                if user_id in queue:
-                    del queue[user_id]
+                match_count[match_queue[user_id]["Game Type"]] += 1
+
                 return True
             await asyncio.sleep(5)
         except KeyError:
             print("Double match")
+            for player in match_queue.keys():
+                queue[player] = match_queue[player]
         except RuntimeError:
             print("Timing error")
+            for player in match_queue.keys():
+                queue[player] = match_queue[player]
 
     global last_ping_time
     if 300 <= time.time() - queue[user_id]["Time"] and time.time() - last_ping_time[queue[user_id]["Game Type"]] > 900:
