@@ -172,9 +172,14 @@ async def exit_queue(interaction):
 # refresh to see if a match can now be created with players waiting in the queue
 @tasks.loop(seconds=15)
 async def refresh_queue(bot: commands.Bot):
+    match_found = False
+    rm_delta = 0
+
     t = time.time() - 3600
     for m in mode_list:
+        rm_delta += len(recent_matches[m])
         recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
+        rm_delta -= len(recent_matches[m])
 
     try:
         for m in mode_list:
@@ -182,8 +187,12 @@ async def refresh_queue(bot: commands.Bot):
                 time_in_queue = time.time() - queue[m][player]["Time"]
                 min_rating, max_rating = calc_search_range(queue[m][player]["Rating"], m, time_in_queue)
                 if await check_for_match(bot, m, player, min_rating, max_rating):
-                    await update_queue_status()
+                    match_found = True
                     break
+
+        if match_found or rm_delta != 0:
+            await update_queue_status()
+
     except KeyError:
         print("Key error")
     except RuntimeError:
@@ -196,14 +205,19 @@ async def update_queue_status():
         global mm_message
         details = ""
         total = 0
+        rm_total = 0
         for m in mode_list:
             total += len(queue[m])
+            rm_total += len(recent_matches[m])
             details += m + ": " + str(len(queue[m])) + "\n"
+
+        matches_made = "There have been " + str(rm_total) + " matches made in the past hour!"
 
         new_message = str(total) + " player(s) in the matchmaking queue:"
         embed = discord.Embed()
         embed.add_field(name=new_message,
                         value=details)
+        embed.set_footer(text=matches_made)
         await mm_message.edit(embed=embed)
     except KeyError:
         print("Key error")
@@ -254,10 +268,21 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
 
             # If match is found
             if best_match:
+                match_queue = {user_id: queue[game_type][user_id], best_match: queue[game_type][best_match]}
+                best_match_queues = []
+                user_queues = []
+                for mode in mode_list:
+                    if best_match in queue[mode]:
+                        del queue[mode][best_match]
+                        best_match_queues.append(mode)
+                    if user_id in queue[mode]:
+                        del queue[mode][user_id]
+                        user_queues.append(mode)
+
                 global match_count
                 log_text = str(match_count[game_type]) + " " + game_type + " match: " + \
-                           queue[game_type][user_id]["Name"] + " " + str(queue[game_type][user_id]["Rating"]) + " vs " + \
-                           queue[game_type][best_match]["Name"] + " " + str(queue[game_type][best_match]["Rating"])
+                           match_queue[user_id]["Name"] + " " + str(match_queue[user_id]["Rating"]) + " vs " + \
+                           match_queue[best_match]["Name"] + " " + str(match_queue[best_match]["Rating"])
                 print(log_text)
                 with open("match_log.txt", "w") as file:
                     file.write(log_text)
@@ -272,11 +297,11 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     embed.set_image(url="attachment://image.png")
                     stadium = rfRandomStadium()
                     if rfFlipCoin == "Heads":
-                        away = queue[game_type][user_id]["Name"]
-                        home = queue[game_type][best_match]["Name"]
+                        away = match_queue[user_id]["Name"]
+                        home = match_queue[best_match]["Name"]
                     else:
-                        away = queue[game_type][best_match]["Name"]
-                        home = queue[game_type][user_id]["Name"]
+                        away = match_queue[best_match]["Name"]
+                        home = match_queue[user_id]["Name"]
                     embed.add_field(name=game_type + " match found!",
                                     value=away + " (top team, away)\n" + home + " (bottom team, home)")
                     embed.add_field(name="Stadium", value=stadium)
@@ -284,8 +309,8 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                         best_match) + ">", embed=embed, file=file)
                 else:
                     embed.add_field(name=game_type + " match found!",
-                                    value=queue[game_type][user_id]["Name"] + " vs " + str(
-                                        queue[game_type][best_match]["Name"]) + "\n\nFind matches in <#" + str(
+                                    value=match_queue[user_id]["Name"] + " vs " + str(
+                                        match_queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed)
@@ -296,16 +321,22 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 # Add to recent matches list
                 recent_matches[game_type].append(time.time())
 
-                for m in mode_list:
-                    if best_match in queue[m]:
-                        del queue[m][best_match]
-                    if user_id in queue[m]:
-                        del queue[m][user_id]
                 return True
-            await asyncio.sleep(5)
         except KeyError:
+            if best_match and best_match_queues and match_queue:
+                for mode in best_match_queues:
+                    queue[mode][best_match] = match_queue[best_match]
+            if user_id and user_queues and match_queue:
+                for mode in user_queues:
+                    queue[mode][user_id] = match_queue[user_id]
             print("Double match")
         except RuntimeError:
+            if best_match and best_match_queues and match_queue:
+                for mode in best_match_queues:
+                    queue[mode][best_match] = match_queue[best_match]
+            if user_id and user_queues and match_queue:
+                for mode in user_queues:
+                    queue[mode][user_id] = match_queue[user_id]
             print("Timing error")
 
     global last_ping_time
