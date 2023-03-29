@@ -1,3 +1,4 @@
+import re
 import discord
 import requests
 from discord.ext import commands
@@ -6,9 +7,21 @@ from resources import characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
+modes_body = {
+    "communities": 1,
+    "active": True
+}
+modes = requests.post("https://api.projectrio.app/tag_set/list", data=modes_body).json()["Tag Sets"]
+for m in modes:
+    print(m)
 
-async def ostat_user_char(ctx, user: str, char: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=StarsOffSeason4&char_id=" + str(
+STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Stars Off" in x["name"]), None)["name"])
+STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Stars On" in x["name"]), None)["name"])
+BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Big Balla" in x["name"]), None)["name"])
+
+
+async def ostat_user_char(ctx, user: str, char: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=" + mode + "&char_id=" + str(
         characters.reverse_mappings[char])
     url = all_url + "&username=" + user
 
@@ -66,8 +79,8 @@ async def ostat_user_char(ctx, user: str, char: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_user(ctx, user: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=StarsOffSeason4"
+async def ostat_user(ctx, user: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     user_url = all_url + "&username=" + user
     all_by_char_url = all_url + "&by_char=1"
     user_by_char_url = all_by_char_url + "&username=" + user
@@ -112,10 +125,10 @@ async def ostat_user(ctx, user: str):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"], reverse=True)
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["plate_appearances"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(user_dict.keys())
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] + user_dict[x]["summary_walks_hbp"], reverse=True)
 
     for char in sorted_char_list:
         char_stats = user_dict[char]
@@ -148,8 +161,8 @@ async def ostat_user(ctx, user: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_char(ctx, char: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=StarsOffSeason4"
+async def ostat_char(ctx, char: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     char_url = all_url + "&char_id=" + str(characters.reverse_mappings[char])
     char_by_user_url = all_url + "&by_user=1" + "&char_id=" + str(characters.reverse_mappings[char])
 
@@ -215,8 +228,8 @@ async def ostat_char(ctx, char: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_all(ctx):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=StarsOffSeason4"
+async def ostat_all(ctx, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     all_response = requests.get(all_url).json()
@@ -277,22 +290,34 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="ostat", help="Look up player batting stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def o_stat(self, ctx, user="all", char="all"):
+    async def o_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
+        if mode in ["on", "starson", "ston", "stars"]:
+            mode = STARS_ON_MODE
+        elif mode in ["bb", "bigballa", "balla", "big"]:
+            mode = BIG_BALLA_MODE
+        else:
+            mode = STARS_OFF_MODE
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
         if char == "all" and user == "all":
-            await ostat_all(ctx)
+            await ostat_all(ctx, mode)
         elif char == "all" and user != "all":
-            await ostat_user(ctx, user)
+            await ostat_user(ctx, user, mode)
         elif char != "all" and user == "all":
-            await ostat_char(ctx, char)
+            await ostat_char(ctx, char, mode)
         elif char != "all" and user != "all":
-            await ostat_user_char(ctx, user, char)
+            await ostat_user_char(ctx, user, char, mode)
 
     @commands.command(name="pstat", help="Look up player pitching stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def p_stat(self, ctx, user="all", char="all"):
-        url = "https://api.projectrio.app/detailed_stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=StarsOffSeason4"
+    async def p_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
+        if mode in ["on", "starson", "ston", "stars"]:
+            mode = STARS_ON_MODE
+        elif mode in ["bb", "bigballa", "balla", "big"]:
+            mode = BIG_BALLA_MODE
+        else:
+            mode = STARS_OFF_MODE
+        url = "https://api.projectrio.app/detailed_stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
         all_url = url
 
         if char.lower() in characters.aliases:
