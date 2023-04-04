@@ -317,7 +317,7 @@ class WebStatLookup(commands.Cog):
             mode = BIG_BALLA_MODE
         else:
             mode = STARS_OFF_MODE
-        url = "https://api.projectrio.app/detailed_stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
+        url = "https://api.projectrio.app/stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
         all_url = url
 
         if char.lower() in characters.aliases:
