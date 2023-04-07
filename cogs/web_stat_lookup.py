@@ -2,22 +2,15 @@ import re
 import discord
 import requests
 from discord.ext import commands
+from resources import ladders
 
 from resources import characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
-modes_body = {
-    "communities": 1,
-    "active": True
-}
-modes = requests.post("https://api.projectrio.app/tag_set/list", data=modes_body).json()["Tag Sets"]
-for m in modes:
-    print(m)
-
-STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Stars Off" in x["name"]), None)["name"])
-STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Stars On" in x["name"]), None)["name"])
-BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', next((x for x in modes if "Big Balla" in x["name"]), None)["name"])
+STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_OFF_MODE)
+STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_ON_MODE)
+BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.BIG_BALLA_MODE)
 
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str):

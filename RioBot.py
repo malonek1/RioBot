@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import discord
 
-from resources import gspread_client
+from resources import ladders
 import matchmaking as mm
 
 # load .env file which has discord token
@@ -30,7 +30,8 @@ async def on_ready():
 
     # Start timed tasks
     mm.refresh_queue.start(bot)
-    gspread_client.refresh_api_data.start()
+#    gspread_client.refresh_api_data.start()
+    ladders.refresh_ladders.start()
 
     cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes", "randomize_commands", "ladder"]
 
