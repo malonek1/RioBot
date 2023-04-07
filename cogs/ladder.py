@@ -18,7 +18,7 @@ class Ladder(commands.Cog):
     @commands.command(help="display the ladder")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
-        if ctx.channel.id != ev.get_var("bot_spam_channel_id"):
+        if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
             if mode in ["on", "starson", "ston", "stars"]:
                 mode = ladders.STARS_ON_MODE
             elif mode in ["bb", "bigballa", "balla", "big"]:
@@ -32,7 +32,7 @@ class Ladder(commands.Cog):
                 buffer1 = " " * (4 - len(str(index + 1)))
                 buffer2 = " " * (20 - len(user["username"]))
                 message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(user["rating"]) + "\n"
-                if len(message) > 1950:
+                if (index + 1) % 50 == 0:
                     message += "```"
                     await ctx.send(message)
                     message = "```"
@@ -41,7 +41,7 @@ class Ladder(commands.Cog):
             await ctx.send(message)
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='The !submit command must be used here:', value='<#947699610921599006>')
+            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.get_var("bot_spam_channel_id")}>')
             await ctx.send(embed=embed)
 
 
