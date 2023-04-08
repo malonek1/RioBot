@@ -8,12 +8,11 @@ import datetime as dt
 import pytz
 
 from resources import EnvironmentVariables as ev
-from resources import gspread_client as gs
+from resources import ladders
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
 from services.image_functions import ifBuildTeamImageFile
 
-# TODO: Fetch mode list from Rio Web
-mode_list = ["Superstars-Off Ranked", "Superstars-On Ranked", "Superstars-Off Random Teams"]
+mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
 
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
@@ -108,16 +107,8 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if game_type == "Superstars-On Ranked" or game_type == "Superstars-On Unranked":
-            # TODO: Avoid accessing the API every time someone queues
-            matches = gs.on_log_sheet.findall(player_id)
-            if matches:
-                player_rating = round(float(gs.on_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
-        else:
-            # TODO: Avoid accessing the API every time someone queues
-            matches = gs.off_log_sheet.findall(player_id)
-            if matches:
-                player_rating = round(float(gs.off_log_sheet.cell(matches[-1].row, matches[-1].col + 3).value))
+        if player_name in ladders.ladders[game_type]:
+            player_rating = ladders.ladders[game_type][player_name]["rating"]
 
         # put player in queue
         queue[game_type][player_id] = {
@@ -230,10 +221,9 @@ async def update_queue_status():
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
     percentile += (percentile * time_in_queue / 180)
-    if "Superstars-On" in game_type:
-        rating_list_copy = gs.on_rating_list.copy()
-    else:
-        rating_list_copy = gs.off_rating_list.copy()
+    rating_list_copy = []
+    for user in ladders.ladders[game_type]:
+        rating_list_copy.append(ladders.ladders[game_type][user]["rating"])
     rating_list_copy.append(rating)
     rating_list_copy.append(0)
     rating_list_copy.append(3000)
@@ -255,7 +245,7 @@ def calc_search_range(rating, game_type, time_in_queue):
 # Uses their user_id, search range (min-max ratings).
 async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max_rating):
     print("Player:", queue[game_type][user_id]["Name"], "Rating:", queue[game_type][user_id]["Rating"], "Time:",
-          round(time.time() - queue[game_type][user_id]["Time"]), "Rating Range", min_rating, max_rating)
+          round(time.time() - queue[game_type][user_id]["Time"]), "Search Range", min_rating, max_rating)
     channel = bot.get_channel(MATCH_CHANNEL_ID)
     if len(queue[game_type]) >= 2:
         try:
@@ -341,12 +331,12 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
 
     global last_ping_time
     if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1200:
-        role_id = "<@&998791698433986641>"
-        role_name = "RANDOM-TEAM"
-        if game_type == "Superstars-Off Ranked":
+        role_id = ""
+        role_name = ""
+        if game_type == ladders.STARS_OFF_MODE:
             role_id = "<@&998791156794150943>"
             role_name = "STARS-OFF"
-        if game_type == "Superstars-On Ranked":
+        if game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA_MODE:
             role_id = "<@&998791464630898808>"
             role_name = "STARS-ON"
         embed = discord.Embed()
