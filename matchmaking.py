@@ -107,7 +107,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if player_name in ladders.ladders[game_type]:
+        if player_name.lower() in (user.lower() for user in ladders.ladders[game_type]):
             player_rating = ladders.ladders[game_type][player_name]["rating"]
 
         # put player in queue
@@ -330,7 +330,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
             print("Timing error")
 
     global last_ping_time
-    if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1200:
+    if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1800:
         role_id = ""
         role_name = ""
         if game_type == ladders.STARS_OFF_MODE:

@@ -3,6 +3,11 @@ import discord
 import requests
 from resources import ladders
 from resources import EnvironmentVariables as ev
+import math
+
+# Rating adjustment constants
+BETA = 0.85
+ALPHA = 0.1
 
 modes_body = {
     "communities": 1,
@@ -19,9 +24,9 @@ class Ladder(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
         if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
-            if mode in ["on", "starson", "ston", "stars"]:
+            if mode.lower() in ["on", "starson", "ston", "stars"]:
                 mode = ladders.STARS_ON_MODE
-            elif mode in ["bb", "bigballa", "balla", "big"]:
+            elif mode.lower() in ["bb", "bigballa", "balla", "big"]:
                 mode = ladders.BIG_BALLA_MODE
             else:
                 mode = ladders.STARS_OFF_MODE
@@ -31,6 +36,13 @@ class Ladder(commands.Cog):
             for index, user in enumerate(ladder_values):
                 buffer1 = " " * (4 - len(str(index + 1)))
                 buffer2 = " " * (20 - len(user["username"]))
+
+                # PLACEHOLDERS
+                player_wins = 1
+                player_games = 1
+                adjusted_rating = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
+                                  (user["rating"] - (500 * math.sqrt(math.log10(player_games) / player_games)))
+
                 message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(user["rating"]) + "\n"
                 if (index + 1) % 50 == 0:
                     message += "```"

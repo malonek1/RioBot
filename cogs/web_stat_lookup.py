@@ -8,10 +8,6 @@ from resources import characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
-STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_OFF_MODE)
-STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_ON_MODE)
-BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.BIG_BALLA_MODE)
-
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str):
     all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=" + mode + "&char_id=" + str(
@@ -302,13 +298,8 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="ostat", help="Look up player batting stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def o_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
-        if mode in ["on", "starson", "ston", "stars"]:
-            mode = STARS_ON_MODE
-        elif mode in ["bb", "bigballa", "balla", "big"]:
-            mode = BIG_BALLA_MODE
-        else:
-            mode = STARS_OFF_MODE
+    async def o_stat(self, ctx, user="all", char="all", mode=ladders.STARS_OFF_MODE):
+        mode = ladders.get_web_mode(mode)
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
         if char == "all" and user == "all":
@@ -322,13 +313,8 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="pstat", help="Look up player pitching stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def p_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
-        if mode in ["on", "starson", "ston", "stars"]:
-            mode = STARS_ON_MODE
-        elif mode in ["bb", "bigballa", "balla", "big"]:
-            mode = BIG_BALLA_MODE
-        else:
-            mode = STARS_OFF_MODE
+    async def p_stat(self, ctx, user="all", char="all", mode=ladders.STARS_OFF_MODE):
+        mode = ladders.get_web_mode(mode)
         url = "https://api.projectrio.app/stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
         all_url = url
 

@@ -1,5 +1,6 @@
 from discord.ext import tasks
 import requests
+import re
 
 modes_body = {
     "Communities": [1],
@@ -24,6 +25,12 @@ try:
 except Exception as e:
     print(e)
 
+MODE_ALIASES = {
+    STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
+    STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson"],
+    BIG_BALLA_MODE: ["bb", "bigballa", "balla", "big"]
+}
+
 ladders = {
     STARS_OFF_MODE: [],
     STARS_ON_MODE: [],
@@ -31,9 +38,21 @@ ladders = {
 }
 
 
+def find_game_mode(mode: str):
+    for m in MODE_ALIASES:
+        if mode in MODE_ALIASES[m]:
+            return m
+
+    return STARS_OFF_MODE
+
+
+def get_web_mode(mode: str):
+    return re.sub(r'[^a-zA-Z0-9]', '', find_game_mode(mode))
+
+
 @tasks.loop(minutes=5)
 async def refresh_ladders():
-    global STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA_MODE, ladders
+    global ladders
 
     for mode in ladders:
         ladder_body = {"TagSet": mode}

@@ -33,7 +33,7 @@ async def on_ready():
 #    gspread_client.refresh_api_data.start()
     ladders.refresh_ladders.start()
 
-    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes", "randomize_commands", "ladder"]
+    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes", "randomize_commands", "ladder", "recent_games"]
 
     for cog in cog_files:
         await bot.load_extension("cogs." + cog)
