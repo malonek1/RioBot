@@ -25,7 +25,7 @@ class SubmitResults(commands.Cog):
     # Submit user command that allows a player to submit a game with another player
     @commands.command(help="type !submit <game_id> <user1> <score1> <user2> <score2>")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def submit(self, ctx, game_id: int, user1: str, score1: int, user2: str, score2: int):
+    async def submit(self, ctx, game_id: str, user1: str, score1: int, user2: str, score2: int):
         account_age = ctx.author.joined_at
         sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(days=1)
         rb_channel = self.client.get_channel(RANKED_BOT_CHANNEL_ID)
@@ -81,9 +81,6 @@ class SubmitResults(commands.Cog):
                                     mode = ladders.STARS_ON_MODE, ':star:'
 
                                 await game_mode_message.delete()
-                                embed = discord.Embed(
-                                    title=f'Submitted {mode[0]} match between {user1} and {user2}!',
-                                    color=0x138F13)
                                 if score1 > score2:
                                     winner_user = user1
                                     winner_score = score1
@@ -106,6 +103,15 @@ class SubmitResults(commands.Cog):
                                 response = requests.post(WEB_SUBMIT_URL, json=post_body)
                                 print(response.status_code)
                                 print(response.json())
+                                if response.status_code == 200:
+                                    embed = discord.Embed(
+                                        title=f'Submitted {mode[0]} match between {user1} and {user2}!',
+                                        color=0x138F13)
+                                else:
+                                    embed = discord.Embed(
+                                        title=f'Failed to submit match between {user1} and {user2}',
+                                        description=f'{response.status_code}',
+                                        color=0xFF5733)
                                 await ctx.send(embed=embed)
 
             else:
