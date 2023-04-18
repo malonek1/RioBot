@@ -41,13 +41,13 @@ class RecentGames(commands.Cog):
                 opp_user = game["Home User"]
                 opp_score = game["Home Score"]
                 opp_captain = next((e for e in emojis if e.name == game["Home Captain"].replace(" ", "")), "")
-            timestamp = game["date_time_end"]
+            timestamp = game["date_time_start"]
             if user_score > opp_score:
                 message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}\n"
             else:
-                message += f"{user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}\n"
+                message += f"<t:{timestamp}:d> {user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}\n"
 
-            if (index + 1) % 10 == 0:
+            if (index + 1) % 5 == 0:
                 embed.add_field(name="", value=message, inline=False)
                 message = ""
 
