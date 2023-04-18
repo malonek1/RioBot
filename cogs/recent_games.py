@@ -30,17 +30,17 @@ class RecentGames(commands.Cog):
             if game["Home User"].lower() == user.lower():
                 user = game["Home User"]
                 user_score = game["Home Score"]
-                user_captain = next((e for e in emojis if e.name == game["Home Captain"].replace(" ", "")), "")
+                user_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
                 opp_user = game["Away User"]
                 opp_score = game["Away Score"]
-                opp_captain = next((e for e in emojis if e.name == game["Away Captain"].replace(" ", "")), "")
+                opp_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
             else:
                 user = game["Away User"]
                 user_score = game["Away Score"]
-                user_captain = next((e for e in emojis if e.name == game["Away Captain"].replace(" ", "")), "")
+                user_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
                 opp_user = game["Home User"]
                 opp_score = game["Home Score"]
-                opp_captain = next((e for e in emojis if e.name == game["Home Captain"].replace(" ", "")), "")
+                opp_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
             if user_score > opp_score:
                 message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}\n"
