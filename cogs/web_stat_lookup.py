@@ -1,14 +1,20 @@
+import re
 import discord
 import requests
 from discord.ext import commands
+from resources import ladders
 
 from resources import characters
 
-BASE_WEB_URL = "https://api.projectrio.app/detailed_stats/"
+BASE_WEB_URL = "https://api.projectrio.app/stats/"
+
+STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_OFF_MODE)
+STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_ON_MODE)
+BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.BIG_BALLA_MODE)
 
 
-async def ostat_user_char(ctx, user: str, char: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=Normal&tag=Ranked&char_id=" + str(
+async def ostat_user_char(ctx, user: str, char: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=" + mode + "&char_id=" + str(
         characters.reverse_mappings[char])
     url = all_url + "&username=" + user
 
@@ -16,8 +22,7 @@ async def ostat_user_char(ctx, user: str, char: str):
     response = requests.get(url).json()
 
     stats = response["Stats"]["Batting"]
-    pa = stats["summary_at_bats"] + stats["summary_walks_bb"] + stats["summary_walks_hbp"] + stats[
-        "summary_sac_flys"]
+    pa = stats["summary_at_bats"] + stats["summary_walks_bb"] + stats["summary_walks_hbp"] + stats["summary_sac_flys"]
     avg = stats["summary_hits"] / stats["summary_at_bats"]
     obp = (stats["summary_hits"] + stats["summary_walks_hbp"] + stats["summary_walks_bb"]) / pa
     slg = (stats["summary_singles"] + (stats["summary_doubles"] * 2) + (stats["summary_triples"] * 3) + (
@@ -28,17 +33,23 @@ async def ostat_user_char(ctx, user: str, char: str):
     overall = all_response["Stats"]["Batting"]
     overall_pa = overall["summary_at_bats"] + overall["summary_walks_bb"] + overall["summary_walks_hbp"] + \
                  overall["summary_sac_flys"]
-    overall_obp = (overall["summary_hits"] + overall["summary_walks_hbp"] + overall[
-        "summary_walks_bb"]) / overall_pa
-    overall_slg = (overall["summary_singles"] + (overall["summary_doubles"] * 2) + (
-            overall["summary_triples"] * 3) + (
-                           overall["summary_homeruns"] * 4)) / overall["summary_at_bats"]
-
-    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+    if overall_pa > 0 and overall["summary_at_bats"] > 0:
+        overall_obp = (overall["summary_hits"] + overall["summary_walks_hbp"] + overall[
+            "summary_walks_bb"]) / overall_pa
+        overall_slg = (overall["summary_singles"] + (overall["summary_doubles"] * 2) + (
+                overall["summary_triples"] * 3) + (
+                               overall["summary_homeruns"] * 4)) / overall["summary_at_bats"]
+        if overall_obp > 0 and overall_slg > 0:
+            ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+        else:
+            ops_plus = 0
+    else:
+        ops_plus = 0
 
     misc = response["Stats"]["Misc"]
-    winrate = (misc["home_wins"] + misc["away_wins"]) / (
-            misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"])
+    # winrate = (misc["home_wins"] + misc["away_wins"]) / (
+    #         misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"])
+    winrate = 0
 
     embed = discord.Embed(title=user + " - " + char + " (" + str(pa) + " PA)")
     embed.add_field(name="G", value=str(misc["game_appearances"]), inline=True)
@@ -65,8 +76,8 @@ async def ostat_user_char(ctx, user: str, char: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_user(ctx, user: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=Normal&tag=Ranked"
+async def ostat_user(ctx, user: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     user_url = all_url + "&username=" + user
     all_by_char_url = all_url + "&by_char=1"
     user_by_char_url = all_by_char_url + "&username=" + user
@@ -87,40 +98,48 @@ async def ostat_user(ctx, user: str):
     user_stats = user_dict["all"]
     pa = user_stats["summary_at_bats"] + user_stats["summary_walks_hbp"] + user_stats[
         "summary_walks_bb"] + user_stats["summary_sac_flys"]
-    # TODO: pa = user_stats["plate_appearances"]
-    avg = user_stats["summary_hits"] / user_stats["summary_at_bats"]
-    obp = (user_stats["summary_hits"] + user_stats["summary_walks_hbp"] + user_stats[
-        "summary_walks_bb"]) / pa
-    slg = (user_stats["summary_singles"] + (user_stats["summary_doubles"] * 2) + (
-            user_stats["summary_triples"] * 3) + (
-                   user_stats["summary_homeruns"] * 4)) / user_stats["summary_at_bats"]
+    if user_stats["summary_at_bats"] > 0 and pa > 0:
+        # TODO: pa = user_stats["plate_appearances"]
+        avg = user_stats["summary_hits"] / user_stats["summary_at_bats"]
+        obp = (user_stats["summary_hits"] + user_stats["summary_walks_hbp"] + user_stats[
+            "summary_walks_bb"]) / pa
+        slg = (user_stats["summary_singles"] + (user_stats["summary_doubles"] * 2) + (
+                user_stats["summary_triples"] * 3) + (
+                       user_stats["summary_homeruns"] * 4)) / user_stats["summary_at_bats"]
 
-    all_stats = all_dict["all"]
-    overall_pa = all_stats["summary_at_bats"] + all_stats["summary_walks_hbp"] + all_stats["summary_walks_bb"] + \
-                 all_stats[
-                     "summary_sac_flys"]
-    overall_obp = (all_stats["summary_hits"] + all_stats["summary_walks_hbp"] + all_stats[
-        "summary_walks_bb"]) / overall_pa
-    overall_slg = (all_stats["summary_singles"] + (all_stats["summary_doubles"] * 2) + (
-            all_stats["summary_triples"] * 3) + (
-                           all_stats["summary_homeruns"] * 4)) / all_stats["summary_at_bats"]
-    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+        all_stats = all_dict["all"]
+        overall_pa = all_stats["summary_at_bats"] + all_stats["summary_walks_hbp"] + all_stats["summary_walks_bb"] + \
+                     all_stats["summary_sac_flys"]
+        if overall_pa > 0 and all_stats["summary_at_bats"] > 0:
+            overall_obp = (all_stats["summary_hits"] + all_stats["summary_walks_hbp"] + all_stats[
+                "summary_walks_bb"]) / overall_pa
+            overall_slg = (all_stats["summary_singles"] + (all_stats["summary_doubles"] * 2) + (
+                    all_stats["summary_triples"] * 3) + (
+                                   all_stats["summary_homeruns"] * 4)) / all_stats["summary_at_bats"]
+            if overall_obp > 0 and overall_slg > 0:
+                ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+            else:
+                ops_plus = 0
+        else:
+            ops_plus = 0
+        title = "\n" + user + " (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
+            obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " OPS+"
+    else:
+        title = user
     desc = "**Char** (PA): AVG / OBP / SLG, cOPS+"
-    title = "\n" + user + " (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
-        obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " OPS+"
 
     del user_dict["all"]
     try:
         sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["plate_appearances"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(user_dict.keys())
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] + user_dict[x]["summary_walks_hbp"], reverse=True)
 
     for char in sorted_char_list:
         char_stats = user_dict[char]
-        if char_stats["summary_at_bats"] > 0 and char_stats["plate_appearances"] > 0:
-            pa = char_stats["summary_at_bats"] + char_stats["summary_walks_hbp"] + char_stats["summary_walks_bb"] + \
-                 char_stats["summary_sac_flys"]
+        pa = char_stats["summary_at_bats"] + char_stats["summary_walks_hbp"] + char_stats["summary_walks_bb"] + \
+             char_stats["summary_sac_flys"]
+        if char_stats["summary_at_bats"] > 0 and pa > 0:
             avg = char_stats["summary_hits"] / char_stats["summary_at_bats"]
             obp = (char_stats["summary_hits"] + char_stats["summary_walks_hbp"] + char_stats["summary_walks_bb"]) / pa
             slg = (char_stats["summary_singles"] + (char_stats["summary_doubles"] * 2) + (
@@ -130,15 +149,19 @@ async def ostat_user(ctx, user: str):
             all_stats = all_dict[char]
             overall_pa = all_stats["summary_at_bats"] + all_stats["summary_walks_hbp"] + all_stats["summary_walks_bb"] + \
                          all_stats["summary_sac_flys"]
-            overall_obp = (all_stats["summary_hits"] + all_stats["summary_walks_hbp"] + all_stats[
-                "summary_walks_bb"]) / overall_pa
-            overall_slg = (all_stats["summary_singles"] + (all_stats["summary_doubles"] * 2) + (
-                    all_stats["summary_triples"] * 3) + (all_stats["summary_homeruns"] * 4)) / all_stats[
-                              "summary_at_bats"]
-            ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+            if overall_pa > 0 and all_stats["summary_at_bats"] > 0:
+                overall_obp = (all_stats["summary_hits"] + all_stats["summary_walks_hbp"] + all_stats[
+                    "summary_walks_bb"]) / overall_pa
+                overall_slg = (all_stats["summary_singles"] + (all_stats["summary_doubles"] * 2) + (
+                        all_stats["summary_triples"] * 3) + (all_stats["summary_homeruns"] * 4)) / all_stats["summary_at_bats"]
+                if overall_obp > 0 and overall_slg > 0:
+                    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+                else:
+                    ops_plus = 0
+            else:
+                ops_plus = 0
             desc += "\n**" + char + "** (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
-                obp) + " / " + "{:.3f}".format(slg) + ", " + str(
-                round(ops_plus)) + " cOPS+"
+                obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " cOPS+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -147,8 +170,8 @@ async def ostat_user(ctx, user: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_char(ctx, char: str):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=Normal&tag=Ranked"
+async def ostat_char(ctx, char: str, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     char_url = all_url + "&char_id=" + str(characters.reverse_mappings[char])
     char_by_user_url = all_url + "&by_user=1" + "&char_id=" + str(characters.reverse_mappings[char])
 
@@ -180,19 +203,21 @@ async def ostat_char(ctx, char: str):
     output_dict = {}
     for user in user_dict:
         user_stats = user_dict[user]
-        if user_stats["summary_at_bats"] > 0 and user_stats["plate_appearances"] > 0:
-            user_pa = user_stats["summary_at_bats"] + user_stats["summary_walks_hbp"] + user_stats["summary_walks_bb"] + \
-                      user_stats["summary_sac_flys"]
+        user_pa = user_stats["summary_at_bats"] + user_stats["summary_walks_hbp"] + user_stats["summary_walks_bb"] + \
+                  user_stats["summary_sac_flys"]
+        if user_stats["summary_at_bats"] > 0 and user_pa > 0:
             user_avg = user_stats["summary_hits"] / user_stats["summary_at_bats"]
             user_obp = (user_stats["summary_hits"] + user_stats["summary_walks_hbp"] + user_stats[
                 "summary_walks_bb"]) / user_pa
             user_slg = (user_stats["summary_singles"] + (user_stats["summary_doubles"] * 2) + (
                     user_stats["summary_triples"] * 3) + (user_stats["summary_homeruns"] * 4)) / user_stats[
                            "summary_at_bats"]
+            if obp > 0 and slg > 0:
+                ops_plus = ((user_obp / obp) + (user_slg / slg) - 1) * 100
+            else:
+                ops_plus = 0
 
-            ops_plus = ((user_obp / obp) + (user_slg / slg) - 1) * 100
-
-            if user_pa > (pa / 200) and user != "GenericHomeUser" and user != "GenericAwayUser":
+            if user_pa > (pa / 200):
                 output_dict[user] = (user_pa, user_avg, user_obp, user_slg, ops_plus)
 
     sorted_user_list = sorted(output_dict.keys(), key=lambda x: output_dict[x][4], reverse=True)
@@ -214,8 +239,8 @@ async def ostat_char(ctx, char: str):
     await ctx.send(embed=embed)
 
 
-async def ostat_all(ctx):
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=Normal&tag=Ranked"
+async def ostat_all(ctx, mode: str):
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     all_response = requests.get(all_url).json()
@@ -243,23 +268,26 @@ async def ostat_all(ctx):
         sorted_char_list = sorted(all_dict.keys(), key=lambda x: all_dict[x]["plate_appearances"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(all_dict.keys())
+        sorted_char_list = sorted(all_dict.keys(),
+                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] + all_dict[x]["summary_walks_hbp"],
+                                  reverse=True)
 
     for char in sorted_char_list:
         char_stats = all_dict[char]
         # TODO: pa = user_dict["all"]["plate_appearances"]
         pa = char_stats["summary_at_bats"] + char_stats["summary_walks_hbp"] + char_stats[
             "summary_walks_bb"] + char_stats["summary_sac_flys"]
-        avg = char_stats["summary_hits"] / char_stats["summary_at_bats"]
-        obp = (char_stats["summary_hits"] + char_stats["summary_walks_hbp"] + char_stats["summary_walks_bb"]) / pa
-        slg = (char_stats["summary_singles"] + (char_stats["summary_doubles"] * 2) + (
-                char_stats["summary_triples"] * 3) + (char_stats["summary_homeruns"] * 4)) / char_stats[
-                  "summary_at_bats"]
+        if char_stats["summary_at_bats"] > 0 and pa > 0:
+            avg = char_stats["summary_hits"] / char_stats["summary_at_bats"]
+            obp = (char_stats["summary_hits"] + char_stats["summary_walks_hbp"] + char_stats["summary_walks_bb"]) / pa
+            slg = (char_stats["summary_singles"] + (char_stats["summary_doubles"] * 2) + (
+                    char_stats["summary_triples"] * 3) + (char_stats["summary_homeruns"] * 4)) / char_stats[
+                      "summary_at_bats"]
 
-        ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
+            ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
 
-        desc += "\n**" + char + "** (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
-            obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " OPS+"
+            desc += "\n**" + char + "** (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(
+                obp) + " / " + "{:.3f}".format(slg) + ", " + str(round(ops_plus)) + " OPS+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -274,22 +302,34 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="ostat", help="Look up player batting stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def o_stat(self, ctx, user="all", char="all"):
+    async def o_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
+        if mode in ["on", "starson", "ston", "stars"]:
+            mode = STARS_ON_MODE
+        elif mode in ["bb", "bigballa", "balla", "big"]:
+            mode = BIG_BALLA_MODE
+        else:
+            mode = STARS_OFF_MODE
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
         if char == "all" and user == "all":
-            await ostat_all(ctx)
+            await ostat_all(ctx, mode)
         elif char == "all" and user != "all":
-            await ostat_user(ctx, user)
+            await ostat_user(ctx, user, mode)
         elif char != "all" and user == "all":
-            await ostat_char(ctx, char)
+            await ostat_char(ctx, char, mode)
         elif char != "all" and user != "all":
-            await ostat_user_char(ctx, user, char)
+            await ostat_user_char(ctx, user, char, mode)
 
     @commands.command(name="pstat", help="Look up player pitching stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def p_stat(self, ctx, user="all", char="all"):
-        url = "https://api.projectrio.app/detailed_stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=Normal&tag=Ranked"
+    async def p_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
+        if mode in ["on", "starson", "ston", "stars"]:
+            mode = STARS_ON_MODE
+        elif mode in ["bb", "bigballa", "balla", "big"]:
+            mode = BIG_BALLA_MODE
+        else:
+            mode = STARS_OFF_MODE
+        url = "https://api.projectrio.app/stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
         all_url = url
 
         if char.lower() in characters.aliases:
