@@ -23,6 +23,7 @@ class Ladder(commands.Cog):
     @commands.command(help="display the ladder")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
+        await ladders.refresh_ladders()
         if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
             if mode.lower() in ["on", "starson", "ston", "stars"]:
                 mode = ladders.STARS_ON_MODE

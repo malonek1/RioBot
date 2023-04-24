@@ -50,7 +50,7 @@ def get_web_mode(mode: str):
     return re.sub(r'[^a-zA-Z0-9]', '', find_game_mode(mode))
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=15)
 async def refresh_ladders():
     global ladders
 

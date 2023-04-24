@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from resources import EnvironmentVariables as ev
 
 
 class Misc(commands.Cog):
@@ -80,7 +81,7 @@ class Misc(commands.Cog):
                                   "• Users must obtain these files on their own accord")
         elif rule == 12:
             embed.add_field(name="Netplay Specific Rules",
-                            value="• Users can only submit games to the ranked leaderboards from one account.  No smurfing.\n"
+                            value="• Users can only submit games to the ranked leaderboards from one account. No smurfing.\n"
                                   "• Dropping out of active tournaments will result in action from the moderation team depending on circumstances. Multiple offenses are more likely to result in bans from future tournaments.")
         elif rule == 13:
             embed.add_field(name="No politics",
@@ -154,9 +155,9 @@ class Misc(commands.Cog):
     async def ranked(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RANKED:',
-                        value='We run a ranked online ladder through this server. You can find the ranked leaderboards here: https://docs.google.com/spreadsheets/d/1B03IEnfOo3pAG7wBIjDW6jIHP0CTzn7jQJuxlNJebgc/edit?usp=sharing\n\n'
-                              'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, head to the <#948321928760918087> channel and look for games. Make sure ranked mode is enabled in the netplay lobby by checking the Ranked Box.\n'
-                              'After the game completes, use <#947699610921599006> to submit the game result to our leaderboard. Use the following command format:\n!submit <your score> <opponent\'s score> <@opponent\'s discord>')
+                        value=f'We run a ranked online ladder through this server. You can find the ranked leaderboards by typing !ladder <mode> <#{ev.get_var("bot_spam_channel_id")}>\n\n'
+                              'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, use the buttons in the channel to queue for a game.\n'
+                              'To ensure the game counts for ranked, make sure the host selects the appropriate Game Mode when hosting the Rio lobby.')
         await ctx.send(embed=embed)
 
     # explain auto golf mode
@@ -235,7 +236,7 @@ class Misc(commands.Cog):
                               'https://mario-superstar-baseball.fandom.com/wiki/Mario_Superstar_Baseball_Wiki')
         await ctx.send(embed=embed)
 
-    # feeback link
+    # feedback link
     @commands.command(help="returns link to suggestion form for RioBot features")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def feedback(self, ctx):
