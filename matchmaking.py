@@ -328,6 +328,8 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 for mode in user_queues:
                     queue[mode][user_id] = match_queue[user_id]
             print("Timing error")
+        except UnboundLocalError:
+            print("Something weird went wrong")
 
     global last_ping_time
     if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1800:
