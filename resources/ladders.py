@@ -40,7 +40,7 @@ ladders = {
 
 def find_game_mode(mode: str):
     for m in MODE_ALIASES:
-        if mode in MODE_ALIASES[m]:
+        if mode.lower() in MODE_ALIASES[m]:
             return m
 
     return STARS_OFF_MODE
