@@ -25,12 +25,7 @@ class Ladder(commands.Cog):
     async def ladder(self, ctx, mode="off"):
         await ladders.refresh_ladders()
         if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
-            if mode.lower() in ["on", "starson", "ston", "stars"]:
-                mode = ladders.STARS_ON_MODE
-            elif mode.lower() in ["bb", "bigballa", "balla", "big"]:
-                mode = ladders.BIG_BALLA_MODE
-            else:
-                mode = ladders.STARS_OFF_MODE
+            mode = ladders.find_game_mode(mode)
 
             ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["rating"], reverse=True)
             message = "**" + mode + " Ladder**\n```"
