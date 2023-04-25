@@ -11,6 +11,7 @@ from resources import EnvironmentVariables as ev
 from resources import ladders
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
 from services.image_functions import ifBuildTeamImageFile
+from helpers import utils
 
 mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
 
@@ -107,8 +108,10 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if player_name.lower() in (user.lower() for user in ladders.ladders[game_type]):
+        if utils.strip_non_alphanumeric(player_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
             player_rating = ladders.ladders[game_type][player_name]["rating"]
+        elif utils.strip_non_alphanumeric(interaction.user.display_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
+            player_rating = ladders.ladders[game_type][interaction.user.display_name]["rating"]
 
         # put player in queue
         queue[game_type][player_id] = {

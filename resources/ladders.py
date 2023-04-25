@@ -1,6 +1,6 @@
 from discord.ext import tasks
 import requests
-import re
+from helpers import utils
 
 modes_body = {
     "Communities": [1],
@@ -47,7 +47,7 @@ def find_game_mode(mode: str):
 
 
 def get_web_mode(mode: str):
-    return re.sub(r'[^a-zA-Z0-9]', '', find_game_mode(mode))
+    return utils.strip_non_alphanumeric(find_game_mode(mode))
 
 
 @tasks.loop(minutes=15)
