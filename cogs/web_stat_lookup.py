@@ -126,10 +126,11 @@ async def ostat_user(ctx, user: str, mode: str):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["plate_appearances"], reverse=True)
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] +
+                                                                  user_dict[x]["summary_walks_hbp"] + user_dict[x]["summary_sac_flys"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] + user_dict[x]["summary_walks_hbp"], reverse=True)
+        sorted(user_dict.keys())
 
     for char in sorted_char_list:
         char_stats = user_dict[char]
@@ -261,12 +262,12 @@ async def ostat_all(ctx, mode: str):
     del all_dict["all"]
 
     try:
-        sorted_char_list = sorted(all_dict.keys(), key=lambda x: all_dict[x]["plate_appearances"], reverse=True)
+        sorted_char_list = sorted(all_dict.keys(),
+                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] +
+                                                all_dict[x]["summary_walks_hbp"] + all_dict[x]["summary_sac_flys"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(all_dict.keys(),
-                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] + all_dict[x]["summary_walks_hbp"],
-                                  reverse=True)
+        sorted_char_list = sorted(all_dict.keys())
 
     for char in sorted_char_list:
         char_stats = all_dict[char]

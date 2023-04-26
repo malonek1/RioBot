@@ -95,10 +95,8 @@ async def init_buttons(bot: commands.Bot):
                                     view=new_view)
 
 
-# Command for a player to enter the matchmaking queue
+# Button for a player to enter the matchmaking queue
 # If they are in the queue already, it will refresh their presence in the queue
-# You can also move from one queue to another with this
-# @bot.command(name="queue", aliases=["q"], help="Enter queue")
 async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1400
     player_id = str(interaction.user.id)
@@ -148,9 +146,8 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         await mod_channel.send(embed=mod_embed)
 
 
-# Command for a player to remove themselves from the queue
+# Button for a player to remove themselves from the queue
 # If they aren't in the queue, it will just post a message with the queue status
-# @bot.command(name="dequeue", aliases=["dq"], help="Exit queue")
 async def exit_queue(interaction):
     for m in mode_list:
         if str(interaction.user.id) in queue[m]:
@@ -219,7 +216,7 @@ async def update_queue_status():
         print("Runtime error")
 
 
-# params: player's rating and what percentile you want your search range to cover
+# params: player's rating and amount of time they've spent in queue
 # return: min and max rating the player can match against
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
