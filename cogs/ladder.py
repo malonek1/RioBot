@@ -24,13 +24,15 @@ class Ladder(commands.Cog):
 
             ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
             message = "**" + mode + " Ladder**\n```"
+            message += "#" + (" " * 4) + "Username" + (" " * 12) + "Rtg" + "   Record\n"
             for index, user in enumerate(ladder_values):
                 buffer1 = " " * (4 - len(str(index + 1)))
                 buffer2 = " " * (20 - len(user["username"]))
 
                 # PLACEHOLDERS
 
-                message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(round(user["adjusted_rating"])) + "\n"
+                message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(round(user["adjusted_rating"])) \
+                           + "  " + str(user["num_wins"]) + "-" + str(user["num_losses"]) + "\n"
                 if (index + 1) % 40 == 0:
                     message += "```"
                     await ctx.send(message)
