@@ -22,8 +22,8 @@ class RecentGames(commands.Cog):
     @commands.command(help="display a user's recent games")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def last(self, ctx, num_games: int = 10, user: str = "all", mode: str = "off"):
-        if num_games > 50:
-            num_games = 50
+        if num_games > 40:
+            num_games = 40
         web_mode = ladders.get_web_mode(mode)
         mode = ladders.find_game_mode(mode)
         api_url = BASE_GAMES_URL + "?limit_games=" + str(num_games) + "&tag=" + web_mode

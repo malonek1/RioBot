@@ -64,8 +64,6 @@ async def refresh_ladders():
         ladders[mode] = requests.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body).json()
         for user in ladders[mode]:
             player_wins = ladders[mode][user]["num_wins"]
-            player_games = ladders[mode][user]["num_wins"] + ladders[mode][user]["num_losses"]
+            player_games = ladders[mode][user]["num_wins"] + ladders[mode][user]["num_losses"] + 1
             ladders[mode][user]["adjusted_rating"] = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
-                              (ladders[mode][user]["rating"] - (500 * math.sqrt(math.log10(player_games) / player_games)))
-        # ladders[mode] = sorted(ladder.values(), key=lambda x: x["rating"], reverse=True)
-        # print(ladders[mode])
+                              (ladders[mode][user]["rating"] - (500 * math.sqrt(math.log10(player_games + 1) / player_games)))
