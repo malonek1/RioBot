@@ -1,6 +1,11 @@
 from discord.ext import tasks
 import requests
 from helpers import utils
+import math
+
+# Rating adjustment constants
+BETA = 0.85
+ALPHA = 0.1
 
 modes_body = {
     "Communities": [1],
@@ -57,5 +62,10 @@ async def refresh_ladders():
     for mode in ladders:
         ladder_body = {"TagSet": mode}
         ladders[mode] = requests.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body).json()
+        for user in ladders[mode]:
+            player_wins = ladders[mode][user]["num_wins"]
+            player_games = ladders[mode][user]["num_wins"] + ladders[mode][user]["num_losses"]
+            ladders[mode][user]["adjusted_rating"] = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
+                              (ladders[mode][user]["rating"] - (500 * math.sqrt(math.log10(player_games) / player_games)))
         # ladders[mode] = sorted(ladder.values(), key=lambda x: x["rating"], reverse=True)
         # print(ladders[mode])
