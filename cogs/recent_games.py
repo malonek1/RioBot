@@ -5,6 +5,15 @@ from resources import ladders
 
 BASE_GAMES_URL = "https://api.projectrio.app/games/"
 
+stadium_map = {
+    0: "Mario Stadium",
+    1: "Bowser Castle",
+    2: "Wario Palace",
+    3: "Yoshi Park",
+    4: "Peach Garden",
+    5: "DK Jungle"
+}
+
 
 class RecentGames(commands.Cog):
     def __init__(self, client):
@@ -25,7 +34,7 @@ class RecentGames(commands.Cog):
 
         message = ""
         emojis = ctx.message.guild.emojis
-        embed = discord.Embed(title=f"{mode} last {num_games} games for {user}")
+        embed = discord.Embed(title=f"{mode} last {len(games_data['games'])} games for {user}")
         for index, game in enumerate(games_data["games"]):
             if game["Home User"].lower() == user.lower():
                 user = game["Home User"]
@@ -43,9 +52,11 @@ class RecentGames(commands.Cog):
                 opp_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
             if user_score > opp_score:
-                message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}\n"
+                message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}"
             else:
-                message += f"<t:{timestamp}:d> {user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}\n"
+                message += f"<t:{timestamp}:d> {user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
+            stadium = stadium_map[game["Stadium"]]
+            message += f" @ *{stadium}*\n"
 
             if (index + 1) % 5 == 0:
                 embed.add_field(name="", value=message, inline=False)
