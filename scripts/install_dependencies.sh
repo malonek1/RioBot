@@ -2,7 +2,7 @@ echo "Installing dependencies for RioBot"
 
 # Installing Python3 manually to get 3.11 instead of 3.7
 # yum install -y python3, python3-pip
-yum install -y gcc openssl-devel bzip2-devel libffi-devel
+yum install -y gcc openssl-devel bzip2-devel libffi-devel zlib1g-dev
 
 cd /opt
 wget https://www.python.org/ftp/python/3.9.6/Python-3.9.6.tgz
