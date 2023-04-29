@@ -1,8 +1,8 @@
 from random import shuffle, randint, choice, sample
 
-from main.helpers.random_team_builder import randomTeamsWithoutDupes, randomTeamsWtihDupes, randomBalancedTeams, \
+from helpers.random_team_builder import randomTeamsWithoutDupes, randomTeamsWtihDupes, randomBalancedTeams, \
     randomPowerTeams, randomTeeBallTeams
-from main.resources.characters import Char
+from resources.characters import Char
 
 
 # Flip a coin

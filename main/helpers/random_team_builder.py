@@ -1,6 +1,6 @@
 import copy
 from random import shuffle, choice
-from main.resources.characters import Char
+from resources.characters import Char
 
 # General Character Lists
 all_captains = [Char.MARIO, Char.LUIGI, Char.PEACH, Char.DAISY, Char.YOSHI, Char.BIRDO, Char.DIDDY, Char.DK, Char.WALUIGI, Char.WARIO, Char.BOWSER_JR, Char.BOWSER]

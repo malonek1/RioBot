@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import discord
 
-from main.resources import ladders
+from resources import ladders
 import matchmaking as mm
 
 # load .env file which has discord token

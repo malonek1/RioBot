@@ -2,7 +2,7 @@ import re
 import discord
 import requests
 from discord.ext import commands
-from main.resources import ladders, characters
+from resources import ladders, characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
 

@@ -7,10 +7,10 @@ import asyncio
 import datetime as dt
 import pytz
 
-from main.resources import EnvironmentVariables as ev, ladders
-from main.services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
-from main.services.image_functions import ifBuildTeamImageFile
-from main.helpers import utils
+from resources import EnvironmentVariables as ev, ladders
+from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
+from services.image_functions import ifBuildTeamImageFile
+from helpers import utils
 
 mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
 
