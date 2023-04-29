@@ -1,5 +1,5 @@
-from helpers.image_builder import *
-from helpers.team_sorter import sortTeamsByTier
+from main.helpers.image_builder import *
+from main.helpers.team_sorter import sortTeamsByTier
 
 
 def ifBuildTeamImageFile(teams, captains=None, sort=True):

@@ -1,10 +1,8 @@
-from io import BytesIO
-
 import discord
 from discord.ext import commands
 
-from services.image_functions import ifBuildTeamImageFile
-from services.random_functions import *
+from main.services.image_functions import ifBuildTeamImageFile
+from main.services.random_functions import *
 
 # Random Cog Properties
 hex_y = 0xE8E337  # Error message

@@ -46,11 +46,11 @@ def build_stat_objs():
     # make LoL's
     char_name_list = []
     stats_name_list = []
-    with open('resources/CharNames.csv', 'r') as file:
+    with open('main/resources/CharNames.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             char_name_list.append(row)
-    with open('resources/StatNames.csv', 'r') as file:
+    with open('main/resources/StatNames.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             stats_name_list.append(row)
@@ -65,7 +65,7 @@ def build_stat_objs():
 
 
 def build_stats_lol(lolref):
-    with open('resources/Stats.csv', 'r') as file:
+    with open('main/resources/Stats.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             lolref.append(row)

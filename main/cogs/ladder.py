@@ -1,8 +1,7 @@
 from discord.ext import commands
 import discord
 import requests
-from resources import ladders
-from resources import EnvironmentVariables as ev
+from main.resources import EnvironmentVariables as ev, ladders
 
 modes_body = {
     "communities": 1,

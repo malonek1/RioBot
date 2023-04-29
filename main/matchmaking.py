@@ -3,14 +3,12 @@ from discord import ButtonStyle
 from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
-import asyncio
 import datetime as dt
 import pytz
 
-from resources import EnvironmentVariables as ev
-from resources import ladders
-from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
-from services.image_functions import ifBuildTeamImageFile
+from main.resources import EnvironmentVariables as ev, ladders
+from main.services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
+from main.services.image_functions import ifBuildTeamImageFile
 
 mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
 

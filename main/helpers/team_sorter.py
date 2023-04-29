@@ -1,4 +1,4 @@
-from resources.characters import Char
+from main.resources.characters import Char
 
 ranked_character_dict = {
     Char.BOWSER.value: 1,

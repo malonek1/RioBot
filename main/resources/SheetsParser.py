@@ -1,7 +1,7 @@
 import datetime
-import resources.gspread_client as gs
+import main.resources.gspread_client as gs
 import glicko2
-from resources import EnvironmentVariables as ev
+from main.resources import EnvironmentVariables as ev
 
 ELO_SHEET_NAME = ev.get_var("google_sheet")
 
