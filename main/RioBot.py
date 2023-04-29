@@ -4,7 +4,7 @@
 
 import os
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import discord
 
@@ -29,15 +29,24 @@ async def on_ready():
     await mm.init_buttons(bot)
 
     # Start timed tasks
-    mm.refresh_queue.start(bot)
+    # mm.refresh_queue.start(bot)
 #    gspread_client.refresh_api_data.start()
     ladders.refresh_ladders.start()
+    handle_crash.start()
 
-    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "submit_results", "memes", "randomize_commands", "ladder"]
+    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games"]
 
     for cog in cog_files:
         await bot.load_extension("cogs." + cog)
         print("%s has loaded." % cog)
+
+
+@tasks.loop(minutes=1)
+async def handle_crash():
+    if not mm.refresh_queue.is_running():
+        mm.refresh_queue.start(bot)
+    if not ladders.refresh_ladders.is_running():
+        ladders.refresh_ladders.start(bot)
 
 
 # Exception handler on user commands to bot
@@ -61,9 +70,7 @@ async def on_command_error(ctx, error):
             embed.add_field(name='Error:', value=str(error), inline=False)
             await ctx.send(embed=embed)
         else:
-            embed = discord.Embed(title='Please specify your score, your opponents score, and tag your opponent',
-                                  color=0xEA7D07)
-            embed.add_field(name='Example:', value='!submit 12 5 @user', inline=True)
+            embed = discord.Embed(title='Something went wrong!', color=0xEA7D07)
             embed.add_field(name='Error:', value=str(error), inline=True)
             await ctx.send(embed=embed)
 
