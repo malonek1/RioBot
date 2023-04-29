@@ -1,5 +1,11 @@
 from discord.ext import tasks
 import requests
+from helpers import utils
+import math
+
+# Rating adjustment constants
+BETA = 0.85
+ALPHA = 0.1
 
 modes_body = {
     "Communities": [1],
@@ -24,6 +30,12 @@ try:
 except Exception as e:
     print(e)
 
+MODE_ALIASES = {
+    STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
+    STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson"],
+    BIG_BALLA_MODE: ["bb", "bigballa", "balla", "big"]
+}
+
 ladders = {
     STARS_OFF_MODE: [],
     STARS_ON_MODE: [],
@@ -31,12 +43,27 @@ ladders = {
 }
 
 
-@tasks.loop(minutes=5)
+def find_game_mode(mode: str):
+    for m in MODE_ALIASES:
+        if mode.lower() in MODE_ALIASES[m]:
+            return m
+
+    return STARS_OFF_MODE
+
+
+def get_web_mode(mode: str):
+    return utils.strip_non_alphanumeric(find_game_mode(mode))
+
+
+@tasks.loop(minutes=15)
 async def refresh_ladders():
-    global STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA_MODE, ladders
+    global ladders
 
     for mode in ladders:
         ladder_body = {"TagSet": mode}
         ladders[mode] = requests.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body).json()
-        # ladders[mode] = sorted(ladder.values(), key=lambda x: x["rating"], reverse=True)
-        # print(ladders[mode])
+        for user in ladders[mode]:
+            player_wins = ladders[mode][user]["num_wins"]
+            player_games = ladders[mode][user]["num_wins"] + ladders[mode][user]["num_losses"] + 1
+            ladders[mode][user]["adjusted_rating"] = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
+                              (ladders[mode][user]["rating"] - (500 * math.sqrt(math.log10(player_games + 1) / player_games)))
