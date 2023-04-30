@@ -1,12 +1,12 @@
 name: CD Pipeline
 on:
   push:
-    branches: [ aws-setup ]
+    branches: [ master ]
 
 jobs:
   continuous-deployment:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/aws-setup'
+    if: github.ref == 'refs/heads/master'
     steps:
      # Step 1
       - name: Configure AWS credentials
