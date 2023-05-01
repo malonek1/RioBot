@@ -100,7 +100,8 @@ class RecentGames(commands.Cog):
             else:
                 message += f"<t:{timestamp}:d> {user_captain} {user1} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
             stadium = stadium_map[game["Stadium"]]
-            message += f" @ *{stadium}*\n"
+            message += f" @ *{stadium}*"
+            message += f" ({ladders.get_game_mode_name(game['Game Mode'])})\n"
 
             if (index + 1) % 5 == 0:
                 embed.add_field(name="", value=message, inline=False)

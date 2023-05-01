@@ -13,6 +13,12 @@ modes_body = {
 }
 modes = requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]
 
+all_modes_body = {
+    "Client": "true"
+}
+
+all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
+
 STARS_OFF_MODE = "Stars Off, Season 5"
 STARS_ON_MODE = "Stars On, Season 5"
 BIG_BALLA_MODE = "Big Balla, Season 5"
@@ -49,6 +55,11 @@ def find_game_mode(mode: str):
             return m
 
     return STARS_OFF_MODE
+
+
+def get_game_mode_name(mode_id: int):
+    game_mode = next(x for x in all_modes if mode_id == x["id"])
+    return game_mode["name"]
 
 
 def get_web_mode(mode: str):
