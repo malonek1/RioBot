@@ -105,10 +105,12 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if utils.strip_non_alphanumeric(player_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
-            player_rating = ladders.ladders[game_type][player_name]["rating"]
-        elif utils.strip_non_alphanumeric(interaction.user.display_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
-            player_rating = ladders.ladders[game_type][interaction.user.display_name]["rating"]
+        player_match = utils.strip_non_alphanumeric(player_name)
+        player_match2 = utils.strip_non_alphanumeric(interaction.user.display_name)
+        for user in ladders.ladders[game_type]:
+            user_match = utils.strip_non_alphanumeric(user)
+            if player_match == user_match or player_match2 == user_match:
+                player_rating = ladders.ladders[game_type][user]["rating"]
 
         # put player in queue
         queue[game_type][player_id] = {
