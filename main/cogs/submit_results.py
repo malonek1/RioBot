@@ -5,8 +5,7 @@ from discord.ext import commands
 import datetime as dt
 import pytz
 
-from resources import SheetsParser
-from resources import EnvironmentVariables as ev
+from resources import EnvironmentVariables as ev, SheetsParser
 
 # Channel ID for #ranked-bot result submission channel
 RANKED_BOT_CHANNEL_ID = int(ev.get_var("ranked_bot_channel_id"))

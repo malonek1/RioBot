@@ -7,10 +7,10 @@ import asyncio
 import datetime as dt
 import pytz
 
-from resources import EnvironmentVariables as ev
-from resources import ladders
+from resources import EnvironmentVariables as ev, ladders
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
 from services.image_functions import ifBuildTeamImageFile
+from helpers import utils
 
 mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
 
@@ -94,10 +94,8 @@ async def init_buttons(bot: commands.Bot):
                                     view=new_view)
 
 
-# Command for a player to enter the matchmaking queue
+# Button for a player to enter the matchmaking queue
 # If they are in the queue already, it will refresh their presence in the queue
-# You can also move from one queue to another with this
-# @bot.command(name="queue", aliases=["q"], help="Enter queue")
 async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1400
     player_id = str(interaction.user.id)
@@ -107,8 +105,12 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if player_name in ladders.ladders[game_type]:
-            player_rating = ladders.ladders[game_type][player_name]["rating"]
+        player_match = utils.strip_non_alphanumeric(player_name)
+        player_match2 = utils.strip_non_alphanumeric(interaction.user.display_name)
+        for user in ladders.ladders[game_type]:
+            user_match = utils.strip_non_alphanumeric(user)
+            if player_match == user_match or player_match2 == user_match:
+                player_rating = ladders.ladders[game_type][user]["rating"]
 
         # put player in queue
         queue[game_type][player_id] = {
@@ -145,9 +147,8 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         await mod_channel.send(embed=mod_embed)
 
 
-# Command for a player to remove themselves from the queue
+# Button for a player to remove themselves from the queue
 # If they aren't in the queue, it will just post a message with the queue status
-# @bot.command(name="dequeue", aliases=["dq"], help="Exit queue")
 async def exit_queue(interaction):
     for m in mode_list:
         if str(interaction.user.id) in queue[m]:
@@ -216,7 +217,7 @@ async def update_queue_status():
         print("Runtime error")
 
 
-# params: player's rating and what percentile you want your search range to cover
+# params: player's rating and amount of time they've spent in queue
 # return: min and max rating the player can match against
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
@@ -328,9 +329,11 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 for mode in user_queues:
                     queue[mode][user_id] = match_queue[user_id]
             print("Timing error")
+        except UnboundLocalError:
+            print("Something weird went wrong")
 
     global last_ping_time
-    if 300 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1200:
+    if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1800:
         role_id = ""
         role_name = ""
         if game_type == ladders.STARS_OFF_MODE:

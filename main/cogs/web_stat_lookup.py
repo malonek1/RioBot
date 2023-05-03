@@ -2,26 +2,20 @@ import re
 import discord
 import requests
 from discord.ext import commands
-from resources import ladders
-
-from resources import characters
+from resources import ladders, characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
-
-STARS_OFF_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_OFF_MODE)
-STARS_ON_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.STARS_ON_MODE)
-BIG_BALLA_MODE = re.sub(r'[^a-zA-Z0-9]', '', ladders.BIG_BALLA_MODE)
 
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str):
     all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&tag=" + mode + "&char_id=" + str(
-        characters.reverse_mappings[char])
+        characters.reverse_mappings[char]) + "&by_char=1"
     url = all_url + "&username=" + user
 
     all_response = requests.get(all_url).json()
     response = requests.get(url).json()
 
-    stats = response["Stats"]["Batting"]
+    stats = response["Stats"][char]["Batting"]
     pa = stats["summary_at_bats"] + stats["summary_walks_bb"] + stats["summary_walks_hbp"] + stats["summary_sac_flys"]
     avg = stats["summary_hits"] / stats["summary_at_bats"]
     obp = (stats["summary_hits"] + stats["summary_walks_hbp"] + stats["summary_walks_bb"]) / pa
@@ -30,7 +24,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
     ops = obp + slg
     # pa = stats["plate_appearances"]
 
-    overall = all_response["Stats"]["Batting"]
+    overall = all_response["Stats"][char]["Batting"]
     overall_pa = overall["summary_at_bats"] + overall["summary_walks_bb"] + overall["summary_walks_hbp"] + \
                  overall["summary_sac_flys"]
     if overall_pa > 0 and overall["summary_at_bats"] > 0:
@@ -46,13 +40,13 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
     else:
         ops_plus = 0
 
-    misc = response["Stats"]["Misc"]
-    # winrate = (misc["home_wins"] + misc["away_wins"]) / (
-    #         misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"])
-    winrate = 0
+    misc = response["Stats"][char]["Misc"]
+    games = misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"]
+    winrate = (misc["home_wins"] + misc["away_wins"]) / games
+    # winrate = 0
 
     embed = discord.Embed(title=user + " - " + char + " (" + str(pa) + " PA)")
-    embed.add_field(name="G", value=str(misc["game_appearances"]), inline=True)
+    embed.add_field(name="G", value=str(games), inline=True)
     embed.add_field(name="Win%", value="{:.1f}".format(winrate * 100), inline=True)
     embed.add_field(name="AB", value=str(stats["summary_at_bats"]), inline=True)
     embed.add_field(name="H", value=str(stats["summary_hits"]), inline=True)
@@ -97,7 +91,7 @@ async def ostat_user(ctx, user: str, mode: str):
 
     user_stats = user_dict["all"]
     pa = user_stats["summary_at_bats"] + user_stats["summary_walks_hbp"] + user_stats[
-        "summary_walks_bb"] + user_stats["summary_sac_flys"]
+        "summary_walks_bb"] + user_stats["summary_s nac_flys"]
     if user_stats["summary_at_bats"] > 0 and pa > 0:
         # TODO: pa = user_stats["plate_appearances"]
         avg = user_stats["summary_hits"] / user_stats["summary_at_bats"]
@@ -130,10 +124,11 @@ async def ostat_user(ctx, user: str, mode: str):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["plate_appearances"], reverse=True)
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] +
+                                                                  user_dict[x]["summary_walks_hbp"] + user_dict[x]["summary_sac_flys"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] + user_dict[x]["summary_walks_hbp"], reverse=True)
+        sorted(user_dict.keys())
 
     for char in sorted_char_list:
         char_stats = user_dict[char]
@@ -265,12 +260,12 @@ async def ostat_all(ctx, mode: str):
     del all_dict["all"]
 
     try:
-        sorted_char_list = sorted(all_dict.keys(), key=lambda x: all_dict[x]["plate_appearances"], reverse=True)
+        sorted_char_list = sorted(all_dict.keys(),
+                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] +
+                                                all_dict[x]["summary_walks_hbp"] + all_dict[x]["summary_sac_flys"], reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(all_dict.keys(),
-                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] + all_dict[x]["summary_walks_hbp"],
-                                  reverse=True)
+        sorted_char_list = sorted(all_dict.keys())
 
     for char in sorted_char_list:
         char_stats = all_dict[char]
@@ -302,13 +297,8 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="ostat", help="Look up player batting stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def o_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
-        if mode in ["on", "starson", "ston", "stars"]:
-            mode = STARS_ON_MODE
-        elif mode in ["bb", "bigballa", "balla", "big"]:
-            mode = BIG_BALLA_MODE
-        else:
-            mode = STARS_OFF_MODE
+    async def o_stat(self, ctx, user="all", char="all", mode=ladders.STARS_OFF_MODE):
+        mode = ladders.get_web_mode(mode)
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
         if char == "all" and user == "all":
@@ -322,13 +312,8 @@ class WebStatLookup(commands.Cog):
 
     @commands.command(name="pstat", help="Look up player pitching stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def p_stat(self, ctx, user="all", char="all", mode=STARS_OFF_MODE):
-        if mode in ["on", "starson", "ston", "stars"]:
-            mode = STARS_ON_MODE
-        elif mode in ["bb", "bigballa", "balla", "big"]:
-            mode = BIG_BALLA_MODE
-        else:
-            mode = STARS_OFF_MODE
+    async def p_stat(self, ctx, user="all", char="all", mode=ladders.STARS_OFF_MODE):
+        mode = ladders.get_web_mode(mode)
         url = "https://api.projectrio.app/stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
         all_url = url
 
