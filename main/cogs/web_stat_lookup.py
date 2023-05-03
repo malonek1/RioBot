@@ -91,7 +91,7 @@ async def ostat_user(ctx, user: str, mode: str):
 
     user_stats = user_dict["all"]
     pa = user_stats["summary_at_bats"] + user_stats["summary_walks_hbp"] + user_stats[
-        "summary_walks_bb"] + user_stats["summary_s nac_flys"]
+        "summary_walks_bb"] + user_stats["summary_sac_flys"]
     if user_stats["summary_at_bats"] > 0 and pa > 0:
         # TODO: pa = user_stats["plate_appearances"]
         avg = user_stats["summary_hits"] / user_stats["summary_at_bats"]
