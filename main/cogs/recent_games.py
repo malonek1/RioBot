@@ -55,7 +55,7 @@ class RecentGames(commands.Cog):
                 message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}"
             else:
                 message += f"<t:{timestamp}:d> {user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
-            stadium = stadium_map[game["Stadium"]]
+            stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*\n"
 
             if (index + 1) % 5 == 0:
@@ -65,6 +65,7 @@ class RecentGames(commands.Cog):
         embed.add_field(name="", value=message, inline=False)
         await ctx.send(embed=embed)
 
+    # TODO: Reuse code between h2h/last
     @commands.command(help="display recent games between two users")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def h2h(self, ctx, user1: str, user2: str, num_games: int = 10):
@@ -99,7 +100,7 @@ class RecentGames(commands.Cog):
                 message += f"<t:{timestamp}:d> {user_captain} **{user1}** {user_score} - {opp_score} {opp_user} {opp_captain}"
             else:
                 message += f"<t:{timestamp}:d> {user_captain} {user1} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
-            stadium = stadium_map[game["Stadium"]]
+            stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*"
             message += f" ({ladders.get_game_mode_name(game['Game Mode'])})\n"
 
