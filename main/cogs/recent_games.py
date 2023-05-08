@@ -36,19 +36,19 @@ class RecentGames(commands.Cog):
         emojis = ctx.message.guild.emojis
         embed = discord.Embed(title=f"{mode} last {len(games_data['games'])} games for {user}")
         for index, game in enumerate(games_data["games"]):
-            if game["Home User"].lower() == user.lower():
-                user = game["Home User"]
-                user_score = game["Home Score"]
+            if game["home_user"].lower() == user.lower():
+                user = game["home_user"]
+                user_score = game["home_score"]
                 user_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
-                opp_user = game["Away User"]
-                opp_score = game["Away Score"]
+                opp_user = game["away_user"]
+                opp_score = game["away_score"]
                 opp_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
             else:
-                user = game["Away User"]
-                user_score = game["Away Score"]
+                user = game["away_user"]
+                user_score = game["away_score"]
                 user_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
-                opp_user = game["Home User"]
-                opp_score = game["Home Score"]
+                opp_user = game["home_user"]
+                opp_score = game["home_score"]
                 opp_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
             if user_score > opp_score:
@@ -77,22 +77,22 @@ class RecentGames(commands.Cog):
         emojis = ctx.message.guild.emojis
         embed = discord.Embed(title=f"Last {len(games_data['games'])} games for {user1} vs {user2}")
         for index, game in enumerate(games_data["games"]):
-            if game["Home User"].lower() == user1.lower():
-                user1 = game["Home User"]
-                user_score = game["Home Score"]
+            if game["home_user"].lower() == user1.lower():
+                user1 = game["home_user"]
+                user_score = game["home_score"]
                 user_captain = next(
                     (e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
-                opp_user = game["Away User"]
-                opp_score = game["Away Score"]
+                opp_user = game["away_user"]
+                opp_score = game["away_score"]
                 opp_captain = next(
                     (e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
             else:
-                user1 = game["Away User"]
-                user_score = game["Away Score"]
+                user1 = game["away_user"]
+                user_score = game["away_score"]
                 user_captain = next(
                     (e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
-                opp_user = game["Home User"]
-                opp_score = game["Home Score"]
+                opp_user = game["home_user"]
+                opp_score = game["home_score"]
                 opp_captain = next(
                     (e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
@@ -102,7 +102,7 @@ class RecentGames(commands.Cog):
                 message += f"<t:{timestamp}:d> {user_captain} {user1} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
             stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*"
-            message += f" ({ladders.get_game_mode_name(game['Game Mode'])})\n"
+            message += f" ({ladders.get_game_mode_name(game['game_mode'])})\n"
 
             if (index + 1) % 5 == 0:
                 embed.add_field(name="", value=message, inline=False)
