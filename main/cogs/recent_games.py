@@ -39,17 +39,17 @@ class RecentGames(commands.Cog):
             if game["home_user"].lower() == user.lower():
                 user = game["home_user"]
                 user_score = game["home_score"]
-                user_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
+                user_captain = next((e for e in emojis if e.name.lower() == game["home_captain"].replace(" ", "").lower()), "")
                 opp_user = game["away_user"]
                 opp_score = game["away_score"]
-                opp_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
+                opp_captain = next((e for e in emojis if e.name.lower() == game["away_captain"].replace(" ", "").lower()), "")
             else:
                 user = game["away_user"]
                 user_score = game["away_score"]
-                user_captain = next((e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
+                user_captain = next((e for e in emojis if e.name.lower() == game["away_captain"].replace(" ", "").lower()), "")
                 opp_user = game["home_user"]
                 opp_score = game["home_score"]
-                opp_captain = next((e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
+                opp_captain = next((e for e in emojis if e.name.lower() == game["home_captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
             if user_score > opp_score:
                 message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}"
@@ -81,20 +81,20 @@ class RecentGames(commands.Cog):
                 user1 = game["home_user"]
                 user_score = game["home_score"]
                 user_captain = next(
-                    (e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
+                    (e for e in emojis if e.name.lower() == game["home_captain"].replace(" ", "").lower()), "")
                 opp_user = game["away_user"]
                 opp_score = game["away_score"]
                 opp_captain = next(
-                    (e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
+                    (e for e in emojis if e.name.lower() == game["away_captain"].replace(" ", "").lower()), "")
             else:
                 user1 = game["away_user"]
                 user_score = game["away_score"]
                 user_captain = next(
-                    (e for e in emojis if e.name.lower() == game["Away Captain"].replace(" ", "").lower()), "")
+                    (e for e in emojis if e.name.lower() == game["away_captain"].replace(" ", "").lower()), "")
                 opp_user = game["home_user"]
                 opp_score = game["home_score"]
                 opp_captain = next(
-                    (e for e in emojis if e.name.lower() == game["Home Captain"].replace(" ", "").lower()), "")
+                    (e for e in emojis if e.name.lower() == game["home_captain"].replace(" ", "").lower()), "")
             timestamp = game["date_time_start"]
             if user_score > opp_score:
                 message += f"<t:{timestamp}:d> {user_captain} **{user1}** {user_score} - {opp_score} {opp_user} {opp_captain}"
