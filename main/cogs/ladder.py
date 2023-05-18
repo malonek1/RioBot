@@ -1,36 +1,13 @@
 from discord.ext import commands
 import discord
 import requests
-import copy
 from resources import EnvironmentVariables as ev, ladders
-from resources.characters import Char
 
 modes_body = {
     "communities": 1,
     "active": True
 }
 modes = requests.post("https://api.projectrio.app/tag_set/list", data=modes_body).json()["Tag Sets"]
-
-BASE_GAMES_URL = "https://api.projectrio.app/games/"
-
-# tier_captains should be the same length as tier_min_elo
-tier_captains = [Char.BOWSER, Char.DK, Char.YOSHI, Char.BIRDO, Char.LUIGI, Char.MARIO, Char.PEACH, Char.DAISY, Char.DIDDY, Char.WALUIGI, Char.WARIO]
-tier_min_elo = [2000, 1800, 1600, 1400, 1200, 1000, 800, 600, 400, 200, 0]
-# tier_min_elo 's last number should be 0
-
-
-def win(user_score, opponent_score):
-    if user_score > opponent_score:
-        return 1
-    else:
-        return 0
-
-
-def lose(user_score, opponent_score):
-    if user_score < opponent_score:
-        return 1
-    else:
-        return 0
 
 
 class Ladder(commands.Cog):
