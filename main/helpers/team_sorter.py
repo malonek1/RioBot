@@ -58,7 +58,7 @@ ranked_character_dict = {
 }
 
 
-def getCharacterRank(char):
+def get_character_rank(char):
     if isinstance(char, Char):
         return ranked_character_dict[char.value]
     else:
@@ -69,17 +69,21 @@ def getCharacterRank(char):
 # END getCharacterRank
 
 
-def sortTeamsByTier(teams):
+def sort_team_by_tier(team):
+    return team.sort(key=get_character_rank)
+
+
+def sort_teams_by_tier(teams):
     for team in teams:
-        team.sort(key=getCharacterRank)
+        team.sort(key=get_character_rank)
     return teams
 # END Sort Teams By Tier Exclude Captain
 
 
-def sortTeamsByTierExcludeCaptain(teams):
+def sort_teams_by_tier_exclude_captain(teams):
     for team in teams:
         captain = team.pop(0)
-        team.sort(key=getCharacterRank)
+        team.sort(key=get_character_rank)
         team.insert(0, captain)
     return teams
 # END Sort Teams By Tier Exclude Captain

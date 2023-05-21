@@ -3,11 +3,28 @@ from io import BytesIO
 import discord
 import requests
 from PIL import Image, ImageOps
-from resources.characters import images
+from main.resources.characters import images
+
+
+def build_team_image(team):
+    team_icons = []
+    for character in team:
+        team_icons.append(Image.open(requests.get(images[character.value], stream=True).raw))
+
+    total_width = 9*60
+    total_height = 1*60
+    team_image = Image.new('RGBA', (total_width, total_height))
+    x_offset = 0
+    for icon in team_icons:
+        team_image.paste(icon, (x_offset, 0))
+        x_offset += 60
+
+    return team_image
+# END build_team_image
 
 
 # Builds a composite image showing two team rosters displayed horizontally
-def buildTeamImage(teams):
+def build_teams_image(teams):
     team_one_icons = []
     team_two_icons = []
     for character in teams[0]:
@@ -33,7 +50,7 @@ def buildTeamImage(teams):
 
 
 # Builds a composite image showing two team rosters displayed horizontally with the Captains highlighted cyan
-def buildTeamImageHighlightCaptain(teams, captains):
+def build_teams_image_highlight_captain(teams, captains):
     team_one_icons = []
     team_two_icons = []
     for character in teams[0]:
@@ -70,7 +87,7 @@ def buildTeamImageHighlightCaptain(teams, captains):
 # END buildTeamImage
 
 
-def convertImageToFile(team_image):
+def convert_image_to_file(team_image):
     with BytesIO() as image_binary:
         team_image.save(image_binary, 'PNG')
         image_binary.seek(0)
