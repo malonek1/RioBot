@@ -26,9 +26,9 @@ class RecentGames(commands.Cog):
             num_games = 40
         web_mode = ladders.get_web_mode(mode)
         mode = ladders.find_game_mode(mode)
-        api_url = BASE_GAMES_URL + "?limit_games=" + str(num_games) + "&tag=" + web_mode
+        api_url = f"{BASE_GAMES_URL}?limit_games={num_games}&tag={web_mode}"
         if user != "all":
-            api_url += "&username=" + user
+            api_url += f"&username={user}"
 
         games_data = requests.get(api_url).json()
 
