@@ -54,7 +54,7 @@ def find_game_mode(mode: str):
         if mode.lower() in MODE_ALIASES[m]:
             return m
 
-    return STARS_OFF_MODE
+    return mode
 
 
 def get_game_mode_name(mode_id: int):
