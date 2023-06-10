@@ -5,14 +5,19 @@ from resources import characters
 
 BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
+all_stats = {}
+all_by_char_stats = {}
+
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str):
+    global all_by_char_stats
     try:
+        all_by_char_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1"
         char_id = characters.reverse_mappings[char]
-        all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1"
-        url = f"{all_url}&username={user}"
+        url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
         response = requests.get(url).json()
-        all_response = requests.get(all_url).json()
+        if not all_by_char_stats.get(mode, {}).get("Batting", {}):
+            all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
         stats = response.get("Stats", {}).get(char, {}).get("Batting", {})
     except (JSONDecodeError, KeyError):
         embed = discord.Embed(
@@ -24,8 +29,8 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
     pa, avg, obp, slg = calc_slash_line(stats)
     ops = obp + slg
 
-    all_stats = all_response.get("Stats", {}).get(char, {}).get("Batting", {})
-    overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_stats)
+    all_char_stats = all_by_char_stats.get(mode, {}).get(char, {}).get("Batting", {})
+    overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_char_stats)
     ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
 
     misc = response.get("Stats", {}).get(char, {}).get("Misc", {})
@@ -61,25 +66,26 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
 
 
 async def ostat_user(ctx, user: str, mode: str):
+    global all_stats, all_by_char_stats
     all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
     user_url = f"{all_url}&username={user}"
     all_by_char_url = f"{all_url}&by_char=1"
     user_by_char_url = f"{all_by_char_url}&username={user}"
     try:
+        if not all_stats.get(mode, {}).get("Batting", {}):
+            print("getting all stats")
+            all_stats[mode] = requests.get(all_url).json()["Stats"]
+        if not all_by_char_stats.get(mode, {}):
+            print("Getting all by char stats")
+            all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
         user_response = requests.get(user_url).json()
         user_by_char_response = requests.get(user_by_char_url).json()
-        all_response = requests.get(all_url).json()
-        all_by_char_response = requests.get(all_by_char_url).json()
     except JSONDecodeError:
         embed = discord.Embed(
             title=f"There are no stats for user {user} in {mode} or the username was not found.",
             color=0xEA7D07)
         await ctx.send(embed=embed)
         return
-
-    all_dict = {"all": all_response["Stats"]["Batting"]}
-    for char in all_by_char_response["Stats"]:
-        all_dict[char] = all_by_char_response["Stats"][char]["Batting"]
 
     user_dict = {"all": user_response["Stats"]["Batting"]}
     for char in user_by_char_response["Stats"]:
@@ -88,8 +94,7 @@ async def ostat_user(ctx, user: str, mode: str):
     user_stats = user_dict["all"]
     pa, avg, obp, slg = calc_slash_line(user_stats)
 
-    all_stats = all_dict["all"]
-    overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_stats)
+    _, _, overall_obp, overall_slg = calc_slash_line(all_stats[mode]["Batting"])
     if overall_obp > 0 and overall_slg > 0:
         ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
     else:
@@ -100,8 +105,10 @@ async def ostat_user(ctx, user: str, mode: str):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] +
-                                                                  user_dict[x]["summary_walks_hbp"] + user_dict[x]["summary_sac_flys"], reverse=True)
+        sorted_char_list = sorted(user_dict.keys(),
+                                  key=lambda x: user_dict[x]["summary_at_bats"] + user_dict[x]["summary_walks_bb"] +
+                                                user_dict[x]["summary_walks_hbp"] + user_dict[x]["summary_sac_flys"],
+                                  reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
         sorted_char_list = sorted(user_dict.keys())
@@ -109,8 +116,8 @@ async def ostat_user(ctx, user: str, mode: str):
     for char in sorted_char_list:
         char_stats = user_dict[char]
         pa, avg, obp, slg = calc_slash_line(char_stats)
-        all_stats = all_dict[char]
-        overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_stats)
+        all_char_stats = all_by_char_stats[mode][char]["Batting"]
+        _, _, overall_obp, overall_slg = calc_slash_line(all_char_stats)
         if overall_obp > 0 and overall_slg > 0:
             ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
         else:
@@ -184,33 +191,28 @@ async def ostat_char(ctx, char: str, mode: str):
 
 
 async def ostat_all(ctx, mode: str):
+    global all_stats, all_by_char_stats
     all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
-    all_response = requests.get(all_url).json()
-    all_by_char_response = requests.get(all_by_char_url).json()
+    all_stats[mode] = requests.get(all_url).json()["Stats"]
+    all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
 
-    all_dict = {"all": all_response["Stats"]["Batting"]}
-    for char in all_by_char_response["Stats"]:
-        all_dict[char] = all_by_char_response["Stats"][char]["Batting"]
-
-    all_stats = all_dict["all"]
-    all_pa, all_avg, all_obp, all_slg = calc_slash_line(all_stats)
+    all_pa, all_avg, all_obp, all_slg = calc_slash_line(all_stats[mode]["Batting"])
     desc = "**Char** (PA): AVG / OBP / SLG, OPS+"
     title = f"\nAll ({all_pa} PA): {all_avg:.3f} / {all_obp:.3f} / {all_slg:.3f}"
 
-    del all_dict["all"]
-
     try:
-        sorted_char_list = sorted(all_dict.keys(),
-                                  key=lambda x: all_dict[x]["summary_at_bats"] + all_dict[x]["summary_walks_bb"] +
-                                                all_dict[x]["summary_walks_hbp"] + all_dict[x]["summary_sac_flys"], reverse=True)
+        sorted_char_list = sorted(all_by_char_stats[mode].keys(),
+                                  key=lambda x: all_by_char_stats[mode][x]["Batting"]["summary_at_bats"] + all_by_char_stats[mode][x]["Batting"]["summary_walks_bb"] +
+                                                all_by_char_stats[mode][x]["Batting"]["summary_walks_hbp"] + all_by_char_stats[mode][x]["Batting"]["summary_sac_flys"],
+                                  reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(all_dict.keys())
+        sorted_char_list = sorted(all_by_char_stats[mode].keys())
 
     for char in sorted_char_list:
-        char_stats = all_dict[char]
+        char_stats = all_by_char_stats[mode][char]["Batting"]
         pa, avg, obp, slg = calc_slash_line(char_stats)
 
         ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
@@ -225,9 +227,12 @@ async def ostat_all(ctx, mode: str):
 
 
 def calc_slash_line(raw_dict):
-    pa = sum(raw_dict.get(key, 0) for key in ["summary_at_bats", "summary_walks_bb", "summary_walks_hbp", "summary_sac_flys"])
+    pa = sum(raw_dict.get(key, 0) for key in
+             ["summary_at_bats", "summary_walks_bb", "summary_walks_hbp", "summary_sac_flys"])
     avg = raw_dict["summary_hits"] / raw_dict["summary_at_bats"] if raw_dict["summary_at_bats"] > 0 else 0
-    obp = (raw_dict["summary_hits"] + raw_dict["summary_walks_hbp"] + raw_dict["summary_walks_bb"]) / pa if pa > 0 else 0
+    obp = (raw_dict["summary_hits"] + raw_dict["summary_walks_hbp"] + raw_dict[
+        "summary_walks_bb"]) / pa if pa > 0 else 0
     slg = (raw_dict["summary_singles"] + (raw_dict["summary_doubles"] * 2) + (
-            raw_dict["summary_triples"] * 3) + (raw_dict["summary_homeruns"] * 4)) / raw_dict["summary_at_bats"] if raw_dict["summary_at_bats"] > 0 else 0
+            raw_dict["summary_triples"] * 3) + (raw_dict["summary_homeruns"] * 4)) / raw_dict["summary_at_bats"] if \
+    raw_dict["summary_at_bats"] > 0 else 0
     return pa, avg, obp, slg
