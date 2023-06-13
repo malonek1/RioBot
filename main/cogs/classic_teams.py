@@ -28,13 +28,9 @@ class ClassicTeamsCommands(commands.Cog):
                 await ctx.send(embed=embed)
                 return
 
-        print("most")
         title = "Season " + str(classic_team.season) + " " + str(classic_team.league) + " - " + str(classic_team.player) + "'s Team"
-        print("wanted")
         file = ifBuildSingleTeamImageFile(classic_team.characters)
-        print("person")
         footer = str(classic_team.player) + " piloted this team to a " + str(classic_team.finish) + " finish from pick " + str(classic_team.pick)
-        print("united states")
 
         embed = discord.Embed(title=title)
         embed.set_footer(text=footer)
