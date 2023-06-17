@@ -1,11 +1,9 @@
-# from helpers.classic_teams_parser import *
-from random import choice
-
+from random import choice, shuffle
 from main.helpers.classic_teams_parser import *
 
 season_aliases = ["season"]
-pick_aliases = ["pick", "select", "selection"]
-finish_aliases = ["finish", "finished", "placement", "placed"]
+pick_aliases = ["pick", "picked", "select", "selection"]
+finish_aliases = ["finish", "finished", "placement", "placed", "result"]
 
 
 def get_random_classic_team():
@@ -54,3 +52,22 @@ def find_classic_teams(args):
     except IndexError:
         print("Index Error occurred")
         return None
+
+
+def get_classic_draft_quote():
+    quotes = ["I wonder when we will get dinger city classic teams added to this - girl who coded this"
+              , "Bababooey! You have been visited by the ghost of grump classic."
+              , "played a classic with mori and he had ball dash petey it was the scariest thing ever - faceman"
+              , "classic canada - Pokebunny"
+              , "Classic dad shoe - Buffcat"
+              , "classic just appeals to a wider audience outside of baseball - VicklessFalcon"
+              , "Genshin is a classic \"game is fine but the fanbase got a lot of weirdos\" game - Joon"
+              , "Classic best format - MORI"
+              , "Classic format is very fun - PeacockSlayer"
+              , "Glad I could be here guys, can't wait to see who'll get 2nd! - guy who came in 2nd"
+              , "I was bringing back a classic joke - DaJoeMyster"
+              , "i love the world baseball classic - Cammie"
+              , "Classic is so cool - duckydonne"
+              , "Classic 51 hit game - BMills"
+    ]
+    return choice(quotes)
