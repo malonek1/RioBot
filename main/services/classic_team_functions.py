@@ -21,7 +21,7 @@ def matches_team_filter(filter_team: ClassicTeam, potential_team: ClassicTeam):
         return False
     elif filter_team.season and potential_team.season != filter_team.season:
         return False
-    elif filter_team.pick and potential_team.pick != filter_team.pick:
+    elif filter_team.pick and str(potential_team.pick).lower() not in str(filter_team.pick).lower():
         return False
     elif filter_team.finish and potential_team.finish != filter_team.finish:
         return False

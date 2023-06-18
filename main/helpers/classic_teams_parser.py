@@ -30,12 +30,15 @@ class ClassicTeam:
         self.finish = finish
 
     def description(self):
+        pick = self.pick
+        if "Auction" not in pick:
+            pick = ordinal(self.pick)
         descriptions = [
-            str(self.player) + " piloted this team to a " + ordinal(self.finish) + " finish from " + ordinal(self.pick) + " pick.",
-            "This " + ordinal(self.finish) + " place team was managed by " + str(self.player) + " with " + ordinal(self.pick) + " pick in the draft.",
-            "Led by " + str(self.player) + ", this " + ordinal(self.pick) + " pick team finished " + ordinal(self.finish) + " in the league.",
-            "With " + ordinal(self.pick) + " selection in the draft, this team made it to " + ordinal(self.finish) + " place thanks to coaching from " + str(self.player) + ".",
-            "Coming " + ordinal(self.finish) + " in the league was possible thanks to daft handling of " + ordinal(self.pick) + " pick by " + str(self.player) + "."
+            str(self.player) + " piloted this team to a " + ordinal(self.finish) + " finish from " + pick + " pick.",
+            "This " + ordinal(self.finish) + " place team was managed by " + str(self.player) + " with " + pick + " pick in the draft.",
+            "Led by " + str(self.player) + ", this " + pick + " pick team finished " + ordinal(self.finish) + " in the league.",
+            "With " + pick + " selection in the draft, this team made it to " + ordinal(self.finish) + " place thanks to coaching from " + str(self.player) + ".",
+            "Coming " + ordinal(self.finish) + " in the league was possible thanks to daft handling of " + pick + " pick by " + str(self.player) + "."
         ]
         shuffle(descriptions)
         return descriptions.pop()

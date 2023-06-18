@@ -18,7 +18,7 @@ class ClassicTeamsCommands(commands.Cog):
         self.client = client
 
     @commands.command(name="classicTeam", help="Picks one random classic team. Use `!classicTeamHelp` to learn about input")
-    @commands.cooldown(1, 20, commands.BucketType.default)
+    @commands.cooldown(1, 15, commands.BucketType.default)
     async def classic_team(self, ctx, *arg):
         if len(arg) == 0:
             classic_team: ClassicTeam = get_random_classic_team()
@@ -40,7 +40,7 @@ class ClassicTeamsCommands(commands.Cog):
         await ctx.send(file=file, embed=embed)
 
     @commands.command(name="classicTeams", help="Sets up a match of two classic teams")
-    @commands.cooldown(1, 20, commands.BucketType.default)
+    @commands.cooldown(1, 15, commands.BucketType.default)
     async def classic_teams(self, ctx):
         classic_teams = []
         classic_team_one: ClassicTeam = get_random_classic_team()
