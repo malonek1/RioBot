@@ -55,19 +55,31 @@ def find_classic_teams(args):
 
 
 def get_classic_draft_quote():
-    quotes = ["I wonder when we will get dinger city classic teams added to this - girl who coded this"
+    quotes = ["i've been sandbagging this whole time :smiling_imp: - sleepywitch before losing playoffs"
               , "Bababooey! You have been visited by the ghost of grump classic."
               , "played a classic with mori and he had ball dash petey it was the scariest thing ever - faceman"
-              , "classic canada - Pokebunny"
+              , "If you want him for one of these koopa fuckers you can have him - Pokebunny"
               , "Classic dad shoe - Buffcat"
               , "classic just appeals to a wider audience outside of baseball - VicklessFalcon"
-              , "Genshin is a classic \"game is fine but the fanbase got a lot of weirdos\" game - Joon"
-              , "Classic best format - MORI"
+              , "Mario pitcher will get it done - VicklessFalcon"
+              , "Sorry to everyone in my league but ive actually already decided that im winning the league. If you could just forfeit now that would be great - Joon"
               , "Classic format is very fun - PeacockSlayer"
-              , "Glad I could be here guys, can't wait to see who'll get 2nd! - guy who came in 2nd"
+              , "Glad I could be here guys, can't wait to see who'll get 2nd! - guy who came in 2nd (samn)"
               , "I was bringing back a classic joke - DaJoeMyster"
               , "i love the world baseball classic - Cammie"
               , "Classic is so cool - duckydonne"
-              , "Classic 51 hit game - BMills"
+              , "Simply trade all your picks away like me - BMills"
+              , "As someone who's never played a classic I feel like the most qualified member of the server - MattGree"
+              , "Is this allowed? - HowieHour"
+              , "3 toads aint that bad - Cezarito"
+              , "make sure goomba doesnt go for his actual price (100) - Super63"
+              , "i smell fear - Kr1ps"
+              , "your team was a gross mangy dog you find on the side of the road (like even now if i looked at your batting lineup i might gag lul) but then somehow becomes a lovable dog champion at whatever dogs do idk - MORI"
+              , "BigNick's team looks like a Mario Kart char select screen"
+              , "Peach pitcher :sweat_drops: - RuckusTheory"
+              , "shut up 30% winrate - seth"
+              , "hey keep my corn pop out of your fucking mouth - JustAGrump"
+              , "Paragoomba and GSG best pitchers in the game - Crazzy"
+
     ]
     return choice(quotes)
