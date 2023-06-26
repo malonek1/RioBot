@@ -55,6 +55,8 @@ class RecentGames(commands.Cog):
                 message += f"<t:{timestamp}:d> {user_captain} **{user}** {user_score} - {opp_score} {opp_user} {opp_captain}"
             else:
                 message += f"<t:{timestamp}:d> {user_captain} {user} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
+            if game["innings_played"] != game["innings_selected"]:
+                message += " (F/" + str(game["innings_played"]) + ")"
             stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*\n"
 
@@ -100,6 +102,8 @@ class RecentGames(commands.Cog):
                 message += f"<t:{timestamp}:d> {user_captain} **{user1}** {user_score} - {opp_score} {opp_user} {opp_captain}"
             else:
                 message += f"<t:{timestamp}:d> {user_captain} {user1} {user_score} - {opp_score} **{opp_user}** {opp_captain}"
+            if game["innings_played"] != game["innings_selected"]:
+                message += " (F/" + str(game["innings_played"]) + ")"
             stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*"
             message += f" ({ladders.get_game_mode_name(game['game_mode'])})\n"
