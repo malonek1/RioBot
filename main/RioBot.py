@@ -34,7 +34,7 @@ async def on_ready():
     ladders.refresh_ladders.start()
     handle_crash.start()
 
-    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games"]
+    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams"]
 
     for cog in cog_files:
         await bot.load_extension("cogs." + cog)
