@@ -12,9 +12,9 @@ all_by_char_stats = {}
 async def ostat_user_char(ctx, user: str, char: str, mode: str):
     global all_by_char_stats
     try:
-        all_by_char_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1"
+        all_by_char_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1&exclude_nonfair=1"
         char_id = characters.reverse_mappings[char]
-        url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
+        url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}&exclude_nonfair=1"
         response = requests.get(url).json()
         if not all_by_char_stats.get(mode, {}).get("Batting", {}):
             all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
@@ -50,6 +50,9 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
               ("SO", str(stats["summary_strikeouts"])),
               ("BB", str(stats["summary_walks_bb"] + stats["summary_walks_hbp"])),
               ("\u200b", "\u200b"),
+              ("Perfect", str(stats["perfect_hits"])),
+              ("Nice", str(stats["nice_hits"])),
+              ("Sour", str(stats["sour_hits"])),
               ("AVG", "{:.3f}".format(avg)),
               ("OBP", "{:.3f}".format(obp)),
               ("SLG", "{:.3f}".format(slg)),
@@ -67,7 +70,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
 
 async def ostat_user(ctx, user: str, mode: str):
     global all_stats, all_by_char_stats
-    all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+    all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
     user_url = f"{all_url}&username={user}"
     all_by_char_url = f"{all_url}&by_char=1"
     user_by_char_url = f"{all_by_char_url}&username={user}"
@@ -133,7 +136,7 @@ async def ostat_user(ctx, user: str, mode: str):
 
 async def ostat_char(ctx, char: str, mode: str):
     try:
-        all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+        all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
         if char != "all":
             char_url = f"{all_url}&char_id={str(characters.reverse_mappings[char])}"
             char_by_user_url = f"{all_url}&by_user=1&char_id={str(characters.reverse_mappings[char])}"
@@ -192,7 +195,7 @@ async def ostat_char(ctx, char: str, mode: str):
 
 async def ostat_all(ctx, mode: str):
     global all_stats, all_by_char_stats
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
+    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_nonfair=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     all_stats[mode] = requests.get(all_url).json()["Stats"]
