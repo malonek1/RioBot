@@ -48,7 +48,7 @@ class Ladder(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command(name="ladderCompact", help="Display the ladder in a compact view. Parameters: [mode] [min_games]")
-    @commands.cooldown(1, 60, commands.BucketType.default)
+    @commands.cooldown(1, 2, commands.BucketType.default)
     async def ladder_compact(self, ctx, mode="off", min_games=5):
         await ladders.refresh_ladders()
         if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
