@@ -19,9 +19,9 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "Stars Off, Season 5"
-STARS_ON_MODE = "Stars On, Season 5"
-BIG_BALLA_MODE = "Big Balla, Season 5"
+STARS_OFF_MODE = "Stars Off, Season 6"
+STARS_ON_MODE = "Stars On, Season 6"
+BIG_BALLA_MODE = "Big Balla, Season 6"
 
 try:
     STARS_OFF_MODE = next(x for x in modes if "Stars Off, Season" in x["name"])["name"]
