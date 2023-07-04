@@ -119,7 +119,7 @@ async def pstat_user(ctx, user: str, mode: str):
             era_minus = 200
         if char_stats['batters_faced'] > 0 and char_stats['outs_pitched'] > 3:
 
-            desc += f'\n**{char}** ({ip:.1f} IP): {avg:.3f} Opp. AVG / {k_rate:.1%} K% / {era:.2f} ERA, {round(era_minus)} cERA-'
+            desc += f'\n**{char}** ({ip:.1f} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-'
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -178,7 +178,7 @@ async def pstat_char(ctx, char: str, mode: str):
         user_k_rate = user_stats[3]
         user_era = user_stats[4]
         era_minus = user_stats[5]
-        desc += f"\n**{index + 1}. {user}** ({user_ip:.1f} IP): {user_avg:.3f} / {user_k_rate:.1%} / {user_era:.2f} ERA, {round(era_minus)} ERA-"
+        desc += f"\n**{index + 1}. {user}** ({user_ip:.1f} IP): {user_avg:.3f} / {user_k_rate:.1%} / {user_era:.2f}, {round(era_minus)} ERA-"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -213,7 +213,7 @@ async def pstat_all(ctx, mode: str):
 
         era_minus = (era / all_era) * 100
         if char_stats['batters_faced'] > 0 and char_stats['outs_pitched'] > 27:
-            desc += f"\n**{char}** ({ip:.1f} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f} ERA, {round(era_minus)} ERA-"
+            desc += f"\n**{char}** ({ip:.1f} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} ERA-"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
