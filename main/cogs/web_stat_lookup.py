@@ -39,56 +39,19 @@ class WebStatLookup(commands.Cog):
         mode = ladders.get_web_mode(mode)
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
-        # if char == "all" and user == "all":
-        #     await pstat_all(ctx, mode)
-        # elif char == "all" and user != "all":
-        #     await pstat_user(ctx, user, mode)
-        # elif char != "all" and user == "all":
-        #     await pstat_char(ctx, char, mode)
-        # elif char != "all" and user != "all":
-        #     await pstat_user_char(ctx, user, char, mode)
-        url = "https://api.projectrio.app/stats/?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
-        all_url = url
+        if char == "all" and user == "all":
+            await pstat_all(ctx, mode)
+        elif char == "all" and user != "all":
+            await pstat_user(ctx, user, mode)
+        elif char != "all" and user == "all":
+            await pstat_char(ctx, char, mode)
+        elif char != "all" and user != "all":
+            await pstat_user_char(ctx, user, char, mode)
 
-        if char != "all":
-            url += "&char_id=" + str(characters.reverse_mappings[char])
-            if user != "all":
-                all_url = url
-
-        if user != "all":
-            url += "&username=" + user
-
-        all_response = requests.get(all_url).json()
-        response = requests.get(url).json()
-
-        stats = response["Stats"]["Pitching"]
-
-        # batter avg vs pitcher
-        d_avg = stats["hits_allowed"] / (stats["batters_faced"] - stats["walks_bb"] - stats["walks_hbp"])
-        era = 9 * stats["runs_allowed"] / (stats["outs_pitched"] / 3)
-        # strikeout percentage
-        kp = (stats["strikeouts_pitched"] / stats["batters_faced"]) * 100
-
-        ip = stats["outs_pitched"] // 3
-        ip_str = str(ip + (0.1 * (stats["outs_pitched"] % 3)))
-
-        overall = all_response["Stats"]["Pitching"]
-        overall_era = 9 * overall["runs_allowed"] / (overall["outs_pitched"] / 3)
-        # character ERA-
-        cera_minus = (era / overall_era) * 100
-
-        char_or_all = " cERA-"
-        if char == "all" or user == "all":
-            char_or_all = " ERA-"
-
-        embed = discord.Embed(title=user + " - " + char + " (" + ip_str + " IP)",
-                              description="opp. AVG: " + "{:.3f}".format(d_avg) + "\nERA: " + "{:.2f}".format(era) +
-                                          "\nK%: " + "{:.1f}".format(kp) + "\n" + char_or_all + ": " + str(
-                                  round(cera_minus)))
-
-        embed.set_thumbnail(url=characters.images[char])
-
-        await ctx.send(embed=embed)
+    @commands.command(name="prank", help="Get a ranking of all players defensively")
+    async def p_rank(self, ctx, mode="off"):
+        mode = ladders.get_web_mode(mode)
+        await pstat_char(ctx, "all", mode)
 
 
 async def setup(client):
