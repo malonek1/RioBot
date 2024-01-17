@@ -13,9 +13,18 @@ modes_body = {
 }
 modes = requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "Stars Off, Season 5"
-STARS_ON_MODE = "Stars On, Season 5"
-BIG_BALLA_MODE = "Big Balla, Season 5"
+all_modes_body = {
+    "Client": "true"
+}
+
+all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
+
+STARS_OFF_MODE = "Stars Off, Season 6"
+STARS_ON_MODE = "Stars On, Season 6"
+BIG_BALLA_MODE = "Big Balla, Season 6"
+PREV_SEASON_OFF = "Stars Off, Season 5"
+PREV_SEASON_ON = "Stars On, Season 5"
+PREV_SEASON_BB = "Big Balla, Season 5"
 
 try:
     STARS_OFF_MODE = next(x for x in modes if "Stars Off, Season" in x["name"])["name"]
@@ -48,7 +57,12 @@ def find_game_mode(mode: str):
         if mode.lower() in MODE_ALIASES[m]:
             return m
 
-    return STARS_OFF_MODE
+    return mode
+
+
+def get_game_mode_name(mode_id: int):
+    game_mode = next(x for x in all_modes if mode_id == x["id"])
+    return game_mode["name"]
 
 
 def get_web_mode(mode: str):

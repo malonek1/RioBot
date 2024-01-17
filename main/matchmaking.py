@@ -7,8 +7,7 @@ import asyncio
 import datetime as dt
 import pytz
 
-from resources import EnvironmentVariables as ev
-from resources import ladders
+from resources import EnvironmentVariables as ev, ladders
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
@@ -106,10 +105,12 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     account_age = interaction.user.joined_at
     sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
     if account_age < sysdate:
-        if utils.strip_non_alphanumeric(player_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
-            player_rating = ladders.ladders[game_type][player_name]["rating"]
-        elif utils.strip_non_alphanumeric(interaction.user.display_name) in (utils.strip_non_alphanumeric(user) for user in ladders.ladders[game_type]):
-            player_rating = ladders.ladders[game_type][interaction.user.display_name]["rating"]
+        player_match = utils.strip_non_alphanumeric(player_name)
+        player_match2 = utils.strip_non_alphanumeric(interaction.user.display_name)
+        for user in ladders.ladders[game_type]:
+            user_match = utils.strip_non_alphanumeric(user)
+            if player_match == user_match or player_match2 == user_match:
+                player_rating = ladders.ladders[game_type][user]["rating"]
 
         # put player in queue
         queue[game_type][player_id] = {
@@ -297,6 +298,28 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
+                elif "Stars Off" in game_type:
+                    player_1 = match_queue[user_id]["Name"] + " ("
+                    player_2 = match_queue[best_match]["Name"] + " ("
+                    if rfFlipCoin() == "Heads":
+                        player_1 += "1p, "
+                        player_2 += "2p, "
+                    else:
+                        player_1 += "2p, "
+                        player_2 += "1p, "
+                    if rfFlipCoin() == "Heads":
+                        player_1 += "away)"
+                        player_2 += "home)"
+                    else:
+                        player_1 += "home)"
+                        player_2 += "away)"
+                    stadium = rfRandomStadium()
+                    embed.add_field(name=game_type + " match found!",
+                                    value=player_1 + " vs " + player_2 + "\n\nFind matches in <#" + str(
+                                        BUTTON_CHANNEL_ID) + ">")
+                    embed.add_field(name="Stadium", value=stadium)
+                    await channel.send("<@" + user_id + "> <@" + str(
+                        best_match) + ">", embed=embed)
                 else:
                     embed.add_field(name=game_type + " match found!",
                                     value=match_queue[user_id]["Name"] + " vs " + str(
