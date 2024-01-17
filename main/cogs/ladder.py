@@ -66,7 +66,7 @@ class Ladder(commands.Cog):
             pos_gap = 3
 
             for index, user in enumerate(ladder_values):
-                if user["num_wins"] + user["num_losses"] < min_games:
+                if (user["num_wins"] == 0 and user["num_losses"] == 0) or (user["num_wins"] + user["num_losses"] < min_games):
                     continue
 
                 pos += 1
