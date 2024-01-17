@@ -25,6 +25,8 @@ class Ladder(commands.Cog):
             message = "**" + mode + " Ladder**\n```"
             message += "#    Username          Rtg    W/L      Pct\n"
             for index, user in enumerate(ladder_values):
+                if user["num_wins"] == 0 and user["num_losses"] == 0:
+                    continue
                 buffer1 = " " * (4 - len(str(index + 1)))
                 buffer2 = " " * (18 - len(user["username"]))
                 buffer3 = " " * (7 - len(str(round(user["adjusted_rating"]))))
