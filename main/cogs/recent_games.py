@@ -26,7 +26,9 @@ class RecentGames(commands.Cog):
             num_games = 40
         web_mode = ladders.get_web_mode(mode)
         mode = ladders.find_game_mode(mode)
-        api_url = f"{BASE_GAMES_URL}?limit_games={num_games}&tag={web_mode}"
+        api_url = f"{BASE_GAMES_URL}?limit_games={num_games}"
+        if mode != "all":
+            api_url += f"&tag={web_mode}"
         if user != "all":
             api_url += f"&username={user}"
 
@@ -59,6 +61,8 @@ class RecentGames(commands.Cog):
                 message += " (F/" + str(game["innings_played"]) + ")"
             stadium = stadium_map[game["stadium"]]
             message += f" @ *{stadium}*\n"
+            if mode == "all":
+                message += f" ({ladders.get_game_mode_name(game['game_mode'])})\n"
 
             if (index + 1) % 5 == 0:
                 embed.add_field(name="", value=message, inline=False)
@@ -70,8 +74,12 @@ class RecentGames(commands.Cog):
     # TODO: Reuse code between h2h/last
     @commands.command(help="display recent games between two users")
     @commands.cooldown(1, 2, commands.BucketType.user)
-    async def h2h(self, ctx, user1: str, user2: str, num_games: int = 10):
+    async def h2h(self, ctx, user1: str, user2: str, mode: str = "all"):
+        num_games = 30
         api_url = f"{BASE_GAMES_URL}?limit_games={str(num_games)}&username={user1}&vs_username={user2}"
+        if mode != "all":
+            web_mode = ladders.get_web_mode(mode)
+            api_url += f"&tag={web_mode}"
 
         games_data = requests.get(api_url).json()
 
