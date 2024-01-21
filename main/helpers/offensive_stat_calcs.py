@@ -69,6 +69,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
 
 
 async def ostat_user(ctx, user: str, mode: str):
+    await ctx.send(f"This information can now be accessed here: https://project-rio-frontend.vercel.app/user/{user}/batting")
     global all_stats, all_by_char_stats
     all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
     user_url = f"{all_url}&username={user}"
@@ -172,7 +173,7 @@ async def ostat_char(ctx, char: str, mode: str):
         else:
             ops_plus = 0
 
-        if user_pa > (pa / 200):
+        if user_pa > (pa / 100):
             output_list.append((user, user_pa, user_avg, user_obp, user_slg, ops_plus))
 
     sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=True)
@@ -184,7 +185,7 @@ async def ostat_char(ctx, char: str, mode: str):
         user_obp = user_stats[3]
         user_slg = user_stats[4]
         ops_plus = user_stats[5]
-        desc += f"\n**{index + 1}. {user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(ops_plus)} cOPS+"
+        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(ops_plus)} cOPS+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)

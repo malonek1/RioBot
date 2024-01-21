@@ -12,7 +12,7 @@ from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
-mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_MODE]
+mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_RANDOMS, ladders.STARS_OFF_MEGA, ladders.STARS_OFF_RANDOMS, ladders.STARS_OFF_HAZARDS]
 
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
@@ -35,9 +35,12 @@ match_count = {}
 for m in mode_list:
     match_count[m] = 1
 
-last_ping_time = {}
-for m in mode_list:
-    last_ping_time[m] = 0.0
+last_ping_time = {
+    "<@&998791464630898808>": 0.0,
+    "<@&998791156794150943>": 0.0
+}
+# for m in mode_list:
+#     last_ping_time[m] = 0.0
 
 recent_matches = {}
 for m in mode_list:
@@ -107,6 +110,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     if account_age < sysdate:
         player_match = utils.strip_non_alphanumeric(player_name)
         player_match2 = utils.strip_non_alphanumeric(interaction.user.display_name)
+        print(player_match, player_match2)
         for user in ladders.ladders[game_type]:
             user_match = utils.strip_non_alphanumeric(user)
             if player_match == user_match or player_match2 == user_match:
@@ -205,7 +209,7 @@ async def update_queue_status():
 
         matches_made = "There have been " + str(rm_total) + " matches made in the past hour!"
 
-        new_message = str(total) + " player(s) in the matchmaking queue:"
+        new_message = "Press buttons below to search for a game.\n" + str(total) + " player(s) in the matchmaking queue:"
         embed = discord.Embed()
         embed.add_field(name=new_message,
                         value=details)
@@ -221,7 +225,7 @@ async def update_queue_status():
 # return: min and max rating the player can match against
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
-    percentile += (percentile * time_in_queue / 180)
+    percentile += (percentile * time_in_queue / 120)
     rating_list_copy = []
     for user in ladders.ladders[game_type]:
         rating_list_copy.append(ladders.ladders[game_type][user]["rating"])
@@ -355,19 +359,22 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
             print("Something weird went wrong")
 
     global last_ping_time
-    if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[game_type] > 1800:
-        role_id = ""
-        role_name = ""
-        if game_type == ladders.STARS_OFF_MODE:
-            role_id = "<@&998791156794150943>"
-            role_name = "STARS-OFF"
-        if game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA_MODE:
-            role_id = "<@&998791464630898808>"
-            role_name = "STARS-ON"
+
+    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_MEGA or game_type == ladders.STARS_OFF_RANDOMS:
+        role_id = "<@&998791156794150943>"
+        role_name = "STARS-OFF"
+    elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA_RANDOMS:
+        role_id = "<@&998791464630898808>"
+        role_name = "STARS-ON"
+    else:
+        role_id = "<@&998791156794150943>"
+        role_name = "STARS-OFF"
+
+    if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[role_id] > 1800:
         embed = discord.Embed()
         embed.add_field(name=f'ATTENTION {role_name} GAMERS',
                         value="There is a player looking for a " + game_type + " match in queue!")
-        last_ping_time[game_type] = time.time()
+        last_ping_time[role_id] = time.time()
         await channel.send(role_id, embed=embed)
 
     if 1800 < time.time() - queue[game_type][user_id]["Time"] < 1815:
