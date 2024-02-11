@@ -19,36 +19,47 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "Stars Off, Season 6"
-STARS_ON_MODE = "Stars On, Season 6"
-BIG_BALLA_MODE = "Big Balla, Season 6"
-PREV_SEASON_OFF = "Stars Off, Season 5"
-PREV_SEASON_ON = "Stars On, Season 5"
-PREV_SEASON_BB = "Big Balla, Season 5"
+STARS_OFF_MODE = "Stars Off, Season 7"
+STARS_ON_MODE = "Stars On Hazardous, Season 7"
+BIG_BALLA_RANDOMS = "Big Balla Randoms, Season 7"
+STARS_OFF_MEGA = "Stars Off Mega, Season 7"
+STARS_OFF_RANDOMS = "Stars Off Hazardous Randoms, Season 7"
+STARS_OFF_HAZARDS = "Stars Off Hazardous, Season 7"
+# STARS_ON_MODE = "Stars On, Season 6"
+# BIG_BALLA_MODE = "Big Balla, Season 6"
+# PREV_SEASON_OFF = "Stars Off, Season 5"
+# PREV_SEASON_ON = "Stars On, Season 5"
+# PREV_SEASON_BB = "Big Balla, Season 5"
 
-try:
-    STARS_OFF_MODE = next(x for x in modes if "Stars Off, Season" in x["name"])["name"]
-except Exception as e:
-    print(e)
-try:
-    STARS_ON_MODE = next(x for x in modes if "Stars On, Season" in x["name"])["name"]
-except Exception as e:
-    print(e)
-try:
-    BIG_BALLA_MODE = next(x for x in modes if "Big Balla, Season" in x["name"])["name"]
-except Exception as e:
-    print(e)
+# try:
+#     STARS_OFF_MODE = next(x for x in modes if "Stars Off, Season" in x["name"])["name"]
+# except Exception as e:
+#     print(e)
+# try:
+#     STARS_ON_MODE = next(x for x in modes if "Stars On, Season" in x["name"])["name"]
+# except Exception as e:
+#     print(e)
+# try:
+#     BIG_BALLA_MODE = next(x for x in modes if "Big Balla, Season" in x["name"])["name"]
+# except Exception as e:
+#     print(e)
 
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
     STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson"],
-    BIG_BALLA_MODE: ["bb", "bigballa", "balla", "big"]
+    BIG_BALLA_RANDOMS: ["bb", "bigballa", "balla", "big"],
+    STARS_OFF_MEGA: ["mega"],
+    STARS_OFF_RANDOMS: ["randoms", "random", "rand"],
+    STARS_OFF_HAZARDS: ["hazards", "hazardous"]
 }
 
 ladders = {
     STARS_OFF_MODE: [],
     STARS_ON_MODE: [],
-    BIG_BALLA_MODE: []
+    BIG_BALLA_RANDOMS: [],
+    STARS_OFF_MEGA: [],
+    STARS_OFF_RANDOMS: [],
+    STARS_OFF_HAZARDS: []
 }
 
 

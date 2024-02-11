@@ -1,8 +1,8 @@
 __pycache__/
-main/.env
+main/.env_BACKUP
 .idea
 match_log.txt
 main/client_secret.json
 *.iml
-main/resources/test.json
-/main/resources/test.json
+main/resources/test_BACKUP.json
+/main/resources/test_BACKUP.json
