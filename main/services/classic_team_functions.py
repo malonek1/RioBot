@@ -1,5 +1,5 @@
 from random import choice, shuffle
-from main.helpers.classic_teams_parser import *
+from helpers.classic_teams_parser import *
 
 season_aliases = ["season"]
 pick_aliases = ["pick", "picked", "select", "selection"]

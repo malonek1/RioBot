@@ -1,7 +1,7 @@
 import csv
 from random import shuffle
-from main.helpers.utils import ordinal
-from main.resources.characters import Char
+from helpers.utils import ordinal
+from resources.characters import Char
 
 # Static variables of which row in the CSV are which
 league_row = 0
