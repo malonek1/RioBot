@@ -3,7 +3,7 @@ from io import BytesIO
 import discord
 import requests
 from PIL import Image, ImageOps
-from main.resources.characters import images
+from resources.characters import images
 
 
 def build_team_image(team):

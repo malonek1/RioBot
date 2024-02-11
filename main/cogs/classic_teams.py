@@ -2,9 +2,9 @@ import json
 
 import discord
 from discord.ext import commands
-from main.services.classic_team_functions import *
-from main.services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
-from main.services.random_functions import rfRandomStadium
+from services.classic_team_functions import *
+from services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
+from services.random_functions import rfRandomStadium
 
 # Builds the classic teams libraries
 build_classic_teams()
