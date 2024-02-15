@@ -19,12 +19,12 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "Stars Off, Season 7"
-STARS_ON_MODE = "Stars On Hazardous, Season 7"
-BIG_BALLA_RANDOMS = "Big Balla Randoms, Season 7"
-STARS_OFF_MEGA = "Stars Off Mega, Season 7"
-STARS_OFF_RANDOMS = "Stars Off Hazardous Randoms, Season 7"
-STARS_OFF_HAZARDS = "Stars Off Hazardous, Season 7"
+STARS_OFF_MODE = "Stars Off, Season 8"
+STARS_ON_MODE = "Stars On Hazardous, Season 8"
+BIG_BALLA_RANDOMS = "Big Balla Randoms, Season 8"
+STARS_OFF_MEGA = "Stars Off Mega, Season 8"
+STARS_OFF_RANDOMS = "Stars Off Hazardous Randoms, Season 8"
+STARS_OFF_HAZARDS = "Stars Off Hazardous, Season 8"
 # STARS_ON_MODE = "Stars On, Season 6"
 # BIG_BALLA_MODE = "Big Balla, Season 6"
 # PREV_SEASON_OFF = "Stars Off, Season 5"
