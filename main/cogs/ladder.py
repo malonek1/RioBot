@@ -27,12 +27,17 @@ class Ladder(commands.Cog):
             message = "**" + mode + " Ladder**\n```"
             message += "#    Username          Rtg    W/L      Pct\n"
             for index, user in enumerate(ladder_values):
+                if user["num_wins"] == 0 and user["num_losses"] == 0:
+                    continue
                 buffer1 = " " * (4 - len(str(index + 1)))
                 buffer2 = " " * (18 - len(user["username"]))
                 buffer3 = " " * (7 - len(str(round(user["adjusted_rating"]))))
                 buffer4 = " " * (8 - (len(str(user["num_wins"])) + len(str(user["num_losses"]))))
 
-                win_pct = user["num_wins"] / (user["num_wins"] + user["num_losses"]) * 100
+                if user["num_wins"] + user["num_losses"] > 0:
+                    win_pct = user["num_wins"] / (user["num_wins"] + user["num_losses"]) * 100
+                else:
+                    win_pct = 0
 
                 message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(round(user["adjusted_rating"])) \
                            + buffer3 + str(user["num_wins"]) + "-" + str(user["num_losses"]) + buffer4 + str(round(win_pct, 1)) + "%\n"
@@ -63,7 +68,7 @@ class Ladder(commands.Cog):
             pos_gap = 3
 
             for index, user in enumerate(ladder_values):
-                if user["num_wins"] + user["num_losses"] < min_games:
+                if (user["num_wins"] == 0 and user["num_losses"] == 0) or (user["num_wins"] + user["num_losses"] < min_games):
                     continue
 
                 pos += 1
