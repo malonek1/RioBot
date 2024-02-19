@@ -6,3 +6,5 @@ main/client_secret.json
 *.iml
 main/resources/test_BACKUP.json
 /main/resources/test_BACKUP.json
+main/.env
+main/resources/test.json

@@ -12,7 +12,7 @@ from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
-mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_RANDOMS, ladders.STARS_OFF_MEGA, ladders.STARS_OFF_RANDOMS, ladders.STARS_OFF_HAZARDS]
+mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_RANDOMS, ladders.STARS_OFF_RANDOMS, ladders.STARS_OFF_HAZARDS]
 
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
@@ -360,7 +360,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
 
     global last_ping_time
 
-    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_MEGA or game_type == ladders.STARS_OFF_RANDOMS:
+    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_RANDOMS:
         role_id = "<@&998791156794150943>"
         role_name = "STARS-OFF"
     elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA_RANDOMS:

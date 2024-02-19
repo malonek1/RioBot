@@ -20,9 +20,8 @@ all_modes_body = {
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
 STARS_OFF_MODE = "Stars Off, Season 8"
-STARS_ON_MODE = "Stars On Hazardous, Season 8"
+STARS_ON_MODE = "Stars On, Season 8"
 BIG_BALLA_RANDOMS = "Big Balla Randoms, Season 8"
-STARS_OFF_MEGA = "Stars Off Mega, Season 8"
 STARS_OFF_RANDOMS = "Stars Off Hazardous Randoms, Season 8"
 STARS_OFF_HAZARDS = "Stars Off Hazardous, Season 8"
 # STARS_ON_MODE = "Stars On, Season 6"
@@ -48,7 +47,6 @@ MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
     STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson"],
     BIG_BALLA_RANDOMS: ["bb", "bigballa", "balla", "big"],
-    STARS_OFF_MEGA: ["mega"],
     STARS_OFF_RANDOMS: ["randoms", "random", "rand"],
     STARS_OFF_HAZARDS: ["hazards", "hazardous"]
 }
@@ -57,7 +55,6 @@ ladders = {
     STARS_OFF_MODE: [],
     STARS_ON_MODE: [],
     BIG_BALLA_RANDOMS: [],
-    STARS_OFF_MEGA: [],
     STARS_OFF_RANDOMS: [],
     STARS_OFF_HAZARDS: []
 }
