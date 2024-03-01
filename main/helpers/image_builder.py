@@ -100,7 +100,6 @@ def convert_image_to_file(team_image):
 
 
 def load_image_for_character(character_name):
-    print(character_name)
     path = "./images/" + character_name + ".png"
     return Image.open(path).convert('RGBA')
 # End loadImageForCharacter
