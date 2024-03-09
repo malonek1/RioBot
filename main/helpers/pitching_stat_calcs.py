@@ -202,9 +202,9 @@ async def pstat_all(ctx, mode: str):
     all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
 
     all_ip, all_avg, all_k_rate, all_era = calc_slash_line(all_stats[mode]["Pitching"])
-    all_ip_str = str(math.floor(all_ip)) + "." + str(all_stats['outs_pitched'] % 3)
+    all_ip_str = str(math.floor(all_ip)) + "." + str(all_stats[mode]["Pitching"]['outs_pitched'] % 3)
     desc = "**Char** (IP): Opp AVG / K% / ERA, ERA-"
-    title = f"\nAll ({all_ip_str:.1f} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
+    title = f"\nAll ({all_ip_str} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
 
     try:
         sorted_char_list = sorted(all_by_char_stats[mode].keys(),
