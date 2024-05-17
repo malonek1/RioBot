@@ -227,8 +227,8 @@ async def update_queue_status():
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
     percentile += (percentile * time_in_queue / 120)
-    if game_type == ladders.STARS_OFF_MODE:
-        percentile = min(percentile, 0.5)
+    # if game_type == ladders.STARS_OFF_MODE:
+    #     percentile = min(percentile, 0.5)
     rating_list_copy = []
     for user in ladders.ladders[game_type]:
         rating_list_copy.append(ladders.ladders[game_type][user]["rating"])
