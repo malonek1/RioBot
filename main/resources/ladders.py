@@ -22,7 +22,7 @@ all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_mo
 STARS_OFF_MODE = "S9 Stars Off"
 STARS_ON_MODE = "S9 Stars On"
 BIG_BALLA = "S9 Big Balla"
-STARS_OFF_REMIXED = "Stars Off Hazardous Randoms, Season 8"
+STARS_OFF_REMIXED = "S9 Remixed"
 STARS_OFF_HAZARDS = "S9 Stars Off Hazards"
 # STARS_ON_MODE = "Stars On, Season 6"
 # BIG_BALLA_MODE = "Big Balla, Season 6"
