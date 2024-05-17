@@ -38,13 +38,13 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str):
     games = misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"]
     winrate = (misc["home_wins"] + misc["away_wins"]) / games if games > 0 else 0
 
-    ip_str = str(math.floor(ip)) + "." + str(stats["outs_pitched"] % 3)
+    ip_str = str(math.floor(ip)) + "." + str(stats.get("outs_pitched", 0) % 3)
     embed = discord.Embed(title=f"{user} - {char} ({ip_str} IP)")
     fields = [("G", str(games)),
               ("Win%", "{:.1f}".format(winrate * 100)),
               ("Batters Faced", str(stats["batters_faced"])),
               ("Hits Allowed", str(stats["hits_allowed"])),
-              ("IP", str(round(stats["outs_pitched"] / 3, 1))),
+              ("IP", str(round(stats.get("outs_pitched", 0) / 3, 1))),
               ("Runs Allowed", str(stats["runs_allowed"])),
               ("\u200b", "\u200b"),
               ("K", str(stats["strikeouts_pitched"])),
@@ -98,7 +98,7 @@ async def pstat_user(ctx, user: str, mode: str):
         era_minus = (era / overall_era) * 100
     else:
         era_minus = 200
-    ip_str = str(math.floor(ip)) + "." + str(user_stats["outs_pitched"] % 3)
+    ip_str = str(math.floor(ip)) + "." + str(user_stats.get("outs_pitched", 0) % 3)
     title = f"\n{user} ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f} ERA, {round(era_minus)} ERA-"
 
     desc = "**Char** (IP): Opp. AVG / K% / ERA, cERA-"
@@ -106,7 +106,7 @@ async def pstat_user(ctx, user: str, mode: str):
     del user_dict["all"]
     try:
         sorted_char_list = sorted(user_dict.keys(),
-                                  key=lambda x: user_dict[x]["outs_pitched"],
+                                  key=lambda x: user_dict[x].get("outs_pitched", 0),
                                   reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
@@ -121,8 +121,8 @@ async def pstat_user(ctx, user: str, mode: str):
             era_minus = (era / overall_era) * 100
         else:
             era_minus = 200
-        if char_stats['batters_faced'] > 0 and char_stats['outs_pitched'] > 3:
-            ip_str = str(math.floor(ip)) + "." + str(char_stats['outs_pitched'] % 3)
+        if char_stats['batters_faced'] > 0 and char_stats.get("outs_pitched", 0) > 3:
+            ip_str = str(math.floor(ip)) + "." + str(char_stats.get("outs_pitched", 0) % 3)
             desc += f'\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-'
 
     embed = discord.Embed(title=title, description=desc)
@@ -158,7 +158,7 @@ async def pstat_char(ctx, char: str, mode: str):
 
     char_stats = user_list[0][1]
     ip, avg, k_rate, era = calc_slash_line(char_stats)
-    ip_str = str(math.floor(ip)) + "." + str(char_stats["outs_pitched"] % 3)
+    ip_str = str(math.floor(ip)) + "." + str(char_stats.get("outs_pitched", 0) % 3)
 
     title = f"\n{char} ({ip_str} IP): {avg:.3f} Opp. AVG / {k_rate:.1%} K% / {era:.2f} ERA"
     desc = "**User** (IP): Opp. AVG / K% / ERA, ERA-"
@@ -172,7 +172,7 @@ async def pstat_char(ctx, char: str, mode: str):
             era_minus = 200
 
         if user_ip > (ip / 100):
-            user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats['outs_pitched'] % 3)
+            user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats.get("outs_pitched", 0) % 3)
             output_list.append((user, user_ip_str, user_avg, user_k_rate, user_era, era_minus))
 
     sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=False)
@@ -202,13 +202,13 @@ async def pstat_all(ctx, mode: str):
     all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
 
     all_ip, all_avg, all_k_rate, all_era = calc_slash_line(all_stats[mode]["Pitching"])
-    all_ip_str = str(math.floor(all_ip)) + "." + str(all_stats[mode]["Pitching"]['outs_pitched'] % 3)
+    all_ip_str = str(math.floor(all_ip)) + "." + str(all_stats.get("outs_pitched", 0) % 3)
     desc = "**Char** (IP): Opp AVG / K% / ERA, ERA-"
-    title = f"\nAll ({all_ip_str} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
+    title = f"\nAll ({all_ip_str:.1f} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
 
     try:
         sorted_char_list = sorted(all_by_char_stats[mode].keys(),
-                                  key=lambda x: all_by_char_stats[mode][x]["Pitching"]["outs_pitched"],
+                                  key=lambda x: all_by_char_stats[mode][x]["Pitching"].get("outs_pitched", 0),
                                   reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
@@ -219,8 +219,8 @@ async def pstat_all(ctx, mode: str):
         ip, avg, k_rate, era = calc_slash_line(char_stats)
 
         era_minus = (era / all_era) * 100
-        if char_stats['batters_faced'] > 0 and char_stats['outs_pitched'] > 27:
-            ip_str = str(math.floor(ip)) + "." + str(char_stats['outs_pitched'] % 3)
+        if char_stats['batters_faced'] > 0 and char_stats.get("outs_pitched", 0) > 27:
+            ip_str = str(math.floor(ip)) + "." + str(char_stats.get("outs_pitched", 0) % 3)
             desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} ERA-"
 
     embed = discord.Embed(title=title, description=desc)
@@ -231,8 +231,7 @@ async def pstat_all(ctx, mode: str):
 
 
 def calc_slash_line(raw_dict):
-    ip = sum(raw_dict.get(key, 0) for key in
-             ["outs_pitched"]) / 3
+    ip = sum(raw_dict.get("outs_pitched", 0)) / 3
     avg = raw_dict["hits_allowed"] / (raw_dict["batters_faced"] - raw_dict['walks_bb'] - raw_dict['walks_hbp']) if raw_dict["batters_faced"] > 0 else 0
     k_rate = (raw_dict["strikeouts_pitched"] / (raw_dict["batters_faced"] - raw_dict['walks_bb'] - raw_dict['walks_hbp'])) if raw_dict['batters_faced'] > 0 else 0
     era = (9 * raw_dict['runs_allowed']) / ip if ip > 0 else 0
