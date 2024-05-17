@@ -3,7 +3,6 @@ from discord import ButtonStyle
 from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
-import asyncio
 import datetime as dt
 import pytz
 
@@ -12,7 +11,7 @@ from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
-mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA_RANDOMS, ladders.STARS_OFF_RANDOMS, ladders.STARS_OFF_HAZARDS]
+mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA, ladders.STARS_OFF_REMIXED, ladders.STARS_OFF_HAZARDS]
 
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
@@ -23,6 +22,9 @@ BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
 MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
 MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
 MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
+
+STARS_OFF_ROLE = "<@&998791156794150943>"
+STARS_ON_ROLE = "<@&998791464630898808>"
 
 # The matchmaking queue
 queue = {}
@@ -45,7 +47,6 @@ last_ping_time = {
 recent_matches = {}
 for m in mode_list:
     recent_matches[m] = []
-
 
 async def init_buttons(bot: commands.Bot):
     # Initialize matchmaking buttons
@@ -100,7 +101,7 @@ async def init_buttons(bot: commands.Bot):
 # Button for a player to enter the matchmaking queue
 # If they are in the queue already, it will refresh their presence in the queue
 async def enter_queue(interaction, bot: commands.Bot, game_type):
-    player_rating = 1400
+    player_rating = 1300
     player_id = str(interaction.user.id)
     player_name = interaction.user.name
     mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
@@ -226,6 +227,8 @@ async def update_queue_status():
 def calc_search_range(rating, game_type, time_in_queue):
     percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
     percentile += (percentile * time_in_queue / 120)
+    if game_type == ladders.STARS_OFF_MODE:
+        percentile = min(percentile, 0.5)
     rating_list_copy = []
     for user in ladders.ladders[game_type]:
         rating_list_copy.append(ladders.ladders[game_type][user]["rating"])
@@ -360,14 +363,14 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
 
     global last_ping_time
 
-    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_RANDOMS:
-        role_id = "<@&998791156794150943>"
+    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_REMIXED or game_type == ladders.STARS_OFF_HAZARDS:
+        role_id = STARS_OFF_ROLE
         role_name = "STARS-OFF"
-    elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA_RANDOMS:
-        role_id = "<@&998791464630898808>"
+    elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA:
+        role_id = STARS_ON_ROLE
         role_name = "STARS-ON"
     else:
-        role_id = "<@&998791156794150943>"
+        role_id = STARS_OFF_ROLE
         role_name = "STARS-OFF"
 
     if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[role_id] > 1800:
