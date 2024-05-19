@@ -56,10 +56,11 @@ def rfRandomStadium():
 
 # Decide on a random mode to play and where
 def rfRandomMode():
-    random_modes = ["random teams"
-                    , "random balanced teams"
+    random_modes = ["Superstars Off"
+                    , "Superstars On"
                     , "BIG BALLA"
-                    , "Tee Ball"]
+                    , "Superstars Off Hazards"
+                    , "Remixed"]
     shuffle(random_modes)
     return "Play a game of " + random_modes.pop() + " at " + rfRandomStadium()
 
