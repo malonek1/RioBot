@@ -54,6 +54,12 @@ def rfRandomStadium():
     return stadiums.pop()
 
 
+def rfRandomHazardsStadium():
+    stadiums = ["Peach Garden", "Wario Palace", "Yoshi Park", "DK Jungle", "Bowser Castle"]
+    shuffle(stadiums)
+    return stadiums.pop()
+
+
 # Decide on a random mode to play and where
 def rfRandomMode():
     random_modes = ["Superstars Off"

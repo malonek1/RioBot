@@ -7,7 +7,7 @@ import datetime as dt
 import pytz
 
 from resources import EnvironmentVariables as ev, ladders
-from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin
+from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
@@ -321,6 +321,8 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                         player_1 += "home)"
                         player_2 += "away)"
                     stadium = rfRandomStadium()
+                    if "Hazards" in game_type and "Mario" in stadium:
+                        stadium = rfRandomHazardsStadium()
                     embed.add_field(name=game_type + " match found!",
                                     value=player_1 + " vs " + player_2 + "\n\nFind matches in <#" + str(
                                         BUTTON_CHANNEL_ID) + ">")
