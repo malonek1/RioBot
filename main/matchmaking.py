@@ -305,7 +305,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
-                elif "Stars Off" in game_type:
+                else:
                     player_1 = match_queue[user_id]["Name"] + " ("
                     player_2 = match_queue[best_match]["Name"] + " ("
                     if rfFlipCoin() == "Heads":
@@ -327,13 +327,13 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed)
-                else:
-                    embed.add_field(name=game_type + " match found!",
-                                    value=match_queue[user_id]["Name"] + " vs " + str(
-                                        match_queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
-                                        BUTTON_CHANNEL_ID) + ">")
-                    await channel.send("<@" + user_id + "> <@" + str(
-                        best_match) + ">", embed=embed)
+                # else:
+                #     embed.add_field(name=game_type + " match found!",
+                #                     value=match_queue[user_id]["Name"] + " vs " + str(
+                #                         match_queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
+                #                         BUTTON_CHANNEL_ID) + ">")
+                #     await channel.send("<@" + user_id + "> <@" + str(
+                #         best_match) + ">", embed=embed)
 
                 # Increment total match count
                 match_count[game_type] += 1
