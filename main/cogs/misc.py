@@ -187,7 +187,9 @@ class Misc(commands.Cog):
     async def rioGuide(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RIO GUIDE:',
-                        value='For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
+                        value='For a tutorial on setting up Project Rio, head to our website <https://www.projectrio.online/tutorial>\n'
+                              'For a guide to netplay, please check out https://discord.com/channels/628353660698624020/1078085662626033674/1213654488045592650\n'
+                              'If you need further help, please use <#823805409143685130> to get assistance.')
         await ctx.send(embed=embed)
 
     # ball flickering
