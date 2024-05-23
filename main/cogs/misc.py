@@ -30,13 +30,13 @@ class Misc(commands.Cog):
         if rule == 1:
             embed.add_field(name="Hate Speech",
                             value="• Includes but is not limited to: racism, homophobia, transphobia, ableism, threats\n"
-                                  "• This includes profile pictures, usernames and custom statuses")
+                                  "• This includes profile pictures, usernames, and custom statuses")
         elif rule == 2:
             embed.add_field(name="Posting NSFW Content",
                             value="• This includes pictures, long text copy pastas, spam pinging, posting discord links, having sexual and or graphic conversations in voice or text channels, or other disruptive content.\n"
-                                  "• NSFW topics include but are not limited to: pornographic, excessively disturbing, sexually suggestive, or topics concerning past sexual experiences, sexual desires, gore, disturbing conversations about abuse, images of scantily clad people, images that make any allusion to sexual fetishes (vore, etc.), images of sex toys, or using trigger words.\n"
-                                  "• Extremely edgy content is content that is ‘excessively dark, often overbearingly depressive in nature could be considered humorous, or posts related to recent tragedies.\n"
-                                  "• This includes profile pictures, usernames and custom statuses.")
+                                  "• NSFW topics include but are not limited to: pornographic, excessively disturbing, sexually suggestive, or topics concerning past sexual experiences, sexual desires, gore, disturbing conversations about abuse, images of scantily clad people, images that make any allusion to sexual fetishes, images of sex toys, or using trigger words.\n"
+                                  "•  Extremely edgy dark humor, making light of recent tragedies \n"
+                                  "• This includes profile pictures, usernames, and custom statuses.")
         elif rule == 3:
             embed.add_field(name="Posting harmful or malicious links",
                             value="• This includes posting links to malicious websites.\n"
@@ -46,44 +46,54 @@ class Misc(commands.Cog):
             embed.add_field(name="Doxxing",
                             value="• Do not post personal details or identifying information of any users without that user's express permission.\n"
                                   "• Do not post pictures of other people without their consent")
-
         elif rule == 5:
             embed.add_field(name="Money Matching",
                             value="• Money-matching (playing in a match in exchange for money) or other forms of gambling are not permitted. \n"
                                   "• Do not approach other users of this server in DMs for the purpose of playing for money.")
-
         elif rule == 6:
+            embed.add_field(name="Ban Evasion/Subverting Server Rules",
+                            value="• Using alternate accounts to evade bans will result in an immediate ban for the alternate account. \n"
+                                  "• Using alternate accounts to subvert instructions or discipline from the moderation team can also lead to a permanent ban for the alt account and main account as well.\n"
+                                  "• Assisting any user in ban evading will subject that user to a permanent ban.\n"
+                                  "• Any \"bending of\" the rules or \"finding loopholes\" in the rules can still be subject to the same punishment as if the rule was broken as written. Use common sense!")
+        elif rule == 7:
             embed.add_field(name="Spamming",
                             value="• Keep discussions on topic to their respective channels\n"
                                   "• Messages in <#628353660698624024> must follow all other rules in the server\n"
                                   "• Self-promotion outside of the self-promotion channel is not permitted\n"
-                                  "• Please only use Pings for their intended purpose. This includes @Netplayers and @New Netplayers for finding games in <#948321928760918087>")
-        elif rule == 7:
+                                  "• Please only use Pings for their intended purpose. This includes @Netplayers and @LFGNewNetplayers for finding games in <#948321928760918087>")
+        elif rule == 8:
             embed.add_field(name="Instigating Fights",
                             value="• Intentional and continuous drama baiting/instigating is not allowed. Drama baiting/instigating is defined as constantly flaming/being toxic to users after being informally/formally warned.\n"
                                   "• Members of the server must also be fair and understanding to those with different opinions.\n"
                                   "• Mods or Admins may ask the discussion to end if it gets too heated.")
-        elif rule == 8:
+        elif rule == 9:
             embed.add_field(name='No "Crossing The Line"',
                             value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
                                   "• Bullying and berating someone will not be tolerated. \n"
-                                  "• If you're unsure your communication is appropriate, then ask a moderator first.")
-        elif rule == 9:
+                                  "• If you're unsure your communication is appropriate, then ask a moderator first.\n"
+                                  "• Alluding to suicide in any way will not be tolerated.\n"
+                                  "• Ban evading or helping someone to ban evade will result in permanent ban.\n"
+                                  "• Using loopholes for bending the rules is still rule breaking. Use common sense.")
+        elif rule == 10:
             embed.add_field(name="Having Non-English Conversations",
                             value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
                                   "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.")
-        elif rule == 10:
+        elif rule == 11:
             embed.add_field(name="Posting Excessively Loud Videos",
                             value="• Excessively loud videos are not allowed in media channels.")
-        elif rule == 11:
+        elif rule == 12:
             embed.add_field(name="Asking for an ISO / ROM",
                             value="• Asking for an ISO / ROM of any game is prohibited.\n"
                                   "• Users must obtain these files on their own accord")
-        elif rule == 12:
+        elif rule == 13:
             embed.add_field(name="Netplay Specific Rules",
                             value="• Users can only submit games to the ranked leaderboards from one account. No smurfing.\n"
-                                  "• Dropping out of active tournaments will result in action from the moderation team depending on circumstances. Multiple offenses are more likely to result in bans from future tournaments.")
-        elif rule == 13:
+                                  "• User must pass a latency test to at least 1 US Server (120ms ping / 15ms jitter) in order to use the matchmaking pings or matchmaking bot.\n"
+                                  "• Users who enter the Matchmaking Bot must accept the instructions given (including random assignment of home/away, stadium, order of pick, opponent, etc.). Failing to respond to the matches given by the bot or asking to gentleman's out of the bot's instructions will lead to a ban from using the features of the matchmaking bot. \n"
+                                  "• Users who wish to specify preferences (such as specific stadiums, specific pick orders, range of opponents, avoiding rematches/runbacks, etc.) should use the \"LFG-pings\" to find a match in #matchmaking-netplay. \n"
+                                  "• For additional rules regarding netplay please read: https://discord.com/channels/628353660698624020/708107695831646209/949426712658194452")
+        elif rule == 14:
             embed.add_field(name="No politics",
                             value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
         await ctx.send(embed=embed)
@@ -130,6 +140,7 @@ class Misc(commands.Cog):
         embed.set_image(url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png")
         await ctx.send(embed=embed)
 
+    # TODO: Update or remove
     # ranked drafting details
     @commands.command(help="Returns the current ranked draft rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
@@ -176,7 +187,9 @@ class Misc(commands.Cog):
     async def rioGuide(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RIO GUIDE:',
-                        value='For a tutorial on setting up Project Rio, check out <#823805174811197470> or head to our website <https://www.projectrio.online/tutorial>\nIf you need further help, please use <#823805409143685130> to get assistance.')
+                        value='For a tutorial on setting up Project Rio, head to our website <https://www.projectrio.online/tutorial>\n'
+                              'For a guide to netplay, please check out https://discord.com/channels/628353660698624020/1078085662626033674/1213654488045592650\n'
+                              'If you need further help, please use <#823805409143685130> to get assistance.')
         await ctx.send(embed=embed)
 
     # ball flickering
@@ -204,7 +217,7 @@ class Misc(commands.Cog):
     async def rio(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='PROJECT RIO:',
-                        value='Project Rio is a custom build of Dolphin Emulator which is built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and soon will alos host a database and webapp on the website.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
+                        value='Project Rio is a custom build of Dolphin Emulator built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and an in-progress web-app.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
         await ctx.send(embed=embed)
 
     # gecko code info
@@ -243,6 +256,19 @@ class Misc(commands.Cog):
         embed = discord.Embed()
         embed.add_field(name='Send your RioBot ideas here:',
                         value='https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="Explains what remix mode is")
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def remixed(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name="Season 9 Remixed Mode Changes",
+                        value="• Chem Partner Threshold has been lowered to 80 chem. New Chem Tree: https://discord.com/channels/628353660698624020/1227071138740305961/1227459912171520030 \n"
+                              "• Perfect Slaps have been buffed to have a higher exit velocity and less gravity \n"
+                              "• Noki has wall jump \n"
+                              "• Blocks on Peach's Garden are all noteblocks \n"
+                              "• Thwomps on Bowser's Castle are locked down \n"
+                              "• All Season 9 Stars Off Changes have been included as well: Toad Normalization, No Fatigue for Star Pitches, Monty Mole 70 speed")
         await ctx.send(embed=embed)
 
 
