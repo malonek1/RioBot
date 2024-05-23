@@ -204,7 +204,7 @@ async def pstat_all(ctx, mode: str):
     all_ip, all_avg, all_k_rate, all_era = calc_slash_line(all_stats[mode]["Pitching"])
     all_ip_str = str(math.floor(all_ip)) + "." + str(all_stats.get("outs_pitched", 0) % 3)
     desc = "**Char** (IP): Opp AVG / K% / ERA, ERA-"
-    title = f"\nAll ({all_ip_str:.1f} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
+    title = f"\nAll ({all_ip_str} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
 
     try:
         sorted_char_list = sorted(all_by_char_stats[mode].keys(),
@@ -231,7 +231,8 @@ async def pstat_all(ctx, mode: str):
 
 
 def calc_slash_line(raw_dict):
-    ip = sum(raw_dict.get("outs_pitched", 0)) / 3
+    ip = sum(raw_dict.get(key, 0) for key in
+             ["outs_pitched"]) / 3
     avg = raw_dict["hits_allowed"] / (raw_dict["batters_faced"] - raw_dict['walks_bb'] - raw_dict['walks_hbp']) if raw_dict["batters_faced"] > 0 else 0
     k_rate = (raw_dict["strikeouts_pitched"] / (raw_dict["batters_faced"] - raw_dict['walks_bb'] - raw_dict['walks_hbp'])) if raw_dict['batters_faced'] > 0 else 0
     era = (9 * raw_dict['runs_allowed']) / ip if ip > 0 else 0
