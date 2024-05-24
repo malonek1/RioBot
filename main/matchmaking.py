@@ -11,8 +11,6 @@ from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
-mode_list = [ladders.STARS_OFF_MODE, ladders.STARS_ON_MODE, ladders.BIG_BALLA, ladders.STARS_OFF_REMIXED, ladders.STARS_OFF_HAZARDS]
-
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
 # Constant to tell the bot where the matchmaking buttons appear
@@ -28,13 +26,13 @@ STARS_ON_ROLE = "<@&998791464630898808>"
 
 # The matchmaking queue
 queue = {}
-for m in mode_list:
+for m in ladders.GAME_MODES:
     queue[m] = {}
 # The message with the matchmaking bot stuff
 mm_message: discord.Message
 
 match_count = {}
-for m in mode_list:
+for m in ladders.GAME_MODES:
     match_count[m] = 1
 
 last_ping_time = {
@@ -45,7 +43,7 @@ last_ping_time = {
 #     last_ping_time[m] = 0.0
 
 recent_matches = {}
-for m in mode_list:
+for m in ladders.GAME_MODES:
     recent_matches[m] = []
 
 async def init_buttons(bot: commands.Bot):
@@ -54,10 +52,10 @@ async def init_buttons(bot: commands.Bot):
 
     new_view = View(timeout=None)
 
-    for i in range(len(mode_list)):
-        button = Button(label=mode_list[i], style=ButtonStyle.blurple)
+    for i in range(len(ladders.GAME_MODES)):
+        button = Button(label=ladders.GAME_MODES[i], style=ButtonStyle.blurple)
 
-        async def press(interaction, mode=mode_list[i]):
+        async def press(interaction, mode=ladders.GAME_MODES[i]):
             await interaction.response.defer()
             await enter_queue(interaction, bot, mode)
             embed = discord.Embed()
@@ -155,7 +153,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
 # Button for a player to remove themselves from the queue
 # If they aren't in the queue, it will just post a message with the queue status
 async def exit_queue(interaction):
-    for m in mode_list:
+    for m in ladders.GAME_MODES:
         if str(interaction.user.id) in queue[m]:
             try:
                 del queue[m][str(interaction.user.id)]
@@ -173,13 +171,13 @@ async def refresh_queue(bot: commands.Bot):
     rm_delta = 0
 
     t = time.time() - 3600
-    for m in mode_list:
+    for m in ladders.GAME_MODES:
         rm_delta += len(recent_matches[m])
         recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
         rm_delta -= len(recent_matches[m])
 
     try:
-        for m in mode_list:
+        for m in ladders.GAME_MODES:
             for player in queue[m]:
                 time_in_queue = time.time() - queue[m][player]["Time"]
                 min_rating, max_rating = calc_search_range(queue[m][player]["Rating"], m, time_in_queue)
@@ -203,7 +201,7 @@ async def update_queue_status():
         details = ""
         total = 0
         rm_total = 0
-        for m in mode_list:
+        for m in ladders.GAME_MODES:
             total += len(queue[m])
             rm_total += len(recent_matches[m])
             details += m + ": " + str(len(queue[m])) + "\n"
@@ -269,7 +267,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 match_queue = {user_id: queue[game_type][user_id], best_match: queue[game_type][best_match]}
                 best_match_queues = []
                 user_queues = []
-                for mode in mode_list:
+                for mode in ladders.GAME_MODES:
                     if best_match in queue[mode]:
                         del queue[mode][best_match]
                         best_match_queues.append(mode)
@@ -287,7 +285,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 embed = discord.Embed()
 
                 # RANDOMS LOGIC
-                if "Random" in game_type:
+                if "Random" in game_type or "Quickplay" in game_type:
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
 
