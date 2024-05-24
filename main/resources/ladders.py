@@ -7,10 +7,8 @@ import math
 BETA = 0.85
 ALPHA = 0.1
 
-modes_body = {
-    "Communities": [1],
-    "Active": "true"
-}
+modes_body = {'Client': 'true', 'Active': 'true', 'combine_codes': True}
+
 modes = requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]
 
 all_modes_body = {
@@ -19,36 +17,22 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "S9 Stars Off"
-STARS_ON_MODE = "S9 Stars On"
+STARS_OFF_MODE = "S9 Superstars Off"
+STARS_ON_MODE = "S9 Superstars On"
 BIG_BALLA = "S9 Big Balla"
 STARS_OFF_REMIXED = "S9 Remixed"
-STARS_OFF_HAZARDS = "S9 Stars Off Hazards"
-# STARS_ON_MODE = "Stars On, Season 6"
-# BIG_BALLA_MODE = "Big Balla, Season 6"
-# PREV_SEASON_OFF = "Stars Off, Season 5"
-# PREV_SEASON_ON = "Stars On, Season 5"
-# PREV_SEASON_BB = "Big Balla, Season 5"
+STARS_OFF_HAZARDS = "S9 Superstars Off Hazards"
+QUICKPLAY = "S9 Quickplay"
 
-# try:
-#     STARS_OFF_MODE = next(x for x in modes if "Stars Off, Season" in x["name"])["name"]
-# except Exception as e:
-#     print(e)
-# try:
-#     STARS_ON_MODE = next(x for x in modes if "Stars On, Season" in x["name"])["name"]
-# except Exception as e:
-#     print(e)
-# try:
-#     BIG_BALLA_MODE = next(x for x in modes if "Big Balla, Season" in x["name"])["name"]
-# except Exception as e:
-#     print(e)
+GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_REMIXED, STARS_OFF_HAZARDS, QUICKPLAY]
 
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
-    STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson"],
+    STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson", "superstars"],
     BIG_BALLA: ["bb", "bigballa", "balla", "big"],
     STARS_OFF_REMIXED: ["remix", "remixed"],
-    STARS_OFF_HAZARDS: ["hazards", "hazardous"]
+    STARS_OFF_HAZARDS: ["hazards", "hazardous"],
+    QUICKPLAY: ["randoms", "random", "quickplay", "quick"]
 }
 
 ladders = {
