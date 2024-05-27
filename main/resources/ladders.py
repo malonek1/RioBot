@@ -35,14 +35,10 @@ MODE_ALIASES = {
     QUICKPLAY: ["randoms", "random", "quickplay", "quick"]
 }
 
-ladders = {
-    STARS_OFF_MODE: [],
-    STARS_ON_MODE: [],
-    BIG_BALLA: [],
-    STARS_OFF_REMIXED: [],
-    STARS_OFF_HAZARDS: []
-}
+ladders = {}
 
+for m in GAME_MODES:
+    ladders[m] = []
 
 def find_game_mode(mode: str):
     for m in MODE_ALIASES:
