@@ -303,13 +303,16 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     if "Quickplay" in game_type:
                         embed.add_field(name=game_type + " match found!",
                                         value=away + " (top team, away)\n" + home + " (bottom team, home)", inline=False)
-                        embed.add_field(name="Stadium", value=stadium)
+
                         game_mode = rfRandomMode()
                         embed.add_field(name="Mode", value=game_mode)
+                        if "Hazards" in game_mode and "Mario" in stadium:
+                            stadium = rfRandomHazardsStadium()
                     else:
                         embed.add_field(name=game_type + " match found!",
                                         value=away + " (top team, away)\n" + home + " (bottom team, home)")
-                        embed.add_field(name="Stadium", value=stadium)
+
+                    embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
                 else:
