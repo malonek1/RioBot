@@ -68,7 +68,7 @@ def rfRandomMode():
                     , "Superstars Off Hazards"
                     , "Remixed"]
     shuffle(random_modes)
-    return "Play a game of " + random_modes.pop() + " at " + rfRandomStadium()
+    return random_modes.pop()
 
 
 # Return two random teams without dupes
