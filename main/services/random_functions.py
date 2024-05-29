@@ -66,7 +66,16 @@ def rfRandomMode():
                     , "Superstars On"
                     , "BIG BALLA"
                     , "Superstars Off Hazards"
-                    , "Remixed"]
+                    , "Remixed"
+                    , "Quickplay"]
+    shuffle(random_modes)
+    return random_modes.pop()
+
+
+def rfRandomQuickplayMode():
+    random_modes = ["Superstars Off Hazards"
+                    , "Superstars On"
+                    , "Big Balla"]
     shuffle(random_modes)
     return random_modes.pop()
 
