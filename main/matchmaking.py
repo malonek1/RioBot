@@ -7,7 +7,8 @@ import datetime as dt
 import pytz
 
 from resources import EnvironmentVariables as ev, ladders
-from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium
+from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, \
+    rfRandomMode
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
@@ -298,8 +299,19 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     else:
                         away = match_queue[best_match]["Name"]
                         home = match_queue[user_id]["Name"]
-                    embed.add_field(name=game_type + " match found!",
-                                    value=away + " (top team, away)\n" + home + " (bottom team, home)")
+
+                    if "Quickplay" in game_type:
+                        embed.add_field(name=game_type + " match found!",
+                                        value=away + " (top team, away)\n" + home + " (bottom team, home)", inline=False)
+
+                        game_mode = rfRandomMode()
+                        embed.add_field(name="Mode", value=game_mode)
+                        if "Hazards" in game_mode and "Mario" in stadium:
+                            stadium = rfRandomHazardsStadium()
+                    else:
+                        embed.add_field(name=game_type + " match found!",
+                                        value=away + " (top team, away)\n" + home + " (bottom team, home)")
+
                     embed.add_field(name="Stadium", value=stadium)
                     await channel.send("<@" + user_id + "> <@" + str(
                         best_match) + ">", embed=embed, file=file)
