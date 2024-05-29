@@ -8,7 +8,7 @@ import pytz
 
 from resources import EnvironmentVariables as ev, ladders
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, \
-    rfRandomMode
+    rfRandomQuickplayMode
 from services.image_functions import ifBuildTeamImageFile
 from helpers import utils
 
@@ -304,10 +304,8 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                         embed.add_field(name=game_type + " match found!",
                                         value=away + " (top team, away)\n" + home + " (bottom team, home)", inline=False)
 
-                        game_mode = rfRandomMode()
+                        game_mode = rfRandomQuickplayMode()
                         embed.add_field(name="Mode", value=game_mode)
-                        if "Hazards" in game_mode and "Mario" in stadium:
-                            stadium = rfRandomHazardsStadium()
                     else:
                         embed.add_field(name=game_type + " match found!",
                                         value=away + " (top team, away)\n" + home + " (bottom team, home)")
