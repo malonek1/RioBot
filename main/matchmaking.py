@@ -286,7 +286,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                 embed = discord.Embed()
 
                 # RANDOMS LOGIC
-                if "Random" in game_type or "Quickplay" in game_type:
+                if "Random" in game_type or "Quickplay" in game_type or "Balla" in game_type:
                     team_list = rfRandomTeamsWithoutDupes()
                     captain_list = [team_list[0][0], team_list[1][0]]
 
@@ -373,7 +373,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
 
     global last_ping_time
 
-    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_REMIXED or game_type == ladders.STARS_OFF_HAZARDS:
+    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_HAZARDS:
         role_id = STARS_OFF_ROLE
         role_name = "STARS-OFF"
     elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA:
