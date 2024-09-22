@@ -17,22 +17,22 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "S9 Superstars Off"
-STARS_ON_MODE = "S9 Superstars On"
-BIG_BALLA = "S9 Big Balla"
-STARS_OFF_REMIXED = "S9 Remixed"
-STARS_OFF_HAZARDS = "S9 Superstars Off Hazards"
-QUICKPLAY = "S9 Quickplay"
+STARS_OFF_MODE = "S10 Superstars Off"
+STARS_ON_MODE = "S10 Superstars On"
+BIG_BALLA = "S10 Big Balla"
+# STARS_OFF_REMIXED = "S9 Remixed"
+STARS_OFF_HAZARDS = "S10 Superstars Off Hazards"
+# QUICKPLAY = "S9 Quickplay"
 
-GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_REMIXED, STARS_OFF_HAZARDS, QUICKPLAY]
+GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_HAZARDS]
 
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
     STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson", "superstars"],
     BIG_BALLA: ["bb", "bigballa", "balla", "big"],
-    STARS_OFF_REMIXED: ["remix", "remixed"],
-    STARS_OFF_HAZARDS: ["hazards", "hazardous"],
-    QUICKPLAY: ["randoms", "random", "quickplay", "quick"]
+    # STARS_OFF_REMIXED: ["remix", "remixed"],
+    STARS_OFF_HAZARDS: ["hazards", "hazardous"]
+    # QUICKPLAY: ["randoms", "random", "quickplay", "quick"]
 }
 
 ladders = {}
