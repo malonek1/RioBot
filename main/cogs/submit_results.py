@@ -3,6 +3,9 @@ import asyncio
 import discord.ext.commands
 from discord.ext import commands
 import requests
+import os
+
+from dotenv import load_dotenv
 
 from resources import EnvironmentVariables as ev
 
@@ -18,6 +21,9 @@ class SubmitResults(commands.Cog):
     @commands.command(help = "type !submit <winner username> <winner score> <loser score> <loser username> <\"Game Mode Name\" (in quotes)>)")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def submit(self, ctx: discord.ext.commands.Context, user1: str, score1: int, score2: int, user2: str, game_mode_name: str):
+        load_dotenv()
+        manual_submit_rio_key = os.getenv("RIO_KEY")
+
         check_emoji = "\U00002705"
         manual_submit_endpoint = "https://api.projectrio.app/manual_submit_game"
 
@@ -39,13 +45,18 @@ class SubmitResults(commands.Cog):
                     "loser_username": user2,
                     "winner_score": score1,
                     "loser_score": score2,
-                    "submitter_rio_key": ev.get_var("manual_submit_rio_key"),
+                    "submitter_rio_key": manual_submit_rio_key,
                     "tag_set": game_mode_name,
                     "date": round(ctx.message.created_at.timestamp()),
                     "recalc": True
                 }
+                print(manual_submit)
+                response = requests.post(manual_submit_endpoint, json=manual_submit)
                 await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
-                requests.post(manual_submit_endpoint, json=manual_submit)
+                # if response.status_code == 200:
+                #     await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
+                # else:
+                #     print(response.content)
 
 
     # Submit user command that allows a player to submit a game with another player
