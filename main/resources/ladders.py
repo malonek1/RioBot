@@ -17,11 +17,11 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "S10 Superstars Off"
-STARS_ON_MODE = "S10 Superstars On"
-BIG_BALLA = "S10 Big Balla"
+STARS_OFF_MODE = "S11 Superstars Off"
+STARS_ON_MODE = "S11 Superstars On"
+BIG_BALLA = "S11 Big Balla"
 # STARS_OFF_REMIXED = "S9 Remixed"
-STARS_OFF_HAZARDS = "S10 Superstars Off Hazards"
+STARS_OFF_HAZARDS = "S11 Superstars Off Hazards"
 # QUICKPLAY = "S9 Quickplay"
 
 GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_HAZARDS]
