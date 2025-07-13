@@ -47,7 +47,7 @@ def rfRandomCharacter():
     return characters.pop()
 
 # Picks multiple random characters from all 52 characters in the game
-def rfRandomCharacters(num):
+def rfRandomCharacters(num, preserve_enum=False):
     if num < 1:
         num = 1
     elif num > 9:
@@ -55,11 +55,21 @@ def rfRandomCharacters(num):
     picked_characters = []
     characters = []
     for char in Char:
-        characters.append(char.value)
+        if preserve_enum:
+            characters.append(char)
+        else:
+            characters.append(char.value)
     for i in range(0, num):
         shuffle(characters)
         picked_characters.append(characters[0])
     return picked_characters
+
+def rfRandomCharactersG():
+    character_list = list(Char)
+    team = [character_list[10], character_list[11], character_list[2], character_list[53], character_list[10],
+            character_list[17], character_list[34], character_list[10], character_list[11]]
+    shuffle(team)
+    return team
 
 
 # Picks a random stadium

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from services.image_functions import ifBuildTeamImageFile
+from services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
 from services.random_functions import *
 
 # Random Cog Properties
@@ -48,6 +48,22 @@ class RandomizeCommands(commands.Cog):
                 except ValueError:
                     embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
             await ctx.send(embed=embed)
+        elif command == "characters" or command == "charas" or command == "char":
+            title = "Random Characters"
+            description = "Can I offer you some random characters in these trying times?"
+            if not qualifier or qualifier == "":
+                team = rfRandomCharacters(9, True)
+            else:
+                try:
+                    team = rfRandomCharacters(int(qualifier), True)
+                except ValueError:
+                    team = rfRandomCharactersG()
+
+            file = ifBuildSingleTeamImageFile(team)
+            
+            embed = discord.Embed(title=title, description=description, color=hex_r)
+            embed.set_image(url="attachment://image.png")
+            await ctx.send(file=file, embed=embed)
         elif command == "stadium":
             embed = discord.Embed(title=rfRandomStadium(), color=hex_r)
             await ctx.send(embed=embed)
