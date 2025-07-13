@@ -31,7 +31,7 @@ class RandomizeCommands(commands.Cog):
         self.client = client
 
     @commands.command(name="random", help="Random Baseball Functions. Please use `!random help` for more info")
-    @commands.cooldown(1, 15, commands.BucketType.default)
+    @commands.cooldown(1, 10, commands.BucketType.default)
     async def random(self, ctx, command, qualifier=""):
         command = command.lower()
         qualifier = qualifier.lower()
@@ -40,7 +40,13 @@ class RandomizeCommands(commands.Cog):
             embed = discord.Embed(title="Random Commands Help", description=random_help_string)
             await ctx.send(embed=embed)
         elif command == "character" or command == "chara" or command == "char":
-            embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
+            if not qualifier or qualifier == "":
+                embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
+            else:
+                try:
+                    embed = discord.Embed(description=rfRandomCharacters(int(qualifier)), color=hex_r)
+                except ValueError:
+                    embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
             await ctx.send(embed=embed)
         elif command == "stadium":
             embed = discord.Embed(title=rfRandomStadium(), color=hex_r)
