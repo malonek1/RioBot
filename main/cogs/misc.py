@@ -94,8 +94,11 @@ class Misc(commands.Cog):
                                   "• Users who wish to specify preferences (such as specific stadiums, specific pick orders, range of opponents, avoiding rematches/runbacks, etc.) should use the \"LFG-pings\" to find a match in #matchmaking-netplay. \n"
                                   "• For additional rules regarding netplay please read: https://discord.com/channels/628353660698624020/708107695831646209/949426712658194452")
         elif rule == 14:
-            embed.add_field(name="No politics",
-                            value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
+            embed.add_field(name="Good Faith Discussion Only",
+                            value="• We discourage the discussion of politics as this is a server focused on Mario Baseball.\n"
+                                  "• However, we also acknowledge that many aspects of our every day lives tie into politics or have become politicized. For these conversational topics, we encourage people to be polite & respectful.\n"
+                                  "• Additionally we recognize the Paradox of Tolerance. As such intolerance, bigotry, and bad-faith misinformation are not allowed (See Rule 1)\n"
+                                  "• The mods reserve the right to shut down political discussions if they are deemed too controversial to remain polite & respectful")
         await ctx.send(embed=embed)
 
     # stadium boundary chart
@@ -258,17 +261,12 @@ class Misc(commands.Cog):
                         value='https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link')
         await ctx.send(embed=embed)
 
-    @commands.command(help="Explains what remix mode is")
-    @commands.cooldown(1, 2, commands.BucketType.user)
-    async def remixed(self, ctx):
+    @commands.command(help="returns a link to roeming's batting calculator")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def battingCalculator(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name="Season 9 Remixed Mode Changes",
-                        value="• Chem Partner Threshold has been lowered to 80 chem. New Chem Tree: https://discord.com/channels/628353660698624020/1227071138740305961/1227459912171520030 \n"
-                              "• Perfect Slaps have been buffed to have a higher exit velocity and less gravity \n"
-                              "• Noki has wall jump \n"
-                              "• Blocks on Peach's Garden are all noteblocks \n"
-                              "• Thwomps on Bowser's Castle are locked down \n"
-                              "• All Season 9 Stars Off Changes have been included as well: Toad Normalization, No Fatigue for Star Pitches, Monty Mole 70 speed")
+        embed.add_field(name='Roeming\'s Batting Calculator',
+                        value='https://roeming.github.io/MSSB_Batting_Calculator/')
         await ctx.send(embed=embed)
 
 
