@@ -269,6 +269,43 @@ class Misc(commands.Cog):
                         value='https://roeming.github.io/MSSB_Batting_Calculator/')
         await ctx.send(embed=embed)
 
+    @commands.command(help="returns the body check table")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def bodyCheck(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Body Check Table',
+                        value='The following image displays the body check odds:\n')
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/747305360255352832/1394839462520815718/body-check-table.png")
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link that explains wall jump mechanics")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def walljump(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Wall Jump Mechanics:',
+                        value='The link below takes you to a discord post explaining wall jump mechanics!\n'
+                              '• https://discord.com/channels/628353660698624020/841677353108242444/1074404141310431282')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link that explain walu tech")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def waluTech(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Walu Tech Mechanics:',
+                        value='The link below takes you to a discord post explaining walu tech!\n'
+                              '• https://discord.com/channels/628353660698624020/841677353108242444/1081418770381283339')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link to the thread with traj cones")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def trajCones(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Trajectory Cones:',
+                        value='The link below takes you to a discord thread displaying all the trajectory cones!\n'
+                              '• https://discord.com/channels/628353660698624020/1087489311764652132/1087492641664536677')
+        await ctx.send(embed=embed)
+
 
 async def setup(client):
     await client.add_cog(Misc(client))
