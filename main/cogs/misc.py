@@ -306,6 +306,16 @@ class Misc(commands.Cog):
                               '• https://discord.com/channels/628353660698624020/1087489311764652132/1087492641664536677')
         await ctx.send(embed=embed)
 
+    @commands.command(help="returns an image displaying all character's ability groupings")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def abilities(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Character\'s Abilities',
+                        value='The following image displays all character\'s abilities by group:\n')
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/628354009865912350/1395295968345456670/image.png")
+        await ctx.send(embed=embed)
+
 
 async def setup(client):
     await client.add_cog(Misc(client))
