@@ -36,7 +36,8 @@ class SubmitResults(commands.Cog):
             try:
                 embed = discord.Embed()
                 embed.add_field(name="New Manual Submission",
-                            value="A new manual submission has been created in the mario baseball server.\n"
+                            value="A new manual submission has been created in the mario baseball server.\n" +
+                                  "`!submit " + user1 + " " + str(score1) + " " + str(score2) + " " + user2 + " \"" + game_mode_name + "\"`\n"
                                   "Please accept or deny it here: " + ctx.message.jump_url)
                 await pokebunny.send(embed=embed)
             except discord.Forbidden:
