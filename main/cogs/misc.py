@@ -94,8 +94,11 @@ class Misc(commands.Cog):
                                   "• Users who wish to specify preferences (such as specific stadiums, specific pick orders, range of opponents, avoiding rematches/runbacks, etc.) should use the \"LFG-pings\" to find a match in #matchmaking-netplay. \n"
                                   "• For additional rules regarding netplay please read: https://discord.com/channels/628353660698624020/708107695831646209/949426712658194452")
         elif rule == 14:
-            embed.add_field(name="No politics",
-                            value="• Please refrain from bringing up controversial political opinions. This is a place to chat about Mario Baseball and other games.")
+            embed.add_field(name="Good Faith Discussion Only",
+                            value="• We discourage the discussion of politics as this is a server focused on Mario Baseball.\n"
+                                  "• However, we also acknowledge that many aspects of our every day lives tie into politics or have become politicized. For these conversational topics, we encourage people to be polite & respectful.\n"
+                                  "• Additionally we recognize the Paradox of Tolerance. As such intolerance, bigotry, and bad-faith misinformation are not allowed (See Rule 1)\n"
+                                  "• The mods reserve the right to shut down political discussions if they are deemed too controversial to remain polite & respectful")
         await ctx.send(embed=embed)
 
     # stadium boundary chart
@@ -258,17 +261,59 @@ class Misc(commands.Cog):
                         value='https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link')
         await ctx.send(embed=embed)
 
-    @commands.command(help="Explains what remix mode is")
-    @commands.cooldown(1, 2, commands.BucketType.user)
-    async def remixed(self, ctx):
+    @commands.command(help="returns a link to roeming's batting calculator")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def battingCalculator(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name="Season 9 Remixed Mode Changes",
-                        value="• Chem Partner Threshold has been lowered to 80 chem. New Chem Tree: https://discord.com/channels/628353660698624020/1227071138740305961/1227459912171520030 \n"
-                              "• Perfect Slaps have been buffed to have a higher exit velocity and less gravity \n"
-                              "• Noki has wall jump \n"
-                              "• Blocks on Peach's Garden are all noteblocks \n"
-                              "• Thwomps on Bowser's Castle are locked down \n"
-                              "• All Season 9 Stars Off Changes have been included as well: Toad Normalization, No Fatigue for Star Pitches, Monty Mole 70 speed")
+        embed.add_field(name='Roeming\'s Batting Calculator',
+                        value='https://roeming.github.io/MSSB_Batting_Calculator/')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns the body check table")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def bodyCheck(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Body Check Table',
+                        value='The following image displays the body check odds:\n')
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/747305360255352832/1394839462520815718/body-check-table.png")
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link that explains wall jump mechanics")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def walljump(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Wall Jump Mechanics:',
+                        value='The link below takes you to a discord post explaining wall jump mechanics!\n'
+                              '• https://discord.com/channels/628353660698624020/841677353108242444/1074404141310431282')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link that explain walu tech")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def waluTech(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Walu Tech Mechanics:',
+                        value='The link below takes you to a discord post explaining walu tech!\n'
+                              '• https://discord.com/channels/628353660698624020/841677353108242444/1081418770381283339')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns a link to the thread with traj cones")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def trajCones(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Trajectory Cones:',
+                        value='The link below takes you to a discord thread displaying all the trajectory cones!\n'
+                              '• https://discord.com/channels/628353660698624020/1087489311764652132/1087492641664536677')
+        await ctx.send(embed=embed)
+
+    @commands.command(help="returns an image displaying all character's ability groupings")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def abilities(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Character\'s Abilities',
+                        value='The following image displays all character\'s abilities by group:\n')
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/628354009865912350/1395295968345456670/image.png")
         await ctx.send(embed=embed)
 
 

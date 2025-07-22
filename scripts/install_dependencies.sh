@@ -15,4 +15,4 @@ make altinstall
 rm -f /opt/Python-3.9.6.tgz
 
 /usr/local/bin/python3.9 -m pip install --upgrade pip
-/usr/local/bin/pip3.9 install -U discord.py==2.1.0 glicko2==2.0.0 gspread==5.7.1 oauth2client==4.1.3 Pillow==9.4.0 python-dotenv==0.21.0 pytz==2022.7 requests==2.28.1
+/usr/local/bin/pip3.9 install -U discord.py==2.5.2 glicko2==2.1.0 gspread==5.7.1 oauth2client==4.1.3 Pillow==11.3.0 python-dotenv==1.1.1 pytz==2025.2 requests==2.32.4

@@ -14,7 +14,7 @@ def build_team_image(team):
     for character in team:
         team_icons.append(load_image_for_character(character.value))
 
-    total_width = 9*image_width
+    total_width = len(team_icons)*image_width
     total_height = 1*image_height
     team_image = Image.new('RGBA', (total_width, total_height))
     x_offset = 0

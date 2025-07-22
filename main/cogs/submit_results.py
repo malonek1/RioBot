@@ -31,6 +31,18 @@ class SubmitResults(commands.Cog):
             await ctx.message.add_reaction(check_emoji)
             # requests.post()
 
+            pokebunny_user_id = 117697656519786497
+            pokebunny = await ctx.bot.fetch_user(pokebunny_user_id)
+            try:
+                embed = discord.Embed()
+                embed.add_field(name="New Manual Submission",
+                            value="A new manual submission has been created in the mario baseball server.\n" +
+                                  "`!submit " + user1 + " " + str(score1) + " " + str(score2) + " " + user2 + " \"" + game_mode_name + "\"`\n"
+                                  "Please accept or deny it here: " + ctx.message.jump_url)
+                await pokebunny.send(embed=embed)
+            except discord.Forbidden:
+                print("Could not DM Pokebunny")
+
             def check_confirm(rxn, usr):
                 return usr.name == "pokebunny" and (rxn.emoji == check_emoji)
 
