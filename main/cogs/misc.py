@@ -316,6 +316,14 @@ class Misc(commands.Cog):
             url="https://media.discordapp.net/attachments/628354009865912350/1395295968345456670/image.png")
         await ctx.send(embed=embed)
 
+    @commands.command(help="infomartion about memory cards")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def memoryCard(self, ctx):
+        embed = discord.Embed()
+        embed.add_field(name='Memory Card Usage in Project Rio',
+                        value='Project Rio does not currently support saving to memory cards. If you want to play the single player campaign we recommend using Dolphin emulator. The alternative is to remove your memory card in Project Rio by going to Config -> Gamecube -> Memory Card. Then you can use save states to capture progress.')
+        await ctx.send(embed=embed)
+
 
 async def setup(client):
     await client.add_cog(Misc(client))
