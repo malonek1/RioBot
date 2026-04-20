@@ -1,3 +1,5 @@
+import time
+
 from discord.ext import tasks
 import requests
 from helpers import utils
@@ -17,15 +19,29 @@ all_modes_body = {
 
 all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
 
-STARS_OFF_MODE = "S13 Superstars Off"
-STARS_ON_MODE = "S13 Superstars On"
-BIG_BALLA = "S13 Big Balla"
-# STARS_OFF_REMIXED = "S9 Remixed"
-STARS_OFF_HAZARDS = "S13 Superstars Off Hazards"
-# QUICKPLAY = "S9 Quickplay"
-RANDOM = "S13 Randoms"
+current_time = time.time()
+active_official_modes = [mode for mode in all_modes if
+                         mode["comm_type"] == "Official" and mode["start_date"] < current_time < mode["end_date"]]
 
-GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_HAZARDS, RANDOM]
+
+def get_official_game_mode(ending: str):
+    for mode in active_official_modes:
+        name: str = mode["name"]
+        if name.lower().endswith(ending.lower()):
+            return name
+    return "Not Found"
+
+
+STARS_OFF_MODE = get_official_game_mode("Superstars Off")
+STARS_ON_MODE = get_official_game_mode("Superstars On")
+BIG_BALLA = get_official_game_mode("Big Balla")
+# STARS_OFF_REMIXED = get_official_game_mode("Remixed")
+STARS_OFF_HAZARDS = get_official_game_mode("Superstars Off Hazards")
+# QUICKPLAY = get_official_game_mode("Quickplay")
+RANDOM = get_official_game_mode("Randoms")
+ALL_POTENTIAL_GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_HAZARDS, RANDOM]
+
+GAME_MODES = [mode for mode in ALL_POTENTIAL_GAME_MODES if mode != "Not Found"]
 
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
