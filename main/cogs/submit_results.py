@@ -52,6 +52,7 @@ class SubmitResults(commands.Cog):
                 }
                 print(manual_submit)
                 response = requests.post(manual_submit_endpoint, json=manual_submit)
+                print(response, response.reason)
                 await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
                 # if response.status_code == 200:
                 #     await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")

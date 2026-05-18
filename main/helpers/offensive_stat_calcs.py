@@ -8,6 +8,16 @@ BASE_WEB_URL = "https://api.projectrio.app/stats/"
 all_stats = {}
 all_by_char_stats = {}
 
+out_value = 0.393
+
+LINEAR_WEIGHTS = {
+    "singles": 0.403 + out_value,
+    "doubles": 0.781 + out_value,
+    "triples": 1.058 + out_value,
+    "homeruns": 1.581 + out_value,
+    "walks_bb": 0.332 + out_value,
+    "walks_hbp": 0.332 + out_value
+}
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str):
     global all_by_char_stats
@@ -31,7 +41,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
 
     all_char_stats = all_by_char_stats.get(mode, {}).get(char, {}).get("Batting", {})
     overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_char_stats)
-    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
+    wrc_plus = calc_wrc_plus(stats, all_char_stats) if overall_obp > 0 and overall_slg > 0 else -100
 
     misc = response.get("Stats", {}).get(char, {}).get("Misc", {})
     games = misc["home_wins"] + misc["away_wins"] + misc["home_loses"] + misc["away_loses"]
@@ -57,7 +67,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str):
               ("OBP", "{:.3f}".format(obp)),
               ("SLG", "{:.3f}".format(slg)),
               ("OPS", "{:.3f}".format(ops)),
-              ("cOPS+", str(round(ops_plus))),
+              ("cwRC+", str(round(wrc_plus))),
               ("\u200b", "\u200b")]
 
     for name, value in fields:
@@ -100,12 +110,12 @@ async def ostat_user(ctx, user: str, mode: str):
 
     _, _, overall_obp, overall_slg = calc_slash_line(all_stats[mode]["Batting"])
     if overall_obp > 0 and overall_slg > 0:
-        ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+        wrc_plus = calc_wrc_plus(user_stats, all_stats[mode]["Batting"])
     else:
-        ops_plus = -100
-    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
+        wrc_plus = -100
+    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} wRC+"
 
-    desc = "**Char** (PA): AVG / OBP / SLG, cOPS+"
+    desc = "**Char** (PA): AVG / OBP / SLG, cwRC+"
 
     del user_dict["all"]
     try:
@@ -123,10 +133,10 @@ async def ostat_user(ctx, user: str, mode: str):
         all_char_stats = all_by_char_stats[mode][char]["Batting"]
         _, _, overall_obp, overall_slg = calc_slash_line(all_char_stats)
         if overall_obp > 0 and overall_slg > 0:
-            ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
+            wrc_plus = calc_wrc_plus(char_stats, all_char_stats)
         else:
-            ops_plus = -100
-        desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} cOPS+'
+            wrc_plus = -100
+        desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} cwRC+'
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -163,18 +173,19 @@ async def ostat_char(ctx, char: str, mode: str):
     pa, avg, obp, slg = calc_slash_line(char_stats)
 
     title = f"\n{char} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}"
-    desc = "**User** (PA): AVG / OBP / SLG, cOPS+"
+    desc = "**User** (PA): AVG / OBP / SLG, cwRC+"
 
     output_list = []
     for user, user_stats in user_list[1:]:
+        print(user)
         user_pa, user_avg, user_obp, user_slg = calc_slash_line(user_stats)
-        if obp > 0 and slg > 0:
-            ops_plus = ((user_obp / obp) + (user_slg / slg) - 1) * 100
-        else:
-            ops_plus = 0
+        if user_pa > (pa / 200) + 20:
+            if obp > 0 and slg > 0:
+                wrc_plus = calc_wrc_plus(user_stats, char_stats)
+            else:
+                wrc_plus = -100
 
-        if user_pa > (pa / 100):
-            output_list.append((user, user_pa, user_avg, user_obp, user_slg, ops_plus))
+            output_list.append((user, user_pa, user_avg, user_obp, user_slg, wrc_plus))
 
     sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=True)
 
@@ -184,8 +195,8 @@ async def ostat_char(ctx, char: str, mode: str):
         user_avg = user_stats[2]
         user_obp = user_stats[3]
         user_slg = user_stats[4]
-        ops_plus = user_stats[5]
-        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(ops_plus)} cOPS+"
+        wrc_plus = user_stats[5]
+        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(wrc_plus)} cwRC+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -203,7 +214,7 @@ async def ostat_all(ctx, mode: str):
     all_by_char_stats[mode] = requests.get(all_by_char_url).json()["Stats"]
 
     all_pa, all_avg, all_obp, all_slg = calc_slash_line(all_stats[mode]["Batting"])
-    desc = "**Char** (PA): AVG / OBP / SLG, OPS+"
+    desc = "**Char** (PA): AVG / OBP / SLG, wRC+"
     title = f"\nAll ({all_pa} PA): {all_avg:.3f} / {all_obp:.3f} / {all_slg:.3f}"
 
     try:
@@ -219,9 +230,9 @@ async def ostat_all(ctx, mode: str):
         char_stats = all_by_char_stats[mode][char]["Batting"]
         pa, avg, obp, slg = calc_slash_line(char_stats)
 
-        ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
+        wrc_plus = calc_wrc_plus(char_stats, all_stats[mode]["Batting"])
 
-        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
+        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} wRC+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -240,3 +251,36 @@ def calc_slash_line(raw_dict):
             raw_dict["summary_triples"] * 3) + (raw_dict["summary_homeruns"] * 4)) / raw_dict["summary_at_bats"] if \
     raw_dict["summary_at_bats"] > 0 else 0
     return pa, avg, obp, slg
+
+
+def calc_wrc_plus(dict, overall_dict):
+    pa = sum(dict.get(key, 0) for key in
+             ["summary_at_bats", "summary_walks_bb", "summary_walks_hbp", "summary_sac_flys"])
+    overall_pa = sum(overall_dict.get(key, 0) for key in
+             ["summary_at_bats", "summary_walks_bb", "summary_walks_hbp", "summary_sac_flys"])
+    overall_obp = (overall_dict["summary_hits"] + overall_dict["summary_walks_hbp"] + overall_dict[
+        "summary_walks_bb"]) / overall_pa if overall_pa > 0 else 0
+
+    run_value = 0
+    overall_value = 0
+    for event in LINEAR_WEIGHTS:
+        run_value += (dict.get("summary_" + event, 0) * LINEAR_WEIGHTS[event])
+        overall_value += (overall_dict.get("summary_" + event, 0) * LINEAR_WEIGHTS[event])
+        print(event, run_value, overall_value)
+    print(pa, overall_pa)
+
+    woba = run_value / pa if pa > 0 else 0
+    overall_woba = overall_value / overall_pa if overall_pa > 0 else 0
+    print(woba, overall_woba)
+
+    woba_scale = overall_obp / overall_woba
+    print(woba_scale)
+
+    runs_per_pa = 0.16961480888026817
+    league_obp = 0.407
+    league_woba = 0.38722611793974404
+    league_woba_scale = league_obp / league_woba
+    league_wrc = ((overall_woba - league_woba) / league_woba_scale) + runs_per_pa
+    print(league_wrc)
+
+    return (((woba - overall_woba / woba_scale) + league_wrc) / league_wrc) * 100 if overall_woba > 0 else 0

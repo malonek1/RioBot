@@ -111,7 +111,7 @@ class GameStatLookup(commands.Cog):
         embed.add_field(name='CHARACTER CHEMISTRY CHART',
                         value='The following image displays the chemistry links between all characters with a value of 0 being the worst and 100 being the best:\n')
         embed.set_image(
-            url="https://media.discordapp.net/attachments/628354009865912350/815693119348932628/image0.png?width=678&height=676")
+            url="https://media.discordapp.net/attachments/903648470697644052/1274470498750828677/EpicPen_2024-08-17_15-48-55.png")
         await ctx.send(embed=embed)
 
     @commands.command(help = "type !bat <character name> for image of character's bat")

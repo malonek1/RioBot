@@ -1,10 +1,10 @@
 __pycache__/
-main/.env_BACKUP
+main/.env
 .idea
 match_log.txt
 main/client_secret.json
 *.iml
-main/resources/test_BACKUP.json
-/main/resources/test_BACKUP.json
-main/.env
+main/resources/test.json
+/main/resources/test.json
+main/.env_PROD
 main/resources/test.json

@@ -171,7 +171,7 @@ async def pstat_char(ctx, char: str, mode: str):
         else:
             era_minus = 200
 
-        if user_ip > (ip / 100):
+        if user_ip > (ip / 200) + 20:
             user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats.get("outs_pitched", 0) % 3)
             output_list.append((user, user_ip_str, user_avg, user_k_rate, user_era, era_minus))
 
