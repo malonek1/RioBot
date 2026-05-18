@@ -26,6 +26,8 @@ files:
     destination: /home/ec2-user/RioBot/main
   - source: scripts
     destination: /home/ec2-user/RioBot/scripts
+  - source: requirements.txt
+    destination: /home/ec2-user/RioBot
 # For deployments to Amazon Linux, Ubuntu Server, or RHEL instances,
 #   you can specify a "permissions"
 #   section here that describes special permissions to apply to the files

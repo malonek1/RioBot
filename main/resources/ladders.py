@@ -1,9 +1,18 @@
 import time
 
+import aiohttp
 from discord.ext import tasks
 import requests
 from helpers import utils
+from models.tag_set import TagSet
 import math
+
+_session: aiohttp.ClientSession | None = None
+
+
+def set_session(session: aiohttp.ClientSession):
+    global _session
+    _session = session
 
 # Rating adjustment constants
 BETA = 0.85
@@ -11,24 +20,23 @@ ALPHA = 0.1
 
 modes_body = {'Client': 'true', 'Active': 'true', 'combine_codes': True}
 
-modes = requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]
+modes = [TagSet.model_validate(m) for m in requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]]
 
 all_modes_body = {
     "Client": "true"
 }
 
-all_modes = requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]
+all_modes: list[TagSet] = [TagSet.model_validate(m) for m in requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]]
 
 current_time = time.time()
 active_official_modes = [mode for mode in all_modes if
-                         mode["comm_type"] == "Official" and mode["start_date"] < current_time < mode["end_date"]]
+                         mode.comm_type == "Official" and mode.start_date < current_time < mode.end_date]
 
 
 def get_official_game_mode(ending: str):
     for mode in active_official_modes:
-        name: str = mode["name"]
-        if name.lower().endswith(ending.lower()):
-            return name
+        if mode.name.lower().endswith(ending.lower()):
+            return mode.name
     return "Not Found"
 
 
@@ -66,9 +74,14 @@ def find_game_mode(mode: str):
     return mode
 
 
-def get_game_mode_name(mode_id: int):
-    game_mode = next(x for x in all_modes if mode_id == x["id"])
-    return game_mode["name"]
+async def get_game_mode_name(mode_id: int):
+    global all_modes
+    game_mode = next((x for x in all_modes if mode_id == x.id), None)
+    if game_mode is None:
+        async with _session.post("https://api.projectrio.app/tag_set/list", json=all_modes_body) as response:
+            all_modes = [TagSet.model_validate(m) for m in (await response.json(content_type=None))["Tag Sets"]]
+        game_mode = next((x for x in all_modes if mode_id == x.id), None)
+    return game_mode.name if game_mode else "Unknown"
 
 
 def get_web_mode(mode: str):
@@ -81,7 +94,8 @@ async def refresh_ladders():
 
     for mode in ladders:
         ladder_body = {"TagSet": mode}
-        ladders[mode] = requests.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body).json()
+        async with _session.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body) as response:
+            ladders[mode] = await response.json(content_type=None)
         for user in ladders[mode]:
             player_wins = ladders[mode][user]["num_wins"]
             player_games = ladders[mode][user]["num_wins"] + ladders[mode][user]["num_losses"] + 1

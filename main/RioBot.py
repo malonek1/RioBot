@@ -3,6 +3,7 @@
 
 import os
 
+import aiohttp
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import discord
@@ -16,8 +17,20 @@ load_dotenv()
 token = os.getenv("BOT_TOKEN")
 intents = discord.Intents.all()
 
+cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results"]
+
+
+class RioBot(commands.Bot):
+    async def setup_hook(self):
+        self.session = aiohttp.ClientSession()
+        ladders.set_session(self.session)
+        for cog in cog_files:
+            await self.load_extension("cogs." + cog)
+            print("%s has loaded." % cog)
+
+
 # initialize the bot commands with the associated prefix
-bot = commands.Bot(command_prefix="!", intents=intents, case_insensitive=True)
+bot = RioBot(command_prefix="!", intents=intents, case_insensitive=True)
 
 
 @bot.event
@@ -27,17 +40,12 @@ async def on_ready():
     # Initialize matchmaking buttons
     await mm.init_buttons(bot)
 
-    # Start timed tasks
+    # Start timed tasks — guarded so reconnects don't raise RuntimeError
     # mm.refresh_queue.start(bot)
-#    gspread_client.refresh_api_data.start()
-    ladders.refresh_ladders.start()
-    handle_crash.start()
-
-    cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results"]
-
-    for cog in cog_files:
-        await bot.load_extension("cogs." + cog)
-        print("%s has loaded." % cog)
+    if not ladders.refresh_ladders.is_running():
+        ladders.refresh_ladders.start()
+    if not handle_crash.is_running():
+        handle_crash.start()
 
 
 @tasks.loop(minutes=1)
