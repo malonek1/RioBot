@@ -4,10 +4,9 @@ import aiohttp
 import discord
 from json import JSONDecodeError
 from resources import characters
+from resources.api import STATS_URL
 from models.pitching_stats import PitchingStats
 from models.misc_stats import MiscStats
-
-BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
 all_stats = {}
 all_by_char_stats = {}
@@ -16,9 +15,9 @@ all_by_char_stats = {}
 async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
     global all_by_char_stats
     try:
-        all_by_char_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&by_char=1"
+        all_by_char_url = f"{STATS_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&by_char=1"
         char_id = characters.reverse_mappings[char]
-        url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
+        url = f"{STATS_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
         async with session.get(url) as response:
             data = await response.json(content_type=None)
         if not all_by_char_stats.get(mode, {}).get("Pitching", {}):
@@ -70,7 +69,7 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 
 async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     global all_stats, all_by_char_stats
-    all_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+    all_url = f"{STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
     user_url = f"{all_url}&username={user}"
     all_by_char_url = f"{all_url}&by_char=1"
     user_by_char_url = f"{all_by_char_url}&username={user}"
@@ -146,7 +145,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
 
 async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     try:
-        all_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+        all_url = f"{STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
         if char != "all":
             char_url = f"{all_url}&char_id={str(characters.reverse_mappings[char])}"
             char_by_user_url = f"{all_url}&by_user=1&char_id={str(characters.reverse_mappings[char])}"
@@ -186,7 +185,7 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         else:
             era_minus = 200
 
-        if user_ip > (ip / 100):
+        if user_ip > (ip / 200) + 20:
             user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats.outs_pitched % 3)
             output_list.append((user, user_ip_str, user_avg, user_k_rate, user_era, era_minus))
 
@@ -210,7 +209,7 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
 
 async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
     global all_stats, all_by_char_stats
-    all_url = BASE_WEB_URL + "?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
+    all_url = STATS_URL + "?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     async with session.get(all_url) as response:

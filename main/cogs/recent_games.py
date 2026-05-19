@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
 from resources import ladders
+from resources.api import GAMES_URL
 from models.game import Game
-
-BASE_GAMES_URL = "https://api.projectrio.app/games/"
 
 stadium_map = {
     0: "Mario Stadium",
@@ -26,7 +25,7 @@ class RecentGames(commands.Cog):
             num_games = 40
         web_mode = ladders.get_web_mode(mode)
         mode = ladders.find_game_mode(mode)
-        api_url = f"{BASE_GAMES_URL}?limit_games={num_games}"
+        api_url = f"{GAMES_URL}?limit_games={num_games}"
         if mode != "all":
             api_url += f"&tag={web_mode}"
         if user != "all":
@@ -77,7 +76,7 @@ class RecentGames(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def h2h(self, ctx, user1: str, user2: str, mode: str = "all"):
         num_games = 30
-        api_url = f"{BASE_GAMES_URL}?limit_games={str(num_games)}&username={user1}&vs_username={user2}"
+        api_url = f"{GAMES_URL}?limit_games={str(num_games)}&username={user1}&vs_username={user2}"
         if mode != "all":
             web_mode = ladders.get_web_mode(mode)
             api_url += f"&tag={web_mode}"

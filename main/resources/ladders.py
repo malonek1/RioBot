@@ -5,6 +5,7 @@ from discord.ext import tasks
 import requests
 from helpers import utils
 from models.tag_set import TagSet
+from resources.api import TAG_SET_URL, LADDER_URL
 import math
 
 _session: aiohttp.ClientSession | None = None
@@ -20,13 +21,13 @@ ALPHA = 0.1
 
 modes_body = {'Client': 'true', 'Active': 'true', 'combine_codes': True}
 
-modes = [TagSet.model_validate(m) for m in requests.post("https://api.projectrio.app/tag_set/list", json=modes_body).json()["Tag Sets"]]
+modes = [TagSet.model_validate(m) for m in requests.post(TAG_SET_URL + "list", json=modes_body).json()["Tag Sets"]]
 
 all_modes_body = {
     "Client": "true"
 }
 
-all_modes: list[TagSet] = [TagSet.model_validate(m) for m in requests.post("https://api.projectrio.app/tag_set/list", json=all_modes_body).json()["Tag Sets"]]
+all_modes: list[TagSet] = [TagSet.model_validate(m) for m in requests.post(TAG_SET_URL + "list", json=all_modes_body).json()["Tag Sets"]]
 
 current_time = time.time()
 active_official_modes = [mode for mode in all_modes if
@@ -78,7 +79,7 @@ async def get_game_mode_name(mode_id: int):
     global all_modes
     game_mode = next((x for x in all_modes if mode_id == x.id), None)
     if game_mode is None:
-        async with _session.post("https://api.projectrio.app/tag_set/list", json=all_modes_body) as response:
+        async with _session.post(TAG_SET_URL + "list", json=all_modes_body) as response:
             all_modes = [TagSet.model_validate(m) for m in (await response.json(content_type=None))["Tag Sets"]]
         game_mode = next((x for x in all_modes if mode_id == x.id), None)
     return game_mode.name if game_mode else "Unknown"
@@ -94,7 +95,7 @@ async def refresh_ladders():
 
     for mode in ladders:
         ladder_body = {"TagSet": mode}
-        async with _session.post("https://api.projectrio.app/tag_set/ladder", json=ladder_body) as response:
+        async with _session.post(LADDER_URL, json=ladder_body) as response:
             ladders[mode] = await response.json(content_type=None)
         for user in ladders[mode]:
             player_wins = ladders[mode][user]["num_wins"]

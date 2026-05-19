@@ -2,10 +2,10 @@ import aiohttp
 import discord
 from json import JSONDecodeError
 from resources import characters
+from resources.api import STATS_URL
+from resources.stat_constants import LINEAR_WEIGHTS, LEAGUE_RUNS_PER_PA, calc_woba
 from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
-
-BASE_WEB_URL = "https://api.projectrio.app/stats/"
 
 all_stats = {}
 all_by_char_stats = {}
@@ -14,9 +14,9 @@ all_by_char_stats = {}
 async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
     global all_by_char_stats
     try:
-        all_by_char_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1&exclude_nonfair=1"
+        all_by_char_url = f"{STATS_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1&exclude_nonfair=1"
         char_id = characters.reverse_mappings[char]
-        url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}&exclude_nonfair=1"
+        url = f"{STATS_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}&exclude_nonfair=1"
         async with session.get(url) as response:
             data = await response.json(content_type=None)
         if not all_by_char_stats.get(mode, {}).get("Batting", {}):
@@ -34,8 +34,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
     ops = obp + slg
 
     all_char_stats = BattingStats.model_validate(all_by_char_stats.get(mode, {}).get(char, {}).get("Batting", {}))
-    overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_char_stats)
-    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
+    wrc_plus = calc_wrc_plus(stats, all_char_stats)
 
     misc = MiscStats.model_validate(data.get("Stats", {}).get(char, {}).get("Misc", {}))
     games = misc.home_wins + misc.away_wins + misc.home_loses + misc.away_loses
@@ -61,7 +60,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
               ("OBP", "{:.3f}".format(obp)),
               ("SLG", "{:.3f}".format(slg)),
               ("OPS", "{:.3f}".format(ops)),
-              ("cOPS+", str(round(ops_plus))),
+              ("cwRC+", str(round(wrc_plus))),
               ("​", "​")]
 
     for name, value in fields:
@@ -75,7 +74,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     await ctx.send(f"This information can now be accessed here: https://project-rio-frontend.vercel.app/user/{user}/batting")
     global all_stats, all_by_char_stats
-    all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
+    all_url = f"{STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
     user_url = f"{all_url}&username={user}"
     all_by_char_url = f"{all_url}&by_char=1"
     user_by_char_url = f"{all_by_char_url}&username={user}"
@@ -108,14 +107,11 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     user_stats = user_dict["all"]
     pa, avg, obp, slg = calc_slash_line(user_stats)
 
-    _, _, overall_obp, overall_slg = calc_slash_line(BattingStats.model_validate(all_stats[mode]["Batting"]))
-    if overall_obp > 0 and overall_slg > 0:
-        ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
-    else:
-        ops_plus = -100
-    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
+    all_batting = BattingStats.model_validate(all_stats[mode]["Batting"])
+    wrc_plus = calc_wrc_plus(user_stats, all_batting)
+    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} wRC+"
 
-    desc = "**Char** (PA): AVG / OBP / SLG, cOPS+"
+    desc = "**Char** (PA): AVG / OBP / SLG, cwRC+"
 
     del user_dict["all"]
     try:
@@ -131,12 +127,8 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_stats = user_dict[char]
         pa, avg, obp, slg = calc_slash_line(char_stats)
         all_char_stats = BattingStats.model_validate(all_by_char_stats[mode][char]["Batting"])
-        _, _, overall_obp, overall_slg = calc_slash_line(all_char_stats)
-        if overall_obp > 0 and overall_slg > 0:
-            ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
-        else:
-            ops_plus = -100
-        desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} cOPS+'
+        wrc_plus = calc_wrc_plus(char_stats, all_char_stats)
+        desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} cwRC+'
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -147,7 +139,7 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
 
 async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     try:
-        all_url = f"{BASE_WEB_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
+        all_url = f"{STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
         if char != "all":
             char_url = f"{all_url}&char_id={str(characters.reverse_mappings[char])}"
             char_by_user_url = f"{all_url}&by_user=1&char_id={str(characters.reverse_mappings[char])}"
@@ -176,18 +168,15 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     pa, avg, obp, slg = calc_slash_line(char_stats)
 
     title = f"\n{char} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}"
-    desc = "**User** (PA): AVG / OBP / SLG, cOPS+"
+    desc = "**User** (PA): AVG / OBP / SLG, cwRC+"
 
     output_list = []
     for user, user_stats in user_list[1:]:
         user_pa, user_avg, user_obp, user_slg = calc_slash_line(user_stats)
-        if obp > 0 and slg > 0:
-            ops_plus = ((user_obp / obp) + (user_slg / slg) - 1) * 100
-        else:
-            ops_plus = 0
+        wrc_plus = calc_wrc_plus(user_stats, char_stats)
 
-        if user_pa > (pa / 100):
-            output_list.append((user, user_pa, user_avg, user_obp, user_slg, ops_plus))
+        if user_pa > (pa / 200) + 20:
+            output_list.append((user, user_pa, user_avg, user_obp, user_slg, wrc_plus))
 
     sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=True)
 
@@ -197,8 +186,8 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         user_avg = user_stats[2]
         user_obp = user_stats[3]
         user_slg = user_stats[4]
-        ops_plus = user_stats[5]
-        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(ops_plus)} cOPS+"
+        wrc_plus = user_stats[5]
+        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(wrc_plus)} cwRC+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -209,7 +198,7 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
 
 async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
     global all_stats, all_by_char_stats
-    all_url = BASE_WEB_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_nonfair=1&exclude_misc=1&tag=" + mode
+    all_url = STATS_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_nonfair=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     async with session.get(all_url) as response:
@@ -219,7 +208,7 @@ async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
 
     all_batting = BattingStats.model_validate(all_stats[mode]["Batting"])
     all_pa, all_avg, all_obp, all_slg = calc_slash_line(all_batting)
-    desc = "**Char** (PA): AVG / OBP / SLG, OPS+"
+    desc = "**Char** (PA): AVG / OBP / SLG, wRC+"
     title = f"\nAll ({all_pa} PA): {all_avg:.3f} / {all_obp:.3f} / {all_slg:.3f}"
 
     try:
@@ -237,9 +226,9 @@ async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
         char_stats = BattingStats.model_validate(all_by_char_stats[mode][char]["Batting"])
         pa, avg, obp, slg = calc_slash_line(char_stats)
 
-        ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
+        wrc_plus = calc_wrc_plus(char_stats, all_batting)
 
-        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
+        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(wrc_plus)} wRC+"
 
     embed = discord.Embed(title=title, description=desc)
     embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -255,3 +244,23 @@ def calc_slash_line(stats: BattingStats):
     slg = (stats.summary_singles + (stats.summary_doubles * 2) + (stats.summary_triples * 3) + (
             stats.summary_homeruns * 4)) / stats.summary_at_bats if stats.summary_at_bats > 0 else 0
     return pa, avg, obp, slg
+
+
+def calc_wrc_plus(stats: BattingStats, overall_stats: BattingStats) -> float:
+    overall_pa = (overall_stats.summary_at_bats + overall_stats.summary_walks_bb +
+                  overall_stats.summary_walks_hbp + overall_stats.summary_sac_flys)
+    if overall_pa == 0:
+        return 0
+
+    overall_obp = (overall_stats.summary_hits + overall_stats.summary_walks_hbp +
+                   overall_stats.summary_walks_bb) / overall_pa
+
+    player_woba = calc_woba(stats)
+    overall_woba = calc_woba(overall_stats)
+
+    if overall_woba == 0:
+        return 0
+
+    woba_scale = overall_obp / overall_woba
+
+    return (((player_woba - overall_woba) / woba_scale + LEAGUE_RUNS_PER_PA) / LEAGUE_RUNS_PER_PA) * 100

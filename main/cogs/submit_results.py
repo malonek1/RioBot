@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from resources import EnvironmentVariables as ev
+from resources.api import MANUAL_SUBMIT_URL
 
 # Channel ID for #ranked-bot result submission channel
 RANKED_BOT_CHANNEL_ID = int(ev.get_var("ranked_bot_channel_id"))
@@ -25,7 +26,7 @@ class SubmitResults(commands.Cog):
 
         check_emoji = "\U00002705"
         x_emoji = "\U0000274C"
-        manual_submit_endpoint = "https://api.projectrio.app/manual_submit_game"
+        manual_submit_endpoint = MANUAL_SUBMIT_URL
 
         if ctx.channel.id == RANKED_BOT_CHANNEL_ID:
             await ctx.message.add_reaction(check_emoji)

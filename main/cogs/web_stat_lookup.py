@@ -5,8 +5,6 @@ from helpers.offensive_stat_calcs import ostat_user_char, ostat_user, ostat_char
 from helpers.pitching_stat_calcs import pstat_user_char, pstat_user, pstat_char, pstat_all
 from resources import ladders, characters
 
-BASE_WEB_URL = "https://api.projectrio.app/stats/"
-
 
 class WebStatLookup(commands.Cog):
     def __init__(self, client):
