@@ -2,7 +2,6 @@ import asyncio
 
 import discord.ext.commands
 from discord.ext import commands
-import requests
 import os
 
 from dotenv import load_dotenv
@@ -25,11 +24,12 @@ class SubmitResults(commands.Cog):
         manual_submit_rio_key = os.getenv("RIO_KEY")
 
         check_emoji = "\U00002705"
+        x_emoji = "\U0000274C"
         manual_submit_endpoint = "https://api.projectrio.app/manual_submit_game"
 
         if ctx.channel.id == RANKED_BOT_CHANNEL_ID:
             await ctx.message.add_reaction(check_emoji)
-            # requests.post()
+            await ctx.message.add_reaction(x_emoji)
 
             pokebunny_user_id = 117697656519786497
             pokebunny = await ctx.bot.fetch_user(pokebunny_user_id)
@@ -44,14 +44,17 @@ class SubmitResults(commands.Cog):
                 print("Could not DM Pokebunny")
 
             def check_confirm(rxn, usr):
-                return usr.name == "pokebunny" and (rxn.emoji == check_emoji)
+                return usr.name == "pokebunny" and rxn.emoji in (check_emoji, x_emoji) and rxn.message.id == ctx.message.id
 
             # Check for bot to see if a user confirmed or denied the results submitted by another user
             try:
-                await self.client.wait_for('reaction_add', timeout=86400.0, check=check_confirm)
+                reaction, _ = await self.client.wait_for('reaction_add', timeout=86400.0, check=check_confirm)
             except asyncio.TimeoutError:
                 await ctx.send("Game was not accepted within 24 hours")
             else:
+                if reaction.emoji == x_emoji:
+                    await ctx.send(f"Rejected: {user1} {score1} {score2} {user2} {game_mode_name}")
+                    return
                 manual_submit = {
                     "winner_username": user1,
                     "loser_username": user2,
@@ -63,7 +66,8 @@ class SubmitResults(commands.Cog):
                     "recalc": True
                 }
                 print(manual_submit)
-                response = requests.post(manual_submit_endpoint, json=manual_submit)
+                async with self.client.session.post(manual_submit_endpoint, json=manual_submit) as response:
+                    pass
                 await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
                 # if response.status_code == 200:
                 #     await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")

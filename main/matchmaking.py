@@ -260,7 +260,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
             for player in queue[game_type]:
                 if max_rating >= queue[game_type][player]["Rating"] >= min_rating and player != user_id:
                     if not best_match or abs(queue[game_type][best_match]["Rating"] - queue[game_type][user_id]["Rating"]) \
-                            > abs(queue[game_type][player]["Rating"] - queue[user_id]["Rating"]):
+                            > abs(queue[game_type][player]["Rating"] - queue[game_type][user_id]["Rating"]):
                         best_match = player
 
             # If match is found
@@ -281,7 +281,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                            match_queue[user_id]["Name"] + " " + str(match_queue[user_id]["Rating"]) + " vs " + \
                            match_queue[best_match]["Name"] + " " + str(match_queue[best_match]["Rating"])
                 print(log_text)
-                with open("match_log.txt", "w") as file:
+                with open("match_log.txt", "a") as file:
                     file.write(log_text)
                 embed = discord.Embed()
 
@@ -293,7 +293,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                     file = ifBuildTeamImageFile(team_list, captain_list)
                     embed.set_image(url="attachment://image.png")
                     stadium = rfRandomStadium()
-                    if rfFlipCoin == "Heads":
+                    if rfFlipCoin() == "Heads":
                         away = match_queue[user_id]["Name"]
                         home = match_queue[best_match]["Name"]
                     else:

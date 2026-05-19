@@ -1,14 +1,7 @@
 from discord.ext import commands
 import discord
-import requests
 import urllib.parse
 from resources import EnvironmentVariables as ev, ladders
-
-modes_body = {
-    "communities": 1,
-    "active": True
-}
-modes = requests.post("https://api.projectrio.app/tag_set/list", data=modes_body).json()["Tag Sets"]
 
 
 class Ladder(commands.Cog):

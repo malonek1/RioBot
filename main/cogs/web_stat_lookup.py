@@ -1,5 +1,4 @@
 import discord
-import requests
 from discord.ext import commands
 
 from helpers.offensive_stat_calcs import ostat_user_char, ostat_user, ostat_char, ostat_all
@@ -19,19 +18,20 @@ class WebStatLookup(commands.Cog):
         mode = ladders.get_web_mode(mode)
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
+        session = self.client.session
         if char == "all" and user == "all":
-            await ostat_all(ctx, mode)
+            await ostat_all(ctx, mode, session)
         elif char == "all" and user != "all":
-            await ostat_user(ctx, user, mode)
+            await ostat_user(ctx, user, mode, session)
         elif char != "all" and user == "all":
-            await ostat_char(ctx, char, mode)
+            await ostat_char(ctx, char, mode, session)
         elif char != "all" and user != "all":
-            await ostat_user_char(ctx, user, char, mode)
+            await ostat_user_char(ctx, user, char, mode, session)
 
     @commands.command(name="orank", help="Get a ranking of all players offensively")
     async def o_rank(self, ctx, mode="off"):
         mode = ladders.get_web_mode(mode)
-        await ostat_char(ctx, "all", mode)
+        await ostat_char(ctx, "all", mode, self.client.session)
 
     @commands.command(name="pstat", help="Look up player pitching stats on Project Rio")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -39,19 +39,20 @@ class WebStatLookup(commands.Cog):
         mode = ladders.get_web_mode(mode)
         if char.lower() in characters.aliases:
             char = characters.mappings[characters.aliases[char.lower()]]
+        session = self.client.session
         if char == "all" and user == "all":
-            await pstat_all(ctx, mode)
+            await pstat_all(ctx, mode, session)
         elif char == "all" and user != "all":
-            await pstat_user(ctx, user, mode)
+            await pstat_user(ctx, user, mode, session)
         elif char != "all" and user == "all":
-            await pstat_char(ctx, char, mode)
+            await pstat_char(ctx, char, mode, session)
         elif char != "all" and user != "all":
-            await pstat_user_char(ctx, user, char, mode)
+            await pstat_user_char(ctx, user, char, mode, session)
 
     @commands.command(name="prank", help="Get a ranking of all players defensively")
     async def p_rank(self, ctx, mode="off"):
         mode = ladders.get_web_mode(mode)
-        await pstat_char(ctx, "all", mode)
+        await pstat_char(ctx, "all", mode, self.client.session)
 
 
 async def setup(client):
