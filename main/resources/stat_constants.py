@@ -12,6 +12,16 @@ LINEAR_WEIGHTS = {
 LEAGUE_RUNS_PER_PA = 0.16961480888026817
 
 
+ELO_BASELINE = 1500
+ELO_SCALE = 0.5  # dampening factor: how much opponent ELO affects wRC+
+
+
+def calc_adj_wrc_plus(wrc_plus: float, avg_opp_elo: float | None, scale: float = ELO_SCALE) -> float:
+    if avg_opp_elo is None:
+        return wrc_plus
+    return wrc_plus * (1 + scale * (avg_opp_elo / ELO_BASELINE - 1))
+
+
 def calc_woba(stats: BattingStats) -> float:
     pa = stats.summary_at_bats + stats.summary_walks_bb + stats.summary_walks_hbp + stats.summary_sac_flys
     if pa == 0:

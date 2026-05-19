@@ -2,13 +2,36 @@ import aiohttp
 import discord
 from json import JSONDecodeError
 from resources import characters
-from resources.api import STATS_URL
-from resources.stat_constants import LINEAR_WEIGHTS, LEAGUE_RUNS_PER_PA, calc_woba
+from resources.api import STATS_URL, GAMES_URL
+from resources.stat_constants import LINEAR_WEIGHTS, LEAGUE_RUNS_PER_PA, calc_woba, calc_adj_wrc_plus
+from helpers.utils import strip_non_alphanumeric
 from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
 
 all_stats = {}
 all_by_char_stats = {}
+_user_opp_elo_cache: dict[tuple[str, str], float | None] = {}
+
+
+async def get_user_opp_elo(user: str, mode: str, session: aiohttp.ClientSession) -> float | None:
+    key = (user, mode)
+    if key in _user_opp_elo_cache:
+        return _user_opp_elo_cache[key]
+
+    web_mode = strip_non_alphanumeric(mode)
+    async with session.get(GAMES_URL, params={"username": user, "tag": web_mode, "limit_games": 500}) as response:
+        games = (await response.json(content_type=None)).get("games", [])
+    opp_elos = []
+    for game in games:
+        if game["home_score"] > game["away_score"]:
+            home_elo, away_elo = game["winner_incoming_elo"], game["loser_incoming_elo"]
+        else:
+            home_elo, away_elo = game["loser_incoming_elo"], game["winner_incoming_elo"]
+        opp_elos.append(away_elo if game["home_user"] == user else home_elo)
+    result = sum(opp_elos) / len(opp_elos) if opp_elos else None
+    _user_opp_elo_cache[key] = result
+    return result
+
 
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
