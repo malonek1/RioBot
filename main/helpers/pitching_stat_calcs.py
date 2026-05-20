@@ -6,8 +6,7 @@ from json import JSONDecodeError
 from resources import characters
 from models.pitching_stats import PitchingStats
 from models.misc_stats import MiscStats
-
-BASE_WEB_URL = "https://api.projectrio.app/stats/"
+from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 
 all_stats = {}
 all_by_char_stats = {}
@@ -16,9 +15,9 @@ all_by_char_stats = {}
 async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
     global all_by_char_stats
     try:
-        all_by_char_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&by_char=1"
+        all_by_char_url = f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&by_char=1"
         char_id = characters.reverse_mappings[char]
-        url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
+        url = f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}"
         async with session.get(url) as response:
             data = await response.json(content_type=None)
         if not all_by_char_stats.get(mode, {}).get("Pitching", {}):
@@ -26,10 +25,7 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
                 all_by_char_stats[mode] = (await response.json(content_type=None))["Stats"]
         stats = PitchingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Pitching", {}))
     except (JSONDecodeError, KeyError):
-        embed = discord.Embed(
-            title=f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.",
-            color=0xEA7D07)
-        await ctx.send(embed=embed)
+        await send_error_embed(ctx, f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.")
         return
 
     ip, avg, k_rate, era = calc_slash_line(stats)
@@ -70,7 +66,7 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 
 async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     global all_stats, all_by_char_stats
-    all_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+    all_url = f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
     user_url = f"{all_url}&username={user}"
     all_by_char_url = f"{all_url}&by_char=1"
     user_by_char_url = f"{all_by_char_url}&username={user}"
@@ -88,10 +84,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         async with session.get(user_by_char_url) as response:
             user_by_char_response = await response.json(content_type=None)
     except (JSONDecodeError, KeyError):
-        embed = discord.Embed(
-            title=f"There are no stats for user {user} in {mode} or the username was not found.",
-            color=0xEA7D07)
-        await ctx.send(embed=embed)
+        await send_error_embed(ctx, f"There are no stats for user {user} in {mode} or the username was not found.")
         return
 
     user_dict: dict[str, PitchingStats] = {
@@ -137,16 +130,12 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
             ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
             desc += f'\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-'
 
-    embed = discord.Embed(title=title, description=desc)
-    embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-    embed.set_thumbnail(url=characters.images["all"])
-
-    await ctx.send(embed=embed)
+    await send_stat_embed(ctx, title, desc, "all")
 
 
 async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     try:
-        all_url = f"{BASE_WEB_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
+        all_url = f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}"
         if char != "all":
             char_url = f"{all_url}&char_id={str(characters.reverse_mappings[char])}"
             char_by_user_url = f"{all_url}&by_user=1&char_id={str(characters.reverse_mappings[char])}"
@@ -159,10 +148,7 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         async with session.get(char_by_user_url) as response:
             char_by_user_response = await response.json(content_type=None)
     except (JSONDecodeError, KeyError):
-        embed = discord.Embed(
-            title=f"There are no stats for character {char} in {mode} or the character alias was not found.",
-            color=0xEA7D07)
-        await ctx.send(embed=embed)
+        await send_error_embed(ctx, f"There are no stats for character {char} in {mode} or the character alias was not found.")
         return
 
     user_list: list[tuple[str, PitchingStats]] = [
@@ -201,16 +187,12 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         era_minus = user_stats[5]
         desc += f"\n{index + 1}. **{user}** ({user_ip} IP): {user_avg:.3f} / {user_k_rate:.1%} / {user_era:.2f}, {round(era_minus)} ERA-"
 
-    embed = discord.Embed(title=title, description=desc)
-    embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-    embed.set_thumbnail(url=characters.images[char])
-
-    await ctx.send(embed=embed)
+    await send_stat_embed(ctx, title, desc, char)
 
 
 async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
     global all_stats, all_by_char_stats
-    all_url = BASE_WEB_URL + "?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
+    all_url = BASE_STATS_URL + "?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag=" + mode
     all_by_char_url = all_url + "&by_char=1"
 
     async with session.get(all_url) as response:
@@ -241,11 +223,7 @@ async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
             ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
             desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} ERA-"
 
-    embed = discord.Embed(title=title, description=desc)
-    embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-    embed.set_thumbnail(url=characters.images["all"])
-
-    await ctx.send(embed=embed)
+    await send_stat_embed(ctx, title, desc, "all")
 
 
 def calc_slash_line(stats: PitchingStats):
