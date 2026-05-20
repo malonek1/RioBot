@@ -16,9 +16,9 @@ class BattingStats(BaseModel):
     summary_walks_bb: int
     summary_walks_hbp: int
     summary_sac_flys: int
-    perfect_hits: int
-    nice_hits: int
-    sour_hits: int
+    perfect_hits: int = 0
+    nice_hits: int = 0
+    sour_hits: int = 0
 
     # Optional — modeled for future use
     summary_bases_stolen: int = 0
