@@ -1,3 +1,3 @@
 #!/bin/bash
 echo "Stopping RioBot"
-pkill -f RioBot.py || true
+sudo pkill -f RioBot.py || true
