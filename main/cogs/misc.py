@@ -138,8 +138,11 @@ class Misc(commands.Cog):
     async def reset(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='RESET GAME:',
-                        value='In the event that a ranked/tournament game crashes or disconnects, players will recreate the game and continue playing from the point of the crash\n\n'
-                              'Here\'s a guide on how to proceed:')
+                        value='In the event that a ranked/tournament game crashes or desyncs, use the "Fast Reset" feature in Rio to jump right back into the game.\n'
+                              'The checkbox can be found at the bottom of the netplay lobby, or under the Rio Config menu in the main Rio window.\n'
+                              'To use it, ensure the game mode and players are the same as the crashed game, and then both players just need to keep pressing A to advance through the menus. Ignore the graphics in the menus - the correct info will be loaded in the background.\n'
+                              'The game will resume from the pitch before the crash/desync happened. Depending on the nature of the crash/desync, the players can agree to recrease the subsequent event manually.\n'
+                              'There are some cases where the Fast Reset may not work properly, such as if the crash/desync happened during a pitch. In these cases, please refer to the guide below for how to manually reset the game:\n')
         embed.set_image(url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png")
         await ctx.send(embed=embed)
 
@@ -321,7 +324,7 @@ class Misc(commands.Cog):
     async def memoryCard(self, ctx):
         embed = discord.Embed()
         embed.add_field(name='Memory Card Usage in Project Rio',
-                        value='Project Rio does not currently support saving to memory cards. If you want to play the single player campaign we recommend using Dolphin emulator. The alternative is to remove your memory card in Project Rio by going to Config -> Gamecube -> Memory Card. Then you can use save states to capture progress.')
+                        value='Project Rio supports memory cards as of version 2.2.0.')
         await ctx.send(embed=embed)
 
 
