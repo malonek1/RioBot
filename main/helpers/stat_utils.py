@@ -2,6 +2,7 @@ import discord
 from resources import characters
 
 BASE_STATS_URL = "https://api.projectrio.app/stats/"
+FRONTEND_URL = "https://projectrio.pages.dev"
 
 
 async def send_error_embed(ctx, message: str):
