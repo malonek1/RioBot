@@ -17,7 +17,7 @@ load_dotenv()
 token = os.getenv("BOT_TOKEN")
 intents = discord.Intents.all()
 
-cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results"]
+cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results", "registration"]
 
 
 class RioBot(commands.Bot):

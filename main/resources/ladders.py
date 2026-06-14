@@ -64,7 +64,7 @@ MODE_ALIASES = {
 ladders = {}
 
 for m in GAME_MODES:
-    ladders[m] = []
+    ladders[m] = {}
 
 def find_game_mode(mode: str):
     for m in MODE_ALIASES:

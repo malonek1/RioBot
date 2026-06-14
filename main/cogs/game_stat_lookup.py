@@ -4,7 +4,7 @@ from resources import EnvironmentVariables as ev, CharacterStats
 
 from resources.characters import BAT_URLS
 
-BOT_SPAM_CHANNEL_ID = int(ev.get_var("bot_spam_channel_id"))
+BOT_SPAM_CHANNEL_ID = ev.BOT_SPAM_CHANNEL_ID
 
 stats_lol = []
 CharacterStats.build_stats_lol(stats_lol)

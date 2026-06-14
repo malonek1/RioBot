@@ -3,10 +3,8 @@ from discord import ButtonStyle
 from discord.ext import tasks, commands
 from discord.ui import View, Button
 import time
-import datetime as dt
-import pytz
 
-from resources import EnvironmentVariables as ev, ladders
+from resources import EnvironmentVariables as ev, ladders, rio_name_map
 from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, \
     rfRandomQuickplayMode
 from services.image_functions import ifBuildTeamImageFile
@@ -15,12 +13,9 @@ from helpers import utils
 # Constant for starting percentile range for matchmaking search
 BASE_PERCENTILE_RANGE = 0.5
 # Constant to tell the bot where the matchmaking buttons appear
-BUTTON_CHANNEL_ID = int(ev.get_var("mm_button_channel_id"))
-
-# Constant to tell the bot where to post matchmaking updates
-MATCH_CHANNEL_ID = int(ev.get_var("mm_match_channel_id"))
-MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
-MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
+BUTTON_CHANNEL_ID = ev.MM_BUTTON_CHANNEL_ID
+MATCH_CHANNEL_ID = ev.MM_MATCH_CHANNEL_ID
+MOD_ROLE_ID = ev.MOD_ROLE_ID
 
 STARS_OFF_ROLE = "<@&998791156794150943>"
 STARS_ON_ROLE = "<@&998791464630898808>"
@@ -58,11 +53,11 @@ async def init_buttons(bot: commands.Bot):
 
         async def press(interaction, mode=ladders.GAME_MODES[i]):
             await interaction.response.defer()
-            await enter_queue(interaction, bot, mode)
-            embed = discord.Embed()
-            embed.add_field(name='Queue Status:',
-                            value="You have entered the " + mode + " queue.")
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            if await enter_queue(interaction, bot, mode):
+                embed = discord.Embed()
+                embed.add_field(name='Queue Status:',
+                                value="You have entered the " + mode + " queue.")
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
         button.callback = press
         new_view.add_item(button)
@@ -103,52 +98,37 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
     player_rating = 1300
     player_id = str(interaction.user.id)
     player_name = interaction.user.name
-    mm_channel = bot.get_channel(MATCH_CHANNEL_ID)
-    mod_channel = bot.get_channel(MOD_CHANNEL_ID)
-    account_age = interaction.user.joined_at
-    sysdate = dt.datetime.now(pytz.utc) - dt.timedelta(hours=1)
-    if account_age < sysdate:
-        player_match = utils.strip_non_alphanumeric(player_name)
-        player_match2 = utils.strip_non_alphanumeric(interaction.user.display_name)
-        print(player_match, player_match2)
-        for user in ladders.ladders[game_type]:
-            user_match = utils.strip_non_alphanumeric(user)
-            if player_match == user_match or player_match2 == user_match:
-                player_rating = ladders.ladders[game_type][user]["rating"]
-
-        # put player in queue
-        queue[game_type][player_id] = {
-            "Name": player_name,
-            "Rating": player_rating,
-            "Time": time.time()
-        }
-
-        # calculate search range
-        min_rating, max_rating = calc_search_range(player_rating, game_type, 0)
-
-        # check for match
-        await check_for_match(bot, game_type, player_id, min_rating, max_rating)
-
-        await update_queue_status()
-
-    else:
-        print("User " + str(player_name) + " tried entering a queue with an invalid discord account age of " + str(
-            account_age))
-        mm_embed = discord.Embed(
-            title=f"User {player_name} hasn't been in the server long enough to join the queue!",
-            description="New server members must wait 1 hour before being able to join the Queue. In the meantime "
-                        "feel free to ping `@LFGNewNetPlayer` in order to find a game.",
+    rio_name = rio_name_map.get_rio_name(player_id)
+    if rio_name is None:
+        embed = discord.Embed(
+            title="Registration required",
+            description="You must link your Project Rio username before joining the queue.\n"
+                        "Use `!register <rio_username>` to register.",
             color=0xFF5733)
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        return
 
-        mod_embed = discord.Embed(
-            title=f'Suspicious activity detected!',
-            color=0xFF5733)
-        mod_embed.add_field(name=f'Discord User Name:', value=player_name, inline=False)
-        mod_embed.add_field(name=f'Discord User ID:', value=player_id, inline=False)
-        mod_embed.add_field(name=f'Joined Server:', value=account_age, inline=False)
-        mod_embed.add_field(name=f'Channel Activity:', value=f'<#{MATCH_CHANNEL_ID}>', inline=False)
-        await mm_channel.send(embed=mm_embed)
-        await mod_channel.send(embed=mod_embed)
+    rio_name_lower = rio_name.lower()
+    for user in ladders.ladders[game_type]:
+        if user.lower() == rio_name_lower:
+            player_rating = ladders.ladders[game_type][user]["rating"]
+            break
+
+    # put player in queue
+    queue[game_type][player_id] = {
+        "Name": player_name,
+        "Rating": player_rating,
+        "Time": time.time()
+    }
+
+    # calculate search range
+    min_rating, max_rating = calc_search_range(player_rating, game_type, 0)
+
+    # check for match
+    await check_for_match(bot, game_type, player_id, min_rating, max_rating)
+
+    await update_queue_status()
+    return True
 
 
 # Button for a player to remove themselves from the queue
@@ -282,7 +262,7 @@ async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max
                            match_queue[best_match]["Name"] + " " + str(match_queue[best_match]["Rating"])
                 print(log_text)
                 with open("match_log.txt", "a") as file:
-                    file.write(log_text)
+                    file.write(log_text + "\n")
                 embed = discord.Embed()
 
                 # RANDOMS LOGIC

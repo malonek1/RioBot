@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 from resources import EnvironmentVariables as ev
 
 # Channel ID for #ranked-bot result submission channel
-RANKED_BOT_CHANNEL_ID = int(ev.get_var("ranked_bot_channel_id"))
-MOD_CHANNEL_ID = int(ev.get_var("mod_channel_id"))
-MOD_ROLE_ID = int(ev.get_var("mod_role_id"))
+RANKED_BOT_CHANNEL_ID = ev.RANKED_BOT_CHANNEL_ID
+MOD_CHANNEL_ID = ev.MOD_CHANNEL_ID
+MOD_ROLE_ID = ev.MOD_ROLE_ID
 
 class SubmitResults(commands.Cog):
     def __init__(self, client):
