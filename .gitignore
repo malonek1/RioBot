@@ -2,6 +2,7 @@ __pycache__/
 main/.env_BACKUP
 .idea
 match_log.txt
+main/rio_name_map.json
 main/client_secret.json
 *.iml
 main/resources/test_BACKUP.json
