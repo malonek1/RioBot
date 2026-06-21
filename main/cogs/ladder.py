@@ -113,7 +113,7 @@ class Ladder(commands.Cog):
         url = f"{FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder"
         pages = _build_pages(header, rows)
         view = LadderView(f"{mode} Ladder", url, pages)
-        view.message = await ctx.send(embed=view.current_embed(), view=view)
+        view.message = await ctx.send(embed=view.current_embed(), view=view if len(pages) > 1 else None)
 
     @commands.command(name="ladderCompact", help="Display the ladder in a compact view. Parameters: [mode] [min_games]")
     @commands.cooldown(1, 2, commands.BucketType.default)
@@ -137,7 +137,7 @@ class Ladder(commands.Cog):
 
         pages = _build_pages(header, rows)
         view = LadderView(f"{mode} Compact Ladder (Min {min_games} games)", None, pages, plain=True)
-        view.message = await ctx.send(content=view.current_content(), view=view)
+        view.message = await ctx.send(content=view.current_content(), view=view if len(pages) > 1 else None)
 
 
 async def setup(client):
