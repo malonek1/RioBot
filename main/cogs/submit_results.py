@@ -53,7 +53,12 @@ class SubmitResults(commands.Cog):
                 await ctx.send("Game was not accepted within 24 hours")
             else:
                 if reaction.emoji == x_emoji:
-                    await ctx.send(f"Rejected: {user1} {score1} {score2} {user2} {game_mode_name}")
+                    reject_embed = discord.Embed(title="Manual Submission Rejected", color=0xFF5733)
+                    reject_embed.add_field(name="Winner", value=user1, inline=True)
+                    reject_embed.add_field(name="Score", value=f"{score1} - {score2}", inline=True)
+                    reject_embed.add_field(name="Loser", value=user2, inline=True)
+                    reject_embed.add_field(name="Game Mode", value=game_mode_name, inline=False)
+                    await ctx.send(embed=reject_embed)
                     return
                 manual_submit = {
                     "winner_username": user1,
@@ -68,7 +73,12 @@ class SubmitResults(commands.Cog):
                 print(manual_submit)
                 async with self.client.session.post(manual_submit_endpoint, json=manual_submit) as response:
                     pass
-                await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
+                submit_embed = discord.Embed(title="Manual Submission Approved", color=0x138F13)
+                submit_embed.add_field(name="Winner", value=user1, inline=True)
+                submit_embed.add_field(name="Score", value=f"{score1} - {score2}", inline=True)
+                submit_embed.add_field(name="Loser", value=user2, inline=True)
+                submit_embed.add_field(name="Game Mode", value=game_mode_name, inline=False)
+                await ctx.send(embed=submit_embed)
                 # if response.status_code == 200:
                 #     await ctx.send(f"Submitted: {user1} {score1} {score2} {user2} {game_mode_name}")
                 # else:
