@@ -16,6 +16,7 @@ BASE_PERCENTILE_RANGE = 0.5
 BUTTON_CHANNEL_ID = ev.MM_BUTTON_CHANNEL_ID
 MATCH_CHANNEL_ID = ev.MM_MATCH_CHANNEL_ID
 MOD_ROLE_ID = ev.MOD_ROLE_ID
+BOT_SPAM_CHANNEL_ID = ev.BOT_SPAM_CHANNEL_ID
 
 STARS_OFF_ROLE = "<@&998791156794150943>"
 STARS_ON_ROLE = "<@&998791464630898808>"
@@ -103,7 +104,7 @@ async def enter_queue(interaction, bot: commands.Bot, game_type):
         embed = discord.Embed(
             title="Registration required",
             description="You must link your Project Rio username before joining the queue.\n"
-                        "Use `!register <rio_username>` to register.",
+                        f"Use `!register <rio_username>` in <#{BOT_SPAM_CHANNEL_ID}> to register.",
             color=0xFF5733)
         await interaction.followup.send(embed=embed, ephemeral=True)
         return
