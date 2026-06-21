@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 import urllib.parse
 from resources import EnvironmentVariables as ev, ladders
+from helpers.stat_utils import FRONTEND_URL
 
 
 class Ladder(commands.Cog):
@@ -14,7 +15,7 @@ class Ladder(commands.Cog):
         await ladders.refresh_ladders()
         if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
             mode = ladders.find_game_mode(mode)
-            await ctx.send(f"This information can also be accessed here: https://project-rio-frontend.vercel.app/modes/{urllib.parse.quote(mode)}/ladder")
+            await ctx.send(f"This information can also be accessed here: {FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder")
 
             ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
             message = "**" + mode + " Ladder**\n```"

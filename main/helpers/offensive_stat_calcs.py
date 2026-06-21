@@ -4,7 +4,7 @@ from json import JSONDecodeError
 from resources import characters
 from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
-from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
+from helpers.stat_utils import BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
 from helpers import stat_cache
 
 
@@ -115,7 +115,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 
 
 async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
-    await ctx.send(f"This information can now be accessed here: https://project-rio-frontend.vercel.app/user/{user}/batting")
+    await ctx.send(f"This information can now be accessed here: {FRONTEND_URL}/user/{user}/batting")
     base_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
     user_url = f"{base_url}&username={user}"
     user_by_char_url = f"{base_url}&by_char=1&username={user}"
