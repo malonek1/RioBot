@@ -107,7 +107,7 @@ class Ladder(commands.Cog):
             total = user["num_wins"] + user["num_losses"]
             win_pct = user["num_wins"] / total * 100
             wl = f"{user['num_wins']}-{user['num_losses']}"
-            username_display = user["username"][:15] + "..." if len(user["username"]) > 18 else user["username"]
+            username_display = user["username"][:17] + "…" if len(user["username"]) > 18 else user["username"]
             rows.append(
                 f"{str(index + 1) + '.':<5}{username_display:<18}{round(user['adjusted_rating']):<7}{wl:<9}{round(win_pct, 1)}%"
             )
@@ -133,7 +133,7 @@ class Ladder(commands.Cog):
         header = f"{'#':<5}{'Username':<16}{'Rtg':<{elo_col}}W/L"
         rows = []
         for pos, user in enumerate(filtered, 1):
-            username_display = user["username"][:11] + "..." if len(user["username"]) > 14 else user["username"]
+            username_display = user["username"][:13] + "…" if len(user["username"]) > 14 else user["username"]
             wl = f"{user['num_wins']}-{user['num_losses']}"
             rows.append(f"{str(pos) + '.':<5}{username_display:<16}{str(round(user['adjusted_rating'])):<{elo_col}}{wl}")
 
