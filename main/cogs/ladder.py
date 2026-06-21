@@ -107,8 +107,9 @@ class Ladder(commands.Cog):
             total = user["num_wins"] + user["num_losses"]
             win_pct = user["num_wins"] / total * 100
             wl = f"{user['num_wins']}-{user['num_losses']}"
+            username_display = user["username"][:15] + "..." if len(user["username"]) > 18 else user["username"]
             rows.append(
-                f"{str(index + 1) + '.':<5}{user['username']:<18}{round(user['adjusted_rating']):<7}{wl:<9}{round(win_pct, 1)}%"
+                f"{str(index + 1) + '.':<5}{username_display:<18}{round(user['adjusted_rating']):<7}{wl:<9}{round(win_pct, 1)}%"
             )
 
         url = f"{FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder"
