@@ -57,10 +57,8 @@ class LadderView(discord.ui.View):
             await interaction.response.edit_message(embed=self.current_embed(), view=self)
 
     async def on_timeout(self):
-        self.prev_button.disabled = True
-        self.next_button.disabled = True
         if self.message:
-            await self.message.edit(view=self)
+            await self.message.edit(view=None)
 
     @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary)
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
