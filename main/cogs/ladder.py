@@ -4,106 +4,139 @@ import urllib.parse
 from resources import EnvironmentVariables as ev, ladders
 from helpers.stat_utils import FRONTEND_URL
 
+ROWS_PER_PAGE = 25
+
+
+def _build_pages(header, rows):
+    if not rows:
+        return [header + "\nNo results."]
+    pages = []
+    for i in range(0, len(rows), ROWS_PER_PAGE):
+        pages.append(header + "\n" + "\n".join(rows[i:i + ROWS_PER_PAGE]))
+    return pages
+
+
+def _make_embed(title, url, pages, page):
+    embed = discord.Embed(title=title, color=0xEA7D07)
+    if url:
+        embed.url = url
+    embed.description = f"```{pages[page]}```"
+    if len(pages) > 1:
+        embed.set_footer(text=f"Page {page + 1} of {len(pages)}")
+    return embed
+
+
+class LadderView(discord.ui.View):
+    def __init__(self, title, url, pages, plain=False):
+        super().__init__(timeout=86400)
+        self.title = title
+        self.url = url
+        self.pages = pages
+        self.page = 0
+        self.plain = plain
+        self.message = None
+        self._sync_buttons()
+
+    def _sync_buttons(self):
+        self.prev_button.disabled = self.page == 0
+        self.next_button.disabled = self.page == len(self.pages) - 1
+
+    def current_embed(self):
+        return _make_embed(self.title, self.url, self.pages, self.page)
+
+    def current_content(self):
+        lines = [f"**{self.title}**", f"```{self.pages[self.page]}```"]
+        if len(self.pages) > 1:
+            lines.append(f"Page {self.page + 1} of {len(self.pages)}")
+        return "\n".join(lines)
+
+    async def _edit(self, interaction):
+        if self.plain:
+            await interaction.response.edit_message(content=self.current_content(), view=self)
+        else:
+            await interaction.response.edit_message(embed=self.current_embed(), view=self)
+
+    async def on_timeout(self):
+        self.prev_button.disabled = True
+        self.next_button.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+
+    @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page -= 1
+        self._sync_buttons()
+        await self._edit(interaction)
+
+    @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page += 1
+        self._sync_buttons()
+        await self._edit(interaction)
+
 
 class Ladder(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    async def _wrong_channel(self, ctx):
+        embed = discord.Embed(color=0xEA7D07)
+        embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
+        await ctx.send(embed=embed)
+
     @commands.command(help="display the ladder")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
         await ladders.refresh_ladders()
-        if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
-            mode = ladders.find_game_mode(mode)
-            await ctx.send(f"This information can also be accessed here: {FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder")
+        if ctx.channel.id != ev.BOT_SPAM_CHANNEL_ID:
+            await self._wrong_channel(ctx)
+            return
 
-            ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
-            message = "**" + mode + " Ladder**\n```"
-            message += "#    Username          Rtg    W/L      Pct\n"
-            for index, user in enumerate(ladder_values):
-                if user["num_wins"] == 0 and user["num_losses"] == 0:
-                    continue
-                buffer1 = " " * (4 - len(str(index + 1)))
-                buffer2 = " " * (18 - len(user["username"]))
-                buffer3 = " " * (7 - len(str(round(user["adjusted_rating"]))))
-                buffer4 = " " * (8 - (len(str(user["num_wins"])) + len(str(user["num_losses"]))))
+        mode = ladders.find_game_mode(mode)
+        ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
 
-                if user["num_wins"] + user["num_losses"] > 0:
-                    win_pct = user["num_wins"] / (user["num_wins"] + user["num_losses"]) * 100
-                else:
-                    win_pct = 0
+        header = f"{'#':<5}{'Username':<18}{'Rtg':<7}{'W/L':<9}Pct"
+        rows = []
+        for index, user in enumerate(ladder_values):
+            if user["num_wins"] == 0 and user["num_losses"] == 0:
+                continue
+            total = user["num_wins"] + user["num_losses"]
+            win_pct = user["num_wins"] / total * 100
+            wl = f"{user['num_wins']}-{user['num_losses']}"
+            rows.append(
+                f"{str(index + 1) + '.':<5}{user['username']:<18}{round(user['adjusted_rating']):<7}{wl:<9}{round(win_pct, 1)}%"
+            )
 
-                message += str(index + 1) + "." + buffer1 + user["username"] + buffer2 + str(round(user["adjusted_rating"])) \
-                           + buffer3 + str(user["num_wins"]) + "-" + str(user["num_losses"]) + buffer4 + str(round(win_pct, 1)) + "%\n"
-                if (index + 1) % 40 == 0:
-                    message += "```"
-                    await ctx.send(message)
-                    message = "```"
-            message += "```"
-
-            if message != "``````":
-                await ctx.send(message)
-        else:
-            embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
-            await ctx.send(embed=embed)
+        url = f"{FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder"
+        pages = _build_pages(header, rows)
+        view = LadderView(f"{mode} Ladder", url, pages)
+        view.message = await ctx.send(embed=view.current_embed(), view=view)
 
     @commands.command(name="ladderCompact", help="Display the ladder in a compact view. Parameters: [mode] [min_games]")
     @commands.cooldown(1, 2, commands.BucketType.default)
     async def ladder_compact(self, ctx, mode="off", min_games=5):
         await ladders.refresh_ladders()
-        if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
-            mode = ladders.find_game_mode(mode)
+        if ctx.channel.id != ev.BOT_SPAM_CHANNEL_ID:
+            await self._wrong_channel(ctx)
+            return
 
-            ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
+        mode = ladders.find_game_mode(mode)
+        ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
+        filtered = [u for u in ladder_values if u["num_wins"] + u["num_losses"] >= min_games]
 
-            pos = 0
-            longest_elo = 0
-            pos_gap = 3
+        longest_elo = max((len(str(round(u["adjusted_rating"]))) for u in filtered), default=3)
+        elo_col = longest_elo + 2
 
-            for index, user in enumerate(ladder_values):
-                if (user["num_wins"] == 0 and user["num_losses"] == 0) or (user["num_wins"] + user["num_losses"] < min_games):
-                    continue
+        header = f"{'#':<5}{'Username':<16}{'Rtg':<{elo_col}}W/L"
+        rows = []
+        for pos, user in enumerate(filtered, 1):
+            username_display = user["username"][:11] + "..." if len(user["username"]) > 14 else user["username"]
+            wl = f"{user['num_wins']}-{user['num_losses']}"
+            rows.append(f"{str(pos) + '.':<5}{username_display:<16}{str(round(user['adjusted_rating'])):<{elo_col}}{wl}")
 
-                pos += 1
-                if len(str(round(user["adjusted_rating"]))) > longest_elo:
-                    longest_elo = len(str(round(user["adjusted_rating"])))
-
-            if pos > 99:
-                pos_gap = 4
-
-            message = "**" + mode + " Compact Ladder, Min " + str(min_games) + " Games **\n```"
-            message += "#" + (" " * pos_gap) + "Username" + (" " * (14+2-len("Username"))) + "Rtg" \
-                       + (" " * (longest_elo+2-len("Rtg"))) + "W/L\n"
-            pos = 1
-            for index, user in enumerate(ladder_values):
-                if user["num_wins"] + user["num_losses"] < min_games:
-                    continue
-
-                username_display = user["username"]
-
-                if len(username_display) > 14:      # MAX USERNAME LENGTH SET HERE
-                    username_display = username_display[:11] + "..."      # USING DOTS OVER DASH
-
-                buffer1 = " " * (pos_gap - len(str(pos)))
-                buffer2 = " " * (14 + 2 - len(username_display))
-                buffer3 = " " * (longest_elo + 2 - len(str(round(user["adjusted_rating"]))))
-
-                message += str(pos) + "." + buffer1 + username_display + buffer2 + str(round(user["adjusted_rating"])) \
-                           + buffer3 + str(user["num_wins"]) + "-" + str(user["num_losses"]) + "\n"
-                if pos % 50 == 0:
-                    message += "```"
-                    await ctx.send(message)
-                    message = "```"
-                pos += 1
-            message += "```"
-
-            if message != "``````":
-                await ctx.send(message)
-        else:
-            embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
-            await ctx.send(embed=embed)
+        pages = _build_pages(header, rows)
+        view = LadderView(f"{mode} Compact Ladder (Min {min_games} games)", None, pages, plain=True)
+        view.message = await ctx.send(content=view.current_content(), view=view)
 
 
 async def setup(client):
