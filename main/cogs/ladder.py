@@ -84,16 +84,20 @@ class Ladder(commands.Cog):
         embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
         await ctx.send(embed=embed)
 
+    async def _fetch_ladder(self, mode):
+        await ladders.refresh_ladders()
+        mode = ladders.find_game_mode(mode)
+        ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
+        return mode, ladder_values
+
     @commands.command(help="display the ladder")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
-        await ladders.refresh_ladders()
         if ctx.channel.id != ev.BOT_SPAM_CHANNEL_ID:
             await self._wrong_channel(ctx)
             return
 
-        mode = ladders.find_game_mode(mode)
-        ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
+        mode, ladder_values = await self._fetch_ladder(mode)
 
         header = f"{'#':<5}{'Username':<18}{'Rtg':<7}{'W/L':<9}Pct"
         rows = []
@@ -115,13 +119,11 @@ class Ladder(commands.Cog):
     @commands.command(name="ladderCompact", help="Display the ladder in a compact view. Parameters: [mode] [min_games]")
     @commands.cooldown(1, 2, commands.BucketType.default)
     async def ladder_compact(self, ctx, mode="off", min_games=5):
-        await ladders.refresh_ladders()
         if ctx.channel.id != ev.BOT_SPAM_CHANNEL_ID:
             await self._wrong_channel(ctx)
             return
 
-        mode = ladders.find_game_mode(mode)
-        ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
+        mode, ladder_values = await self._fetch_ladder(mode)
         filtered = [u for u in ladder_values if u["num_wins"] + u["num_losses"] >= min_games]
 
         longest_elo = max((len(str(round(u["adjusted_rating"]))) for u in filtered), default=3)
