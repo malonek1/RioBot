@@ -13,7 +13,7 @@ class Registration(commands.Cog):
         self.client = client
 
     @commands.command(help="Link your Discord account to your Project Rio username. Example: !register pokebunny")
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 2, commands.BucketType.user)
     async def register(self, ctx, rio_username: str):
         if ctx.channel.id != BOT_SPAM_CHANNEL_ID:
             embed = discord.Embed(color=0xEA7D07)
@@ -56,7 +56,7 @@ class Registration(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(help="Remove your Project Rio username registration")
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 2, commands.BucketType.user)
     async def unregister(self, ctx):
         if ctx.channel.id != BOT_SPAM_CHANNEL_ID:
             embed = discord.Embed(color=0xEA7D07)
