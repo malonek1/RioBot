@@ -1,3 +1,5 @@
+from json import JSONDecodeError
+
 import discord
 from discord.ext import commands
 from resources import rio_name_map, EnvironmentVariables as ev
@@ -32,9 +34,12 @@ class Registration(commands.Cog):
         async with self.client.session.get(
             f"https://api.projectrio.app/games/?username={rio_username}&limit_games=1"
         ) as response:
-            data = await response.json(content_type=None)
+            try:
+                data = await response.json(content_type=None)
+            except JSONDecodeError:
+                data = {}
 
-        if response.status != 200 or "error" in data:
+        if response.status != 200 or "error" in data or not data:
             embed = discord.Embed(
                 title="Registration failed",
                 description=f"No Project Rio account found with username **{rio_username}**. "
