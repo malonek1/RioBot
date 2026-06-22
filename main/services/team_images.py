@@ -2,7 +2,7 @@ from helpers.image_builder import *
 from helpers.team_sorter import sort_teams_by_tier, sort_team_by_tier
 
 
-def ifBuildTeamImageFile(teams, captains=None, sort=True):
+def build_team_image_file(teams, captains=None, sort=True):
     if sort:
         teams = sort_teams_by_tier(teams)
 
@@ -12,10 +12,10 @@ def ifBuildTeamImageFile(teams, captains=None, sort=True):
         teams_image = build_teams_image(teams)
 
     return convert_image_to_file(teams_image)
-# END ifBuildTeamImageFile
+# END build_team_image_file
 
 
-def ifBuildSingleTeamImageFile(team, sort=False):
+def build_single_team_image_file(team, sort=False):
     if sort:
         team = sort_team_by_tier(team)
     team_image = build_team_image(team)

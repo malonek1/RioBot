@@ -2,9 +2,9 @@ import json
 
 import discord
 from discord.ext import commands
-from services.classic_team_functions import *
-from services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
-from services.random_functions import rfRandomStadium
+from services.classic_teams_service import *
+from services.team_images import build_team_image_file, build_single_team_image_file
+from services.randomness import random_stadium
 
 # Builds the classic teams libraries
 build_classic_teams()
@@ -31,7 +31,7 @@ class ClassicTeamsCommands(commands.Cog):
                 return
 
         title = "Season " + str(classic_team.season) + " " + str(classic_team.league) + " - " + str(classic_team.player) + "'s Team"
-        file = ifBuildSingleTeamImageFile(classic_team.characters)
+        file = build_single_team_image_file(classic_team.characters)
         footer = classic_team.description()
 
         embed = discord.Embed(title=title, color=hex_g)
@@ -49,8 +49,8 @@ class ClassicTeamsCommands(commands.Cog):
         classic_teams.append(classic_team_two.characters)
 
         title = "Random Classic Teams"
-        file = ifBuildTeamImageFile(classic_teams)
-        stadium = rfRandomStadium()
+        file = build_team_image_file(classic_teams)
+        stadium = random_stadium()
         footer = get_classic_draft_quote()
 
         embed = discord.Embed(title=title, color=hex_g)

@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
 
-from services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
-from services.random_functions import *
-from helpers.random_team_builder import randomTeamsWithoutDupes, randomTeamsWithDupes, randomBalancedTeams, \
-    randomPowerTeams, randomTeeBallTeams
+from services.team_images import build_team_image_file, build_single_team_image_file
+from services.randomness import *
+from helpers.random_team_builder import random_teams_without_dupes, random_teams_with_dupes, random_balanced_teams, \
+    random_power_teams, random_tee_ball_teams
 
 # Random Cog Properties
 hex_y = 0xE8E337  # Error message
@@ -43,63 +43,63 @@ class RandomizeCommands(commands.Cog):
             await ctx.send(embed=embed)
         elif command == "character" or command == "chara" or command == "char":
             if not qualifier or qualifier == "":
-                embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
+                embed = discord.Embed(title=random_character(), color=hex_r)
             else:
                 try:
-                    embed = discord.Embed(description=rfRandomCharacters(int(qualifier)), color=hex_r)
+                    embed = discord.Embed(description=random_characters(int(qualifier)), color=hex_r)
                 except ValueError:
-                    embed = discord.Embed(title=rfRandomCharacter(), color=hex_r)
+                    embed = discord.Embed(title=random_character(), color=hex_r)
             await ctx.send(embed=embed)
         elif command == "characters" or command == "charas" or command == "char":
             title = "Random Characters"
             description = "Can I offer you some random characters in these trying times?"
             if not qualifier or qualifier == "":
-                team = rfRandomCharacters(9, True)
+                team = random_characters(9, True)
             else:
                 try:
-                    team = rfRandomCharacters(int(qualifier), True)
+                    team = random_characters(int(qualifier), True)
                 except ValueError:
-                    team = rfRandomCharactersG()
+                    team = random_characters_g()
 
-            file = ifBuildSingleTeamImageFile(team)
+            file = build_single_team_image_file(team)
             
             embed = discord.Embed(title=title, description=description, color=hex_r)
             embed.set_image(url="attachment://image.png")
             await ctx.send(file=file, embed=embed)
         elif command == "stadium":
-            embed = discord.Embed(title=rfRandomStadium(), color=hex_r)
+            embed = discord.Embed(title=random_stadium(), color=hex_r)
             await ctx.send(embed=embed)
         elif command == "mode" or command == "modes":
-            embed = discord.Embed(title=rfRandomMode(), color=hex_r)
+            embed = discord.Embed(title=random_mode(), color=hex_r)
             await ctx.send(embed=embed)
         elif command == "teams":
             if not qualifier or qualifier == "":
-                team_list = randomTeamsWithoutDupes()
+                team_list = random_teams_without_dupes()
                 title = "**Random Teams**"
                 description = "Pure random teams without dupes but random variants. Captains are highlighted."
             elif "dupes" in qualifier:
-                team_list = randomTeamsWithDupes()
+                team_list = random_teams_with_dupes()
                 title = "**Random Teams with Dupes** "
                 description = "Pure random teams with duplicates enabled. Captains are highlighted."
             elif "balance" in qualifier:
-                team_list = randomBalancedTeams()
+                team_list = random_balanced_teams()
                 title = "**Random Balanced Teams**"
                 description = "Random teams where each team is given a character from one of five broadly balanced " \
                               "tiers until teams are filled. Captains are highlighted."
             elif "power" in qualifier:
-                team_list = randomPowerTeams()
+                team_list = random_power_teams()
                 title = "**Random Power Teams**"
                 description = "Random teams made from top characters exclusively. Duplicates are enabled. Each team " \
                               "is guaranteed one meta pitcher. Captains are highlighted."
             elif "teeball" in qualifier:
-                team_list = randomTeeBallTeams()
+                team_list = random_tee_ball_teams()
                 title = "**Random Tee-Ball Teams**"
                 description = "Random teams made from the Tee-Ball roster. This excludes the top 9 characters " \
                               "as well as diddy & dixie."
 
             captain_list = [team_list[0][0], team_list[1][0]]
 
-            file = ifBuildTeamImageFile(team_list, captain_list)
+            file = build_team_image_file(team_list, captain_list)
             embed = discord.Embed(title=title, description=description, color=hex_r)
             embed.set_image(url="attachment://image.png")
             await ctx.send(file=file, embed=embed)
@@ -115,7 +115,7 @@ class RandomizeCommands(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def pick(self, ctx, *arg):
         if len(arg) > 1:
-            embed = discord.Embed(description=rfPickOne(arg), color=hex_r)
+            embed = discord.Embed(description=pick_one(arg), color=hex_r)
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(description="Please give me more options than that", color=hex_y)
@@ -125,11 +125,11 @@ class RandomizeCommands(commands.Cog):
 
     @commands.command(name="pickmany", help="Pick N items from a list")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def pick_many(self, ctx, choices, *arg):
+    async def pickmany(self, ctx, choices, *arg):
         try:
             pick_number = int(choices)
             if len(arg) > 0 and pick_number < len(arg):
-                embed = discord.Embed(description=rfPickMany(pick_number, arg), color=hex_r)
+                embed = discord.Embed(description=pick_many(pick_number, arg), color=hex_r)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(description="I don't think you quite know what you're asking", color=hex_y)
@@ -145,7 +145,7 @@ class RandomizeCommands(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def shuffle(self, ctx, *arg):
         if len(arg) > 1:
-            embed = discord.Embed(description=rfShuffle(arg), color=hex_r)
+            embed = discord.Embed(description=shuffle_list(arg), color=hex_r)
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(description="No sense in shuffling that", color=hex_y)
@@ -156,7 +156,7 @@ class RandomizeCommands(commands.Cog):
     @commands.command(name="coin", aliases=["flip", "flipcoin"], help="coin, flip, flipcoin")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def coin(self, ctx):
-        embed = discord.Embed(title=rfFlipCoin(), color=hex_r)
+        embed = discord.Embed(title=flip_coin(), color=hex_r)
         await ctx.send(embed=embed)
 
     # End coin
@@ -167,7 +167,7 @@ class RandomizeCommands(commands.Cog):
         try:
             die_sides = int(die)
             if die_sides > 2:
-                embed = discord.Embed(title=rfRollDice(die_sides), color=hex_r)
+                embed = discord.Embed(title=roll_dice(die_sides), color=hex_r)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(description="I can't roll that in this dimension", color=hex_y)

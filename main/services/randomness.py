@@ -14,45 +14,45 @@ QUICKPLAY_MODES = ["Superstars Off Hazards", "Superstars On", "Big Balla"]
 
 
 # Flip a coin
-def rfFlipCoin():
+def flip_coin():
     return "Heads" if randint(0, 1) == 0 else "Tails"
 
 
 # Roll a die with DIE number of sides
-def rfRollDice(die):
+def roll_dice(die):
     return randint(1, die) if die > 1 else 1
 
 
 # Pick one from a set of arguments
-def rfPickOne(args):
+def pick_one(args):
     return choice(args)
 
 
 # Pick N from a set of arguments. Picks all if N >= the number of arguments
-def rfPickMany(choices, args):
+def pick_many(choices, args):
     return sample(args, choices)
 
 
 # Shuffle a set of arguments into a new list (args may be an immutable tuple)
-def rfShuffle(args):
+def shuffle_list(args):
     shuffle_list = list(args)
     shuffle(shuffle_list)
     return shuffle_list
 
 
 # Picks a random character from all characters in the game
-def rfRandomCharacter():
+def random_character():
     return choice([char.value for char in Char])
 
 
 # Picks NUM random characters (with replacement), clamped to 1-9
-def rfRandomCharacters(num, preserve_enum=False):
+def random_characters(num, preserve_enum=False):
     num = max(1, min(num, 9))
     characters = list(Char) if preserve_enum else [char.value for char in Char]
     return [choice(characters) for _ in range(num)]
 
 
-def rfRandomCharactersG():
+def random_characters_g():
     character_list = list(Char)
     team = [character_list[10], character_list[11], character_list[2], character_list[53], character_list[10],
             character_list[17], character_list[34], character_list[10], character_list[11]]
@@ -61,18 +61,18 @@ def rfRandomCharactersG():
 
 
 # Picks a random stadium
-def rfRandomStadium():
+def random_stadium():
     return choice(STADIUMS)
 
 
-def rfRandomHazardsStadium():
+def random_hazards_stadium():
     return choice(HAZARDS_STADIUMS)
 
 
 # Decide on a random mode to play
-def rfRandomMode():
+def random_mode():
     return choice(RANDOM_MODES)
 
 
-def rfRandomQuickplayMode():
+def random_quickplay_mode():
     return choice(QUICKPLAY_MODES)

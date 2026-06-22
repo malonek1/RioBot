@@ -1,9 +1,9 @@
 import discord
 
 from resources import EnvironmentVariables as ev, ladders
-from services.random_functions import rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, rfRandomQuickplayMode
-from services.image_functions import ifBuildTeamImageFile
-from helpers.random_team_builder import randomTeamsWithoutDupes
+from services.randomness import random_stadium, flip_coin, random_hazards_stadium, random_quickplay_mode
+from services.team_images import build_team_image_file
+from helpers.random_team_builder import random_teams_without_dupes
 from models.matchmaking import MatchAnnouncement
 
 
@@ -22,13 +22,13 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
     props = ladders.get_mode_rendering(game_type)
 
     if props.get("random_teams"):
-        team_list = randomTeamsWithoutDupes()
+        team_list = random_teams_without_dupes()
         captain_list = [team_list[0][0], team_list[1][0]]
 
-        file = ifBuildTeamImageFile(team_list, captain_list)
+        file = build_team_image_file(team_list, captain_list)
         embed.set_image(url="attachment://image.png")
-        stadium = rfRandomStadium()
-        if rfFlipCoin() == "Heads":
+        stadium = random_stadium()
+        if flip_coin() == "Heads":
             away, home = player_a.name, player_b.name
         else:
             away, home = player_b.name, player_a.name
@@ -36,25 +36,25 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
         teams_value = f"{away} (top team, away)\n{home} (bottom team, home)"
         if props.get("quickplay"):
             embed.add_field(name=f"{game_type} match found!", value=teams_value, inline=False)
-            embed.add_field(name="Mode", value=rfRandomQuickplayMode())
+            embed.add_field(name="Mode", value=random_quickplay_mode())
         else:
             embed.add_field(name=f"{game_type} match found!", value=teams_value)
 
         embed.add_field(name="Stadium", value=stadium)
     else:
-        if rfFlipCoin() == "Heads":
+        if flip_coin() == "Heads":
             slot_a, slot_b = "1p", "2p"
         else:
             slot_a, slot_b = "2p", "1p"
-        if rfFlipCoin() == "Heads":
+        if flip_coin() == "Heads":
             side_a, side_b = "away", "home"
         else:
             side_a, side_b = "home", "away"
         player_1 = f"{player_a.name} ({slot_a}, {side_a})"
         player_2 = f"{player_b.name} ({slot_b}, {side_b})"
-        stadium = rfRandomStadium()
+        stadium = random_stadium()
         if props.get("hazards") and "Mario" in stadium:
-            stadium = rfRandomHazardsStadium()
+            stadium = random_hazards_stadium()
         embed.add_field(name=f"{game_type} match found!",
                         value=f"{player_1} vs {player_2}\n\nFind matches in <#{ev.MM_BUTTON_CHANNEL_ID}>")
         embed.add_field(name="Stadium", value=stadium)

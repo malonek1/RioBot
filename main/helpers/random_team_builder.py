@@ -20,7 +20,7 @@ pnd_characters = [Char.BOWSER, Char.PETEY, Char.DK, bro_list, Char.YOSHI, Char.B
                   Char.BABY_MARIO, Char.BABY_LUIGI, Char.GOOMBA, Char.PARAGOOMBA]
 
 
-def pickFromPool(team, pool):
+def pick_from_pool(team, pool):
     next_pick = pool.pop()
     if isinstance(next_pick, list):
         team.append(choice(next_pick))
@@ -29,58 +29,58 @@ def pickFromPool(team, pool):
 # END pickfromPool
 
 
-def pickFromSpecializedPool(team, specialized_pool, pool):
+def pick_from_specialized_pool(team, specialized_pool, pool):
     shuffle(specialized_pool)
     team.append(specialized_pool.pop())
     pool.remove(team[-1])
-# END pickFromSpecializedPool
+# END pick_from_specialized_pool
 
 
-def pureRandomTeams(team_one, team_two, pool, captains, pitchers=None):
+def pure_random_teams(team_one, team_two, pool, captains, pitchers=None):
 
     shuffle(captains)
-    pickFromSpecializedPool(team_one, captains, pool)
-    pickFromSpecializedPool(team_two, captains, pool)
+    pick_from_specialized_pool(team_one, captains, pool)
+    pick_from_specialized_pool(team_two, captains, pool)
 
     if pitchers:
         if team_one[0] in pitchers and team_two[0] not in pitchers:
             pitchers.remove(team_one[0])
-            pickFromSpecializedPool(team_two, pitchers, pool)
+            pick_from_specialized_pool(team_two, pitchers, pool)
         elif team_two[0] in pitchers and team_one[0] not in pitchers:
             pitchers.remove(team_two[0])
-            pickFromSpecializedPool(team_one, pitchers, pool)
+            pick_from_specialized_pool(team_one, pitchers, pool)
         elif team_one[0] not in pitchers and team_two[0] not in pitchers:
-            pickFromSpecializedPool(team_two, pitchers, pool)
-            pickFromSpecializedPool(team_one, pitchers, pool)
+            pick_from_specialized_pool(team_two, pitchers, pool)
+            pick_from_specialized_pool(team_one, pitchers, pool)
 
         if len(team_one) > len(team_two):
-            pickFromPool(team_two, pool)
+            pick_from_pool(team_two, pool)
         elif len(team_two) > len(team_one):
-            pickFromPool(team_one, pool)
+            pick_from_pool(team_one, pool)
 
     shuffle(pool)
     while len(team_one) + len(team_two) < 18:
-        pickFromPool(team_one, pool)
-        pickFromPool(team_two, pool)
-# END pureRandomTeams
+        pick_from_pool(team_one, pool)
+        pick_from_pool(team_two, pool)
+# END pure_random_teams
 
 
-def randomTeamsWithoutDupes():
+def random_teams_without_dupes():
     first_team = []
     second_team = []
-    pureRandomTeams(first_team, second_team, copy.deepcopy(pnd_characters), copy.deepcopy(all_captains))
+    pure_random_teams(first_team, second_team, copy.deepcopy(pnd_characters), copy.deepcopy(all_captains))
     return [first_team, second_team]
-# END randomTeamsWithoutDupes
+# END random_teams_without_dupes
 
 
-def randomTeamsWithDupes():
+def random_teams_with_dupes():
     first_team = []
     second_team = []
     all_characters = list(Char)
     shuffle(all_characters)
-    pureRandomTeams(first_team, second_team, all_characters, copy.deepcopy(all_captains))
+    pure_random_teams(first_team, second_team, all_characters, copy.deepcopy(all_captains))
     return [first_team, second_team]
-# END randomTeamsWithDupes
+# END random_teams_with_dupes
 
 
 # Broad Balanced Tiers
@@ -99,7 +99,7 @@ balanced_captains = {Char.BOWSER: 0, Char.DK: 0, Char.YOSHI: 0, Char.BIRDO: 0, C
                      Char.LUIGI: 1, Char.DIDDY: 1, Char.DAISY: 2, Char.BOWSER_JR: 2, Char.PEACH: 2}
 
 
-def pickFromBrackets(team_one, team_two, brackets):
+def pick_from_brackets(team_one, team_two, brackets):
     shuffle(brackets)
     tier = brackets.pop()
     if len(tier) > 1:
@@ -108,10 +108,10 @@ def pickFromBrackets(team_one, team_two, brackets):
         team_two.append(tier.pop())
         if len(tier) > 1:
             brackets.append(tier)
-# END pickFromBrackets
+# END pick_from_brackets
 
 
-def pickBalancedCaptains(team_one, team_two, captain_dict, brackets):
+def pick_balanced_captains(team_one, team_two, captain_dict, brackets):
     # Assign captains
     captain_list = list(captain_dict.keys())
     shuffle(captain_list)
@@ -129,24 +129,24 @@ def pickBalancedCaptains(team_one, team_two, captain_dict, brackets):
 
     team_two.append(brackets[team_one_cap_tier].pop())
     team_one.append(brackets[team_two_cap_tier].pop())
-# END pickBalancedCaptains
+# END pick_balanced_captains
 
 
-def pickBalancedTeams(team_one, team_two, brackets, captain_dict):
-    pickBalancedCaptains(team_one, team_two, captain_dict, brackets)
+def pick_balanced_teams(team_one, team_two, brackets, captain_dict):
+    pick_balanced_captains(team_one, team_two, captain_dict, brackets)
 
     while len(team_one) + len(team_two) < 18:
-        pickFromBrackets(team_one, team_two, brackets)
-# End pickBalancedTeams
+        pick_from_brackets(team_one, team_two, brackets)
+# End pick_balanced_teams
 
 
-def randomBalancedTeams():
+def random_balanced_teams():
     first_team = []
     second_team = []
-    pickBalancedTeams(first_team, second_team, copy.deepcopy(balanced_brackets), copy.deepcopy(balanced_captains))
+    pick_balanced_teams(first_team, second_team, copy.deepcopy(balanced_brackets), copy.deepcopy(balanced_captains))
 
     return [first_team, second_team]
-# END randomBalancedTeams
+# END random_balanced_teams
 
 
 # Power Team Definitions
@@ -157,12 +157,12 @@ power_captains = [Char.BOWSER, Char.DK, Char.BIRDO, Char.YOSHI, Char.WALUIGI, Ch
 power_pitchers = [Char.BOO, Char.DIXIE, Char.DIDDY, Char.WALUIGI]
 
 
-def randomPowerTeams():
+def random_power_teams():
     first_team = []
     second_team = []
-    pureRandomTeams(first_team, second_team, copy.deepcopy(power_characters), copy.deepcopy(power_captains), copy.deepcopy(power_pitchers))
+    pure_random_teams(first_team, second_team, copy.deepcopy(power_characters), copy.deepcopy(power_captains), copy.deepcopy(power_pitchers))
     return [first_team, second_team]
-# END randomPowerTeams
+# END random_power_teams
 
 
 # Tee Ball Team Definitions
@@ -175,8 +175,8 @@ teeball_characters = [Char.MARIO, Char.LUIGI, Char.WALUIGI, Char.WARIO, Char.TOA
 teeball_captains = [Char.MARIO, Char.LUIGI, Char.WALUIGI, Char.WARIO, Char.PEACH, Char.DAISY, Char.BOWSER_JR]
 
 
-def randomTeeBallTeams():
+def random_tee_ball_teams():
     first_team = []
     second_team = []
-    pureRandomTeams(first_team, second_team, copy.deepcopy(teeball_characters), copy.deepcopy(teeball_captains))
+    pure_random_teams(first_team, second_team, copy.deepcopy(teeball_characters), copy.deepcopy(teeball_captains))
     return [first_team, second_team]
