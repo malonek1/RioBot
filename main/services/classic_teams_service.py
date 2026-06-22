@@ -1,7 +1,8 @@
 import logging
 
 from random import choice, shuffle
-from helpers.classic_teams_parser import *
+from helpers.classic_teams_parser import ClassicTeam, get_classic_teams, get_classic_team_players, \
+    get_classic_team_leagues
 
 logger = logging.getLogger(__name__)
 
