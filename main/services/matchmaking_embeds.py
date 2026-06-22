@@ -55,8 +55,10 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
         stadium = random_stadium()
         if props.get("hazards") and "Mario" in stadium:
             stadium = random_hazards_stadium()
-        embed.add_field(name=f"{game_type} match found!",
-                        value=f"{player_1} vs {player_2}\n\nFind matches in <#{ev.MM_BUTTON_CHANNEL_ID}>")
+        embed.add_field(
+            name=f"{game_type} match found!",
+            value=f"{player_1} vs {player_2}\n\nFind matches in <#{ev.MM_BUTTON_CHANNEL_ID}>",
+        )
         embed.add_field(name="Stadium", value=stadium)
 
     return mentions, embed, file
@@ -74,7 +76,7 @@ def build_status_embed(queues: dict, recent_counts: dict) -> discord.Embed:
 
     embed = discord.Embed()
     embed.add_field(
-        name=f"Press buttons below to search for a game.\n{total} player(s) in the matchmaking queue:",
-        value=details)
+        name=f"Press buttons below to search for a game.\n{total} player(s) in the matchmaking queue:", value=details
+    )
     embed.set_footer(text=f"There have been {rm_total} matches made in the past hour!")
     return embed

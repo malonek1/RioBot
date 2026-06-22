@@ -54,8 +54,17 @@ def random_characters(num, preserve_enum=False):
 
 def random_characters_g():
     character_list = list(Char)
-    team = [character_list[10], character_list[11], character_list[2], character_list[53], character_list[10],
-            character_list[17], character_list[34], character_list[10], character_list[11]]
+    team = [
+        character_list[10],
+        character_list[11],
+        character_list[2],
+        character_list[53],
+        character_list[10],
+        character_list[17],
+        character_list[34],
+        character_list[10],
+        character_list[11],
+    ]
     shuffle(team)
     return team
 

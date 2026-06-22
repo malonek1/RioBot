@@ -26,20 +26,35 @@ hex_y = 0xE8E337  # Error message
 hex_r = 0xF46D75  # Success message
 
 NL = "\n"
-random_help_string = "Here is a list of random commands you can use and their functions:" + NL \
-                     + "`!random teams` - Generate two random teams with no dupes but random variants" + NL \
-                     + "`!random teams dupes` - Generate two random teams with dupes enabled" + NL \
-                     + "`!random teams balanced` - Generate two broadly balanced teams" + NL \
-                     + "`!random teams teeball` - Generate two tee-ball teams using the tee-ball roster" + NL \
-                     + "`!random teams power` - Generate two teams with top tier characters and distributed pitching" + NL \
-                     + "`!random stadium` - Returns a random stadium" + NL \
-                     + "`!random character` - Returns a random character" + NL \
-                     + "`!random mode` - Returns a random game type for you to play" + NL \
-                     + "`!pick options...` - Picks an option randomly" + NL \
-                     + "`!pickmany N options...` - Picks N options randomly" + NL \
-                     + "`!shuffle options...` - Shuffles options and returns them" + NL \
-                     + "`!coin` or `!flip` - Flip a coin" + NL \
-                     + "`!roll N` - Roll a die of N sides"
+random_help_string = (
+    "Here is a list of random commands you can use and their functions:"
+    + NL
+    + "`!random teams` - Generate two random teams with no dupes but random variants"
+    + NL
+    + "`!random teams dupes` - Generate two random teams with dupes enabled"
+    + NL
+    + "`!random teams balanced` - Generate two broadly balanced teams"
+    + NL
+    + "`!random teams teeball` - Generate two tee-ball teams using the tee-ball roster"
+    + NL
+    + "`!random teams power` - Generate two teams with top tier characters and distributed pitching"
+    + NL
+    + "`!random stadium` - Returns a random stadium"
+    + NL
+    + "`!random character` - Returns a random character"
+    + NL
+    + "`!random mode` - Returns a random game type for you to play"
+    + NL
+    + "`!pick options...` - Picks an option randomly"
+    + NL
+    + "`!pickmany N options...` - Picks N options randomly"
+    + NL
+    + "`!shuffle options...` - Shuffles options and returns them"
+    + NL
+    + "`!coin` or `!flip` - Flip a coin"
+    + NL
+    + "`!roll N` - Roll a die of N sides"
+)
 
 
 # Cog Class
@@ -77,7 +92,7 @@ class RandomizeCommands(commands.Cog):
                     team = random_characters_g()
 
             file = build_single_team_image_file(team)
-            
+
             embed = discord.Embed(title=title, description=description, color=hex_r)
             embed.set_image(url="attachment://image.png")
             await ctx.send(file=file, embed=embed)
@@ -99,18 +114,24 @@ class RandomizeCommands(commands.Cog):
             elif "balance" in qualifier:
                 team_list = random_balanced_teams()
                 title = "**Random Balanced Teams**"
-                description = "Random teams where each team is given a character from one of five broadly balanced " \
-                              "tiers until teams are filled. Captains are highlighted."
+                description = (
+                    "Random teams where each team is given a character from one of five broadly balanced "
+                    "tiers until teams are filled. Captains are highlighted."
+                )
             elif "power" in qualifier:
                 team_list = random_power_teams()
                 title = "**Random Power Teams**"
-                description = "Random teams made from top characters exclusively. Duplicates are enabled. Each team " \
-                              "is guaranteed one meta pitcher. Captains are highlighted."
+                description = (
+                    "Random teams made from top characters exclusively. Duplicates are enabled. Each team "
+                    "is guaranteed one meta pitcher. Captains are highlighted."
+                )
             elif "teeball" in qualifier:
                 team_list = random_tee_ball_teams()
                 title = "**Random Tee-Ball Teams**"
-                description = "Random teams made from the Tee-Ball roster. This excludes the top 9 characters " \
-                              "as well as diddy & dixie."
+                description = (
+                    "Random teams made from the Tee-Ball roster. This excludes the top 9 characters "
+                    "as well as diddy & dixie."
+                )
 
             captain_list = [team_list[0][0], team_list[1][0]]
 
@@ -150,8 +171,10 @@ class RandomizeCommands(commands.Cog):
                 embed = discord.Embed(description="I don't think you quite know what you're asking", color=hex_y)
                 await ctx.send(embed=embed)
         except ValueError:
-            embed = discord.Embed(description="Give me a number of choices to make. For example: `!pickmany 2 red "
-                                              "blue green`", color=hex_y)
+            embed = discord.Embed(
+                description="Give me a number of choices to make. For example: `!pickmany 2 red blue green`",
+                color=hex_y,
+            )
             await ctx.send(embed=embed)
 
     # End pick many
@@ -190,6 +213,7 @@ class RandomizeCommands(commands.Cog):
         except ValueError:
             embed = discord.Embed(description="That isn't a dice", color=hex_y)
             await ctx.send(embed=embed)
+
     # End roll
 
 

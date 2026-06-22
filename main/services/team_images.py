@@ -17,6 +17,8 @@ def build_team_image_file(teams, captains=None, sort=True):
         teams_image = build_teams_image(teams)
 
     return convert_image_to_file(teams_image)
+
+
 # END build_team_image_file
 
 

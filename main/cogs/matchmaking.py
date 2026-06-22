@@ -24,7 +24,7 @@ class QueueButton(discord.ui.Button):
         if await self.cog.matchmaker.add_player(interaction, self.cog.bot, self.mode):
             self.cog.start_refresh_if_needed()
             embed = discord.Embed()
-            embed.add_field(name='Queue Status:', value="You have entered the " + self.mode + " queue.")
+            embed.add_field(name="Queue Status:", value="You have entered the " + self.mode + " queue.")
             await interaction.followup.send(embed=embed, ephemeral=True)
 
 
@@ -39,7 +39,7 @@ class LeaveQueueButton(discord.ui.Button):
         await interaction.response.defer()
         await self.cog.matchmaker.remove_player(interaction)
         embed = discord.Embed()
-        embed.add_field(name='Queue Status:', value="You have left the matchmaking queue.")
+        embed.add_field(name="Queue Status:", value="You have left the matchmaking queue.")
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
@@ -95,8 +95,10 @@ class Matchmaking(commands.Cog):
                 await msg.delete()
 
         embed = discord.Embed()
-        embed.add_field(name="Matchmaking queue initialized! Press buttons below to search for a game.",
-                        value="Queue details will appear here when a user has entered the queue")
+        embed.add_field(
+            name="Matchmaking queue initialized! Press buttons below to search for a game.",
+            value="Queue details will appear here when a user has entered the queue",
+        )
         view = MatchmakingView(self)
         self.matchmaker.mm_message = await channel.send(embed=embed, view=view)
 

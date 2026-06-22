@@ -56,7 +56,7 @@ mappings = {
     51: "Dry Bones(B)",
     52: "Bro(F)",
     53: "Bro(B)",
-    None: "None"
+    None: "None",
 }
 
 # Flip dictionary
@@ -333,7 +333,7 @@ aliases = {
     "boomerbro": 53,
     "boomer": 53,
     "b!bro": 53,
-    "bbro": 53
+    "bbro": 53,
 }
 
 
@@ -450,7 +450,7 @@ images = {
     "Dry Bones(B)": "https://i.imgur.com/vJRutvp.png",
     "Bro(F)": "https://i.imgur.com/c0n64rJ.png",
     "Bro(B)": "https://i.imgur.com/9oBKUlT.png",
-    "all": "https://i.imgur.com/yTjBaXK.png"
+    "all": "https://i.imgur.com/yTjBaXK.png",
 }
 
 # Character is the character whose bat you want to see
@@ -508,5 +508,5 @@ BAT_URLS = [
     "https://cdn.discordapp.com/attachments/979122361762709504/1007676460699488336/Dry_BonesR_bat.png",
     "https://cdn.discordapp.com/attachments/979122361762709504/1007676459520905327/Dry_BonesB_bat.png",
     "https://cdn.discordapp.com/attachments/979122361762709504/1007676422137073724/BroF_bat.png",
-    "https://cdn.discordapp.com/attachments/979122361762709504/1007676421793136720/BroB_bat.png"
+    "https://cdn.discordapp.com/attachments/979122361762709504/1007676421793136720/BroB_bat.png",
 ]

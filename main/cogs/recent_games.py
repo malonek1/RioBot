@@ -11,7 +11,7 @@ stadium_map = {
     2: "Wario Palace",
     3: "Yoshi Park",
     4: "Peach Garden",
-    5: "DK Jungle"
+    5: "DK Jungle",
 }
 
 

@@ -1,8 +1,8 @@
 import json
 from os.path import exists
 
-prod_env = 'resources/prod.json'
-dev_env = 'resources/test.json'
+prod_env = "resources/prod.json"
+dev_env = "resources/test.json"
 
 _env_file = dev_env if exists(dev_env) else prod_env
 with open(_env_file) as _f:

@@ -32,7 +32,9 @@ async def _get_batting_by_char_baseline(mode: str, session: aiohttp.ClientSessio
     cached = stat_cache.get(key)
     if cached is not None:
         return cached
-    url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}&by_char=1"
+    url = (
+        f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}&by_char=1"
+    )
     async with session.get(url) as response:
         data = (await response.json(content_type=None))["Stats"]
     result = {}
@@ -73,7 +75,10 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         by_char_baseline = await _get_batting_by_char_baseline(mode, session)
         stats = BattingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Batting", {}))
     except (JSONDecodeError, KeyError):
-        await send_error_embed(ctx, f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.")
+        await send_error_embed(
+            ctx,
+            f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.",
+        )
         return
 
     pa, avg, obp, slg = calc_slash_line(stats)
@@ -89,27 +94,29 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
     winrate = (misc.home_wins + misc.away_wins) / games if games > 0 else 0
 
     embed = discord.Embed(title=f"{user} - {char} ({pa} PA)")
-    fields = [("G", str(games)),
-              ("Win%", "{:.1f}".format(winrate * 100)),
-              ("AB", str(stats.summary_at_bats)),
-              ("H", str(stats.summary_hits)),
-              ("2B", str(stats.summary_doubles)),
-              ("3B", str(stats.summary_triples)),
-              ("HR", str(stats.summary_homeruns)),
-              ("RBI", str(stats.summary_rbi)),
-              ("​", "​"),
-              ("SO", str(stats.summary_strikeouts)),
-              ("BB", str(stats.summary_walks_bb + stats.summary_walks_hbp)),
-              ("​", "​"),
-              ("Perfect", str(stats.perfect_hits)),
-              ("Nice", str(stats.nice_hits)),
-              ("Sour", str(stats.sour_hits)),
-              ("AVG", "{:.3f}".format(avg)),
-              ("OBP", "{:.3f}".format(obp)),
-              ("SLG", "{:.3f}".format(slg)),
-              ("OPS", "{:.3f}".format(ops)),
-              ("cOPS+", str(round(ops_plus))),
-              ("​", "​")]
+    fields = [
+        ("G", str(games)),
+        ("Win%", "{:.1f}".format(winrate * 100)),
+        ("AB", str(stats.summary_at_bats)),
+        ("H", str(stats.summary_hits)),
+        ("2B", str(stats.summary_doubles)),
+        ("3B", str(stats.summary_triples)),
+        ("HR", str(stats.summary_homeruns)),
+        ("RBI", str(stats.summary_rbi)),
+        ("​", "​"),
+        ("SO", str(stats.summary_strikeouts)),
+        ("BB", str(stats.summary_walks_bb + stats.summary_walks_hbp)),
+        ("​", "​"),
+        ("Perfect", str(stats.perfect_hits)),
+        ("Nice", str(stats.nice_hits)),
+        ("Sour", str(stats.sour_hits)),
+        ("AVG", "{:.3f}".format(avg)),
+        ("OBP", "{:.3f}".format(obp)),
+        ("SLG", "{:.3f}".format(slg)),
+        ("OPS", "{:.3f}".format(ops)),
+        ("cOPS+", str(round(ops_plus))),
+        ("​", "​"),
+    ]
 
     for name, value in fields:
         embed.add_field(name=name, value=value, inline=True)
@@ -134,9 +141,7 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         await send_error_embed(ctx, f"There are no stats for user {user} in {mode} or the username was not found.")
         return
 
-    user_dict: dict[str, BattingStats] = {
-        "all": BattingStats.model_validate(user_response["Stats"]["Batting"])
-    }
+    user_dict: dict[str, BattingStats] = {"all": BattingStats.model_validate(user_response["Stats"]["Batting"])}
     for char in user_by_char_response["Stats"]:
         user_dict[char] = BattingStats.model_validate(user_by_char_response["Stats"][char]["Batting"])
 
@@ -152,10 +157,16 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(),
-                                  key=lambda x: user_dict[x].summary_at_bats + user_dict[x].summary_walks_bb +
-                                                user_dict[x].summary_walks_hbp + user_dict[x].summary_sac_flys,
-                                  reverse=True)
+        sorted_char_list = sorted(
+            user_dict.keys(),
+            key=lambda x: (
+                user_dict[x].summary_at_bats
+                + user_dict[x].summary_walks_bb
+                + user_dict[x].summary_walks_hbp
+                + user_dict[x].summary_sac_flys
+            ),
+            reverse=True,
+        )
     except KeyError:
         logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(user_dict.keys())
@@ -166,8 +177,10 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_baseline = by_char_baseline.get(char, {})
         overall_obp = char_baseline.get("obp", 0)
         overall_slg = char_baseline.get("slg", 0)
-        ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
-        desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} cOPS+'
+        ops_plus = (
+            ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
+        )
+        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} cOPS+"
 
     await send_stat_embed(ctx, title, desc, "all")
 
@@ -187,7 +200,9 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         async with session.get(char_by_user_url) as response:
             char_by_user_response = await response.json(content_type=None)
     except (JSONDecodeError, KeyError):
-        await send_error_embed(ctx, f"There are no stats for character {char} in {mode} or the character alias was not found.")
+        await send_error_embed(
+            ctx, f"There are no stats for character {char} in {mode} or the character alias was not found."
+        )
         return
 
     user_list: list[tuple[str, BattingStats]] = [
@@ -251,12 +266,16 @@ async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
     title = f"\nAll ({all_pa} PA): {all_avg:.3f} / {all_obp:.3f} / {all_slg:.3f}"
 
     try:
-        sorted_char_list = sorted(by_char_data.keys(),
-                                  key=lambda x: by_char_data[x]["Batting"].get("summary_at_bats", 0) +
-                                                by_char_data[x]["Batting"].get("summary_walks_bb", 0) +
-                                                by_char_data[x]["Batting"].get("summary_walks_hbp", 0) +
-                                                by_char_data[x]["Batting"].get("summary_sac_flys", 0),
-                                  reverse=True)
+        sorted_char_list = sorted(
+            by_char_data.keys(),
+            key=lambda x: (
+                by_char_data[x]["Batting"].get("summary_at_bats", 0)
+                + by_char_data[x]["Batting"].get("summary_walks_bb", 0)
+                + by_char_data[x]["Batting"].get("summary_walks_hbp", 0)
+                + by_char_data[x]["Batting"].get("summary_sac_flys", 0)
+            ),
+            reverse=True,
+        )
     except KeyError:
         logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(by_char_data.keys())
@@ -274,6 +293,15 @@ def calc_slash_line(stats: BattingStats):
     pa = stats.summary_at_bats + stats.summary_walks_bb + stats.summary_walks_hbp + stats.summary_sac_flys
     avg = stats.summary_hits / stats.summary_at_bats if stats.summary_at_bats > 0 else 0
     obp = (stats.summary_hits + stats.summary_walks_hbp + stats.summary_walks_bb) / pa if pa > 0 else 0
-    slg = (stats.summary_singles + (stats.summary_doubles * 2) + (stats.summary_triples * 3) + (
-            stats.summary_homeruns * 4)) / stats.summary_at_bats if stats.summary_at_bats > 0 else 0
+    slg = (
+        (
+            stats.summary_singles
+            + (stats.summary_doubles * 2)
+            + (stats.summary_triples * 3)
+            + (stats.summary_homeruns * 4)
+        )
+        / stats.summary_at_bats
+        if stats.summary_at_bats > 0
+        else 0
+    )
     return pa, avg, obp, slg

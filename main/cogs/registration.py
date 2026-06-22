@@ -27,8 +27,9 @@ class Registration(commands.Cog):
             embed = discord.Embed(
                 title="Registration failed",
                 description=f"**{rio_username}** is already linked to another Discord account. "
-                            "If you believe this is an error, please contact a moderator.",
-                color=0xFF5733)
+                "If you believe this is an error, please contact a moderator.",
+                color=0xFF5733,
+            )
             await ctx.send(embed=embed)
             return
 
@@ -44,8 +45,9 @@ class Registration(commands.Cog):
             embed = discord.Embed(
                 title="Registration failed",
                 description=f"No Project Rio account found with username **{rio_username}**. "
-                            "Please check the spelling and try again.",
-                color=0xFF5733)
+                "Please check the spelling and try again.",
+                color=0xFF5733,
+            )
             await ctx.send(embed=embed)
             return
 
@@ -53,7 +55,8 @@ class Registration(commands.Cog):
         embed = discord.Embed(color=0x00CC44)
         embed.add_field(
             name="Registration successful!",
-            value=f"Your Discord account is now linked to Rio username **{rio_username}**.")
+            value=f"Your Discord account is now linked to Rio username **{rio_username}**.",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="Remove your Project Rio username registration")
@@ -70,7 +73,10 @@ class Registration(commands.Cog):
             embed.add_field(name="Unregistered", value="Your Rio username link has been removed.")
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name="Not registered", value="You don't have a Rio username linked. Use `!register <rio_username>` to link your account.")
+            embed.add_field(
+                name="Not registered",
+                value="You don't have a Rio username linked. Use `!register <rio_username>` to link your account.",
+            )
         await ctx.send(embed=embed)
 
     @commands.command(help="Check what Rio username is linked to a Discord account. Example: !whois @user")
@@ -84,7 +90,7 @@ class Registration(commands.Cog):
         else:
             embed.add_field(
                 name=f"{target.display_name}",
-                value="No Rio username linked. Use `!register <rio_username>` to link your account."
+                value="No Rio username linked. Use `!register <rio_username>` to link your account.",
             )
         await ctx.send(embed=embed)
 

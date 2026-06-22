@@ -40,31 +40,30 @@ def _fetch_tag_sets(body: dict) -> list[dict]:
             return response.json()["Tag Sets"]
         except (requests.RequestException, ValueError, KeyError) as e:
             last_err = e
-            logger.warning("tag_set/list fetch failed (attempt %d/%d): %s",
-                           attempt, _STARTUP_RETRIES, e)
+            logger.warning("tag_set/list fetch failed (attempt %d/%d): %s", attempt, _STARTUP_RETRIES, e)
             if attempt < _STARTUP_RETRIES:
                 time.sleep(_STARTUP_BACKOFF * attempt)
     raise RuntimeError(
         f"Could not load game modes from Project Rio API after {_STARTUP_RETRIES} attempts"
     ) from last_err
 
+
 # Rating adjustment constants
 BETA = 0.85
 ALPHA = 0.1
 
-modes_body = {'Client': 'true', 'Active': 'true', 'combine_codes': True}
+modes_body = {"Client": "true", "Active": "true", "combine_codes": True}
 
 modes = [TagSet.model_validate(m) for m in _fetch_tag_sets(modes_body)]
 
-all_modes_body = {
-    "Client": "true"
-}
+all_modes_body = {"Client": "true"}
 
 all_modes: list[TagSet] = [TagSet.model_validate(m) for m in _fetch_tag_sets(all_modes_body)]
 
 current_time = time.time()
-active_official_modes = [mode for mode in all_modes if
-                         mode.comm_type == "Official" and mode.start_date < current_time < mode.end_date]
+active_official_modes = [
+    mode for mode in all_modes if mode.comm_type == "Official" and mode.start_date < current_time < mode.end_date
+]
 
 
 def get_official_game_mode(ending: str):
@@ -103,13 +102,14 @@ MODE_RENDERING: dict[str, dict[str, bool]] = {
 def get_mode_rendering(mode: str) -> dict[str, bool]:
     return MODE_RENDERING.get(mode, {})
 
+
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
     STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson", "superstars"],
     BIG_BALLA: ["bb", "bigballa", "balla", "big"],
     # STARS_OFF_REMIXED: ["remix", "remixed"],
     STARS_OFF_HAZARDS: ["hazards", "hazardous"],
-    RANDOM: ["randoms", "random"]
+    RANDOM: ["randoms", "random"],
     # QUICKPLAY: ["randoms", "random", "quickplay", "quick"]
 }
 
@@ -135,6 +135,7 @@ def get_sorted_ratings(mode: str) -> list[float]:
 
 def get_player_rating(mode: str, rio_name: str, default: float) -> float:
     return rating_lookup.get(mode, {}).get(rio_name.lower(), default)
+
 
 def find_game_mode(mode: str):
     for m in MODE_ALIASES:
@@ -171,8 +172,9 @@ async def refresh_ladders():
             for user in new_ladder:
                 player_wins = new_ladder[user]["num_wins"]
                 player_games = new_ladder[user]["num_wins"] + new_ladder[user]["num_losses"] + 1
-                new_ladder[user]["adjusted_rating"] = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
-                    (new_ladder[user]["rating"] - (500 * math.sqrt(math.log10(player_games + 1) / player_games)))
+                new_ladder[user]["adjusted_rating"] = (
+                    BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))
+                ) * (new_ladder[user]["rating"] - (500 * math.sqrt(math.log10(player_games + 1) / player_games)))
             ladders[mode] = new_ladder
             sorted_ratings[mode] = sorted(new_ladder[user]["rating"] for user in new_ladder)
             rating_lookup[mode] = {user.lower(): new_ladder[user]["rating"] for user in new_ladder}

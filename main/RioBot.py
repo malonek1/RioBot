@@ -24,7 +24,19 @@ load_dotenv()
 token = os.getenv("BOT_TOKEN")
 intents = discord.Intents.all()
 
-cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results", "registration", "matchmaking"]
+cog_files = [
+    "web_stat_lookup",
+    "game_stat_lookup",
+    "misc",
+    "memes",
+    "randomize_commands",
+    "ladder",
+    "recent_games",
+    "classic_teams",
+    "submit_results",
+    "registration",
+    "matchmaking",
+]
 
 
 class RioBot(commands.Bot):
@@ -74,23 +86,23 @@ async def on_command_error(ctx, error):
 
     elif isinstance(error, commands.UserInputError):
         if str(error) == "stat is a required argument that is missing.":
-            embed = discord.Embed(title='You need to specify the stat you are looking up!', color=0xEA7D07)
-            embed.add_field(name='Example:', value='!stat bowser power', inline=False)
-            embed.add_field(name='Error:', value=str(error), inline=False)
+            embed = discord.Embed(title="You need to specify the stat you are looking up!", color=0xEA7D07)
+            embed.add_field(name="Example:", value="!stat bowser power", inline=False)
+            embed.add_field(name="Error:", value=str(error), inline=False)
             await ctx.send(embed=embed)
         elif str(error) == "character is a required argument that is missing.":
-            embed = discord.Embed(title='You need to specify the character you are looking up!', color=0xEA7D07)
-            embed.add_field(name='Example:', value='!stat bowser power', inline=False)
-            embed.add_field(name='Error:', value=str(error), inline=False)
+            embed = discord.Embed(title="You need to specify the character you are looking up!", color=0xEA7D07)
+            embed.add_field(name="Example:", value="!stat bowser power", inline=False)
+            embed.add_field(name="Error:", value=str(error), inline=False)
             await ctx.send(embed=embed)
         else:
-            embed = discord.Embed(title='Something went wrong!', color=0xEA7D07)
-            embed.add_field(name='Error:', value=str(error), inline=True)
+            embed = discord.Embed(title="Something went wrong!", color=0xEA7D07)
+            embed.add_field(name="Error:", value=str(error), inline=True)
             await ctx.send(embed=embed)
 
     elif isinstance(error, commands.CommandNotFound):
-        embed = discord.Embed(title='The specified command does not exist!', color=0xEA7D07)
-        embed.add_field(name='Error:', value=str(error), inline=True)
+        embed = discord.Embed(title="The specified command does not exist!", color=0xEA7D07)
+        embed.add_field(name="Error:", value=str(error), inline=True)
         await ctx.send(embed=embed)
 
     elif isinstance(error, commands.MissingRole):
@@ -98,8 +110,8 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
     else:
-        embed = discord.Embed(title='Something went wrong!', color=0xEA7D07)
-        embed.add_field(name='Error:', value=str(error), inline=True)
+        embed = discord.Embed(title="Something went wrong!", color=0xEA7D07)
+        embed.add_field(name="Error:", value=str(error), inline=True)
         await ctx.send(embed=embed)
 
 

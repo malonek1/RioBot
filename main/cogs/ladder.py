@@ -14,7 +14,7 @@ def _build_pages(header, rows):
         return [header + "\nNo results."]
     pages = []
     for i in range(0, len(rows), ROWS_PER_PAGE):
-        pages.append(header + "\n" + "\n".join(rows[i:i + ROWS_PER_PAGE]))
+        pages.append(header + "\n" + "\n".join(rows[i : i + ROWS_PER_PAGE]))
     return pages
 
 
@@ -81,7 +81,7 @@ class Ladder(commands.Cog):
 
     async def _wrong_channel(self, ctx):
         embed = discord.Embed(color=0xEA7D07)
-        embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
+        embed.add_field(name="The !ladder command must be used here:", value=f"<#{ev.BOT_SPAM_CHANNEL_ID}>")
         await ctx.send(embed=embed)
 
     async def _fetch_ladder(self, mode):
@@ -135,7 +135,9 @@ class Ladder(commands.Cog):
         for pos, user in enumerate(filtered, 1):
             username_display = user["username"][:13] + "…" if len(user["username"]) > 14 else user["username"]
             wl = f"{user['num_wins']}-{user['num_losses']}"
-            rows.append(f"{str(pos) + '.':<5}{username_display:<16}{str(round(user['adjusted_rating'])):<{elo_col}}{wl}")
+            rows.append(
+                f"{str(pos) + '.':<5}{username_display:<16}{str(round(user['adjusted_rating'])):<{elo_col}}{wl}"
+            )
 
         pages = _build_pages(header, rows)
         view = LadderView(f"{mode} Compact Ladder (Min {min_games} games)", None, pages, plain=True)

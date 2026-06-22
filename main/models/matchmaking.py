@@ -20,6 +20,7 @@ class MatchAnnouncement(BaseModel):
     The two players are interchangeable — matching is symmetric. Which one is
     listed first / assigned home/away is decided cosmetically at render time.
     """
+
     game_type: str
     player_a: QueuedPlayer
     player_b: QueuedPlayer

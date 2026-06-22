@@ -95,8 +95,10 @@ class Matchmaker:
         # Widened range per player, computed once up front so commits during the
         # greedy pass don't shift anyone's range mid-pass.
         recent_count = self._recent_match_count(game_type, now)
-        ranges = {pid: self.calc_search_range(p.rating, game_type, now - p.joined_at, recent_count)
-                  for pid, p in mode_queue.items()}
+        ranges = {
+            pid: self.calc_search_range(p.rating, game_type, now - p.joined_at, recent_count)
+            for pid, p in mode_queue.items()
+        }
 
         pids = list(mode_queue.keys())
         eligible: list[tuple[float, str, str]] = []  # (rating gap, a, b)
@@ -138,8 +140,9 @@ class Matchmaker:
 
     # --- Search range -------------------------------------------------------
     @staticmethod
-    def calc_search_range(rating: float, game_type: str, time_in_queue: float,
-                          recent_count: int) -> tuple[float, float]:
+    def calc_search_range(
+        rating: float, game_type: str, time_in_queue: float, recent_count: int
+    ) -> tuple[float, float]:
         """Return (min_rating, max_rating) a player can match against.
 
         The band is a percentile window of the ladder population centred on the
@@ -181,8 +184,9 @@ class Matchmaker:
             embed = discord.Embed(
                 title="Registration required",
                 description="You must link your Project Rio username before joining the queue.\n"
-                            f"Use `!register <rio_username>` in <#{BOT_SPAM_CHANNEL_ID}> to register.",
-                color=0xFF5733)
+                f"Use `!register <rio_username>` in <#{BOT_SPAM_CHANNEL_ID}> to register.",
+                color=0xFF5733,
+            )
             await interaction.followup.send(embed=embed, ephemeral=True)
             return False
 
@@ -256,17 +260,21 @@ class Matchmaker:
             else:
                 for role_id, role_name, game_type in pings:
                     embed = discord.Embed()
-                    embed.add_field(name=f'ATTENTION {role_name} GAMERS',
-                                    value=f"There is a player looking for a {game_type} match in queue!")
+                    embed.add_field(
+                        name=f"ATTENTION {role_name} GAMERS",
+                        value=f"There is a player looking for a {game_type} match in queue!",
+                    )
                     await channel.send(role_id, embed=embed)
 
         for user_id in afk_dm_ids:
             try:
                 user = await bot.fetch_user(user_id)
                 embed = discord.Embed()
-                embed.add_field(name="AFK Reminder",
-                                value="You have been in the queue for 30 minutes. "
-                                      "Please leave the queue if you have found a match or are no longer looking.")
+                embed.add_field(
+                    name="AFK Reminder",
+                    value="You have been in the queue for 30 minutes. "
+                    "Please leave the queue if you have found a match or are no longer looking.",
+                )
                 await user.send(embed=embed)
             except discord.Forbidden:
                 logger.info("AFK DM forbidden for user %s", user_id)
@@ -288,8 +296,7 @@ class Matchmaker:
 
     async def _send_match(self, bot: commands.Bot, ann: MatchAnnouncement):
         a, b = ann.player_a, ann.player_b
-        logger.info("%s match: %s %s vs %s %s", ann.game_type,
-                    a.name, a.rating, b.name, b.rating)
+        logger.info("%s match: %s %s vs %s %s", ann.game_type, a.name, a.rating, b.name, b.rating)
 
         channel = bot.get_channel(MATCH_CHANNEL_ID)
         if channel is None:
