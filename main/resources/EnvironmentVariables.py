@@ -23,3 +23,6 @@ MM_MATCH_CHANNEL_ID = int(_vars["mm_match_channel_id"])
 # prod role IDs so a config file that predates these keys still boots.
 MM_STARS_OFF_ROLE_ID = int(_vars.get("mm_stars_off_role_id", 998791156794150943))
 MM_STARS_ON_ROLE_ID = int(_vars.get("mm_stars_on_role_id", 998791464630898808))
+# Discord user allowed to approve/deny manual game submissions. Fallback keeps
+# the bot working if the config file predates this key.
+MANUAL_SUBMIT_APPROVER_ID = int(_vars.get("manual_submit_approver_id", 117697656519786497))

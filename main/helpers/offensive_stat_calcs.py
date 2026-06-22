@@ -1,3 +1,5 @@
+import logging
+
 import aiohttp
 import discord
 from json import JSONDecodeError
@@ -6,6 +8,8 @@ from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
 from helpers.stat_utils import BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
 from helpers import stat_cache
+
+logger = logging.getLogger(__name__)
 
 
 async def _get_batting_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
@@ -153,7 +157,7 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
                                                 user_dict[x].summary_walks_hbp + user_dict[x].summary_sac_flys,
                                   reverse=True)
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(user_dict.keys())
 
     for char in sorted_char_list:
@@ -254,7 +258,7 @@ async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
                                                 by_char_data[x]["Batting"].get("summary_sac_flys", 0),
                                   reverse=True)
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(by_char_data.keys())
 
     for char in sorted_char_list:

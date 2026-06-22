@@ -1,3 +1,4 @@
+import logging
 import math
 
 import aiohttp
@@ -8,6 +9,8 @@ from models.pitching_stats import PitchingStats
 from models.misc_stats import MiscStats
 from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from helpers import stat_cache
+
+logger = logging.getLogger(__name__)
 
 
 async def _get_pitching_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
@@ -149,7 +152,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
                                   key=lambda x: user_dict[x].outs_pitched,
                                   reverse=True)
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(user_dict.keys())
 
     for char in sorted_char_list:
@@ -252,7 +255,7 @@ async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
                                   key=lambda x: by_char_data[x]["Pitching"].get("outs_pitched", 0),
                                   reverse=True)
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(by_char_data.keys())
 
     for char in sorted_char_list:

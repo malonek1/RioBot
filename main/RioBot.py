@@ -3,6 +3,7 @@
 
 import os
 import datetime
+import logging
 
 import aiohttp
 import pytz
@@ -12,6 +13,8 @@ import discord
 
 from resources import ladders
 from helpers import offensive_stat_calcs, pitching_stat_calcs
+
+logger = logging.getLogger(__name__)
 
 _EST = pytz.timezone("America/New_York")
 _CACHE_REFRESH_TIME = datetime.time(hour=6, minute=0, tzinfo=_EST)
@@ -31,7 +34,7 @@ class RioBot(commands.Bot):
         ladders.set_session(self.session)
         for cog in cog_files:
             await self.load_extension("cogs." + cog)
-            print("%s has loaded." % cog)
+            logger.info("%s cog loaded", cog)
 
 
 # initialize the bot commands with the associated prefix
@@ -40,7 +43,7 @@ bot = RioBot(command_prefix="!", intents=intents, case_insensitive=True)
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} has connected to Discord!")
+    logger.info("%s has connected to Discord!", bot.user)
 
     # Matchmaking (buttons + refresh loop) is owned by the matchmaking cog.
 
@@ -57,14 +60,14 @@ async def refresh_stat_caches():
         try:
             await offensive_stat_calcs.refresh_baselines(mode, bot.session)
             await pitching_stat_calcs.refresh_baselines(mode, bot.session)
-        except Exception as e:
-            print(f"Failed to refresh stat cache for {mode}: {e}")
+        except Exception:
+            logger.exception("Failed to refresh stat cache for %s", mode)
 
 
 # Exception handler on user commands to bot
 @bot.event
 async def on_command_error(ctx, error):
-    print(error)
+    logger.warning("Command error in %s: %s", ctx.command, error)
 
     if isinstance(error, commands.CommandOnCooldown):
         embed = discord.Embed(title=error, color=0xEA7D07)
@@ -101,4 +104,7 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
 
-bot.run(token)
+# root_logger=True lets discord.py configure the root logger (timestamped
+# StreamHandler at INFO) so our own module loggers are actually emitted, not
+# just discord's. Without this our logger.info calls go nowhere.
+bot.run(token, root_logger=True)

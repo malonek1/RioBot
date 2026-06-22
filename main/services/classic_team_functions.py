@@ -1,5 +1,9 @@
+import logging
+
 from random import choice, shuffle
 from helpers.classic_teams_parser import *
+
+logger = logging.getLogger(__name__)
 
 season_aliases = ["season"]
 pick_aliases = ["pick", "picked", "select", "selection"]
@@ -50,7 +54,7 @@ def find_classic_teams(args):
     try:
         return [classic_team for classic_team in classic_teams if matches_team_filter(team_filter, classic_team)]
     except IndexError:
-        print("Index Error occurred")
+        logger.warning("IndexError while filtering classic teams for %s", team_filter)
         return None
 
 
