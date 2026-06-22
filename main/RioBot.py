@@ -12,7 +12,6 @@ import discord
 
 from resources import ladders
 from helpers import offensive_stat_calcs, pitching_stat_calcs
-import matchmaking as mm
 
 _EST = pytz.timezone("America/New_York")
 _CACHE_REFRESH_TIME = datetime.time(hour=6, minute=0, tzinfo=_EST)
@@ -23,7 +22,7 @@ load_dotenv()
 token = os.getenv("BOT_TOKEN")
 intents = discord.Intents.all()
 
-cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results", "registration"]
+cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results", "registration", "matchmaking"]
 
 
 class RioBot(commands.Bot):
@@ -43,15 +42,11 @@ bot = RioBot(command_prefix="!", intents=intents, case_insensitive=True)
 async def on_ready():
     print(f"{bot.user} has connected to Discord!")
 
-    # Initialize matchmaking buttons
-    await mm.init_buttons(bot)
+    # Matchmaking (buttons + refresh loop) is owned by the matchmaking cog.
 
     # Start timed tasks — guarded so reconnects don't raise RuntimeError
-    # mm.refresh_queue.start(bot)
     if not ladders.refresh_ladders.is_running():
         ladders.refresh_ladders.start()
-    if not handle_crash.is_running():
-        handle_crash.start()
     if not refresh_stat_caches.is_running():
         refresh_stat_caches.start()
 
@@ -64,14 +59,6 @@ async def refresh_stat_caches():
             await pitching_stat_calcs.refresh_baselines(mode, bot.session)
         except Exception as e:
             print(f"Failed to refresh stat cache for {mode}: {e}")
-
-
-@tasks.loop(minutes=1)
-async def handle_crash():
-    if not mm.refresh_queue.is_running():
-        mm.refresh_queue.start(bot)
-    if not ladders.refresh_ladders.is_running():
-        ladders.refresh_ladders.start(bot)
 
 
 # Exception handler on user commands to bot

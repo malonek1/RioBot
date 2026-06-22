@@ -1,385 +1,260 @@
-import discord
-from discord import ButtonStyle
-from discord.ext import tasks, commands
-from discord.ui import View, Button
+import asyncio
+import logging
 import time
 
-from resources import EnvironmentVariables as ev, ladders, rio_name_map
-from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, \
-    rfRandomQuickplayMode
-from services.image_functions import ifBuildTeamImageFile
-from helpers import utils
+import discord
+from discord.ext import commands
 
-# Constant for starting percentile range for matchmaking search
+from resources import EnvironmentVariables as ev, ladders, rio_name_map
+from models.matchmaking import QueuedPlayer, MatchAnnouncement
+from services.matchmaking_embeds import build_match_message, build_status_embed
+
+logger = logging.getLogger(__name__)
+
+# --- Tunable constants -------------------------------------------------------
+# Starting percentile range for matchmaking search.
 BASE_PERCENTILE_RANGE = 0.5
-# Constant to tell the bot where the matchmaking buttons appear
+# Divisor controlling how quickly the search range widens with time in queue.
+SEARCH_WIDEN_INTERVAL = 120
+# Default rating assigned to players who aren't on the ladder yet.
+DEFAULT_RATING = 1300
+# How long a match is counted toward the "matches in the past hour" stat.
+RECENT_MATCH_WINDOW = 3600
+# Seconds a player must wait before a role ping goes out for them.
+PING_AFTER = 120
+# Minimum gap between role pings for the same role.
+PING_COOLDOWN = 1800
+# Seconds before a player gets an AFK reminder DM.
+AFK_AFTER = 1800
+
+# --- Channel / role configuration -------------------------------------------
 BUTTON_CHANNEL_ID = ev.MM_BUTTON_CHANNEL_ID
 MATCH_CHANNEL_ID = ev.MM_MATCH_CHANNEL_ID
-MOD_ROLE_ID = ev.MOD_ROLE_ID
 BOT_SPAM_CHANNEL_ID = ev.BOT_SPAM_CHANNEL_ID
 
-STARS_OFF_ROLE = "<@&998791156794150943>"
-STARS_ON_ROLE = "<@&998791464630898808>"
-
-# The matchmaking queue
-queue = {}
-for m in ladders.GAME_MODES:
-    queue[m] = {}
-# The message with the matchmaking bot stuff
-mm_message: discord.Message
-
-match_count = {}
-for m in ladders.GAME_MODES:
-    match_count[m] = 1
-
-last_ping_time = {
-    "<@&998791464630898808>": 0.0,
-    "<@&998791156794150943>": 0.0
-}
-# for m in mode_list:
-#     last_ping_time[m] = 0.0
-
-recent_matches = {}
-for m in ladders.GAME_MODES:
-    recent_matches[m] = []
-
-async def init_buttons(bot: commands.Bot):
-    # Initialize matchmaking buttons
-    global mm_message
-
-    new_view = View(timeout=None)
-
-    for i in range(len(ladders.GAME_MODES)):
-        button = Button(label=ladders.GAME_MODES[i], style=ButtonStyle.blurple)
-
-        async def press(interaction, mode=ladders.GAME_MODES[i]):
-            await interaction.response.defer()
-            if await enter_queue(interaction, bot, mode):
-                embed = discord.Embed()
-                embed.add_field(name='Queue Status:',
-                                value="You have entered the " + mode + " queue.")
-                await interaction.followup.send(embed=embed, ephemeral=True)
-
-        button.callback = press
-        new_view.add_item(button)
-
-    dequeue_button = Button(label="Leave Queue", style=ButtonStyle.red)
-
-    async def dequeue_press(interaction):
-        await interaction.response.defer()
-        await exit_queue(interaction)
-        embed = discord.Embed()
-        embed.add_field(name='Queue Status:',
-                        value="You have left the matchmaking queue.")
-        await interaction.followup.send(embed=embed, ephemeral=True)
-
-    dequeue_button.callback = dequeue_press
-
-    feedback_button = Button(label="Give Feedback", style=ButtonStyle.url, url="https://forms.gle/KNKwp86VFxrgkZiW9")
-
-    # button_view.add_item(stars_unranked_button)
-    new_view.add_item(dequeue_button)
-    new_view.add_item(feedback_button)
-    channel = bot.get_channel(BUTTON_CHANNEL_ID)
-    history = channel.history()
-    async for msg in history:
-        if msg.author == bot.user:
-            await msg.delete()
-
-    embed = discord.Embed()
-    embed.add_field(name="Matchmaking queue initialized! Press buttons below to search for a game.",
-                    value="Queue details will appear here when a user has entered the queue")
-    mm_message = await channel.send(embed=embed,
-                                    view=new_view)
+STARS_OFF_ROLE = f"<@&{ev.MM_STARS_OFF_ROLE_ID}>"
+STARS_ON_ROLE = f"<@&{ev.MM_STARS_ON_ROLE_ID}>"
 
 
-# Button for a player to enter the matchmaking queue
-# If they are in the queue already, it will refresh their presence in the queue
-async def enter_queue(interaction, bot: commands.Bot, game_type):
-    player_rating = 1300
-    player_id = str(interaction.user.id)
-    player_name = interaction.user.name
-    rio_name = rio_name_map.get_rio_name(player_id)
-    if rio_name is None:
-        embed = discord.Embed(
-            title="Registration required",
-            description="You must link your Project Rio username before joining the queue.\n"
-                        f"Use `!register <rio_username>` in <#{BOT_SPAM_CHANNEL_ID}> to register.",
-            color=0xFF5733)
-        await interaction.followup.send(embed=embed, ephemeral=True)
-        return
+class Matchmaker:
+    """Owns all matchmaking state and serializes mutations behind a lock.
 
-    rio_name_lower = rio_name.lower()
-    for user in ladders.ladders[game_type]:
-        if user.lower() == rio_name_lower:
-            player_rating = ladders.ladders[game_type][user]["rating"]
-            break
+    The golden rule: *decide under the lock, do Discord I/O after releasing it*.
+    Every read-modify of the queues happens inside ``self._lock`` and never
+    awaits a network call, which is what makes the previous
+    "dict changed size during iteration" / double-match races impossible.
 
-    # put player in queue
-    queue[game_type][player_id] = {
-        "Name": player_name,
-        "Rating": player_rating,
-        "Time": time.time()
-    }
+    This class is pure engine — it holds no buttons or task loops. The
+    Matchmaking cog (cogs/matchmaking.py) owns the Discord lifecycle and drives
+    it via ``add_player`` / ``remove_player`` / ``run_refresh``.
+    """
 
-    # calculate search range
-    min_rating, max_rating = calc_search_range(player_rating, game_type, 0)
+    def __init__(self):
+        self._lock = asyncio.Lock()
+        self.queues: dict[str, dict[str, QueuedPlayer]] = {m: {} for m in ladders.GAME_MODES}
+        self.match_count: dict[str, int] = {m: 1 for m in ladders.GAME_MODES}
+        self.recent_matches: dict[str, list[float]] = {m: [] for m in ladders.GAME_MODES}
+        self.last_ping_time: dict[str, float] = {STARS_OFF_ROLE: 0.0, STARS_ON_ROLE: 0.0}
+        self.mm_message: discord.Message | None = None
 
-    # check for match
-    await check_for_match(bot, game_type, player_id, min_rating, max_rating)
-
-    await update_queue_status()
-    return True
-
-
-# Button for a player to remove themselves from the queue
-# If they aren't in the queue, it will just post a message with the queue status
-async def exit_queue(interaction):
-    for m in ladders.GAME_MODES:
-        if str(interaction.user.id) in queue[m]:
-            try:
-                del queue[m][str(interaction.user.id)]
-            except KeyError:
-                print("Key error")
-            except RuntimeError:
-                print("Runtime error")
-    await update_queue_status()
-
-
-# refresh to see if a match can now be created with players waiting in the queue
-@tasks.loop(seconds=15)
-async def refresh_queue(bot: commands.Bot):
-    match_found = False
-    rm_delta = 0
-
-    t = time.time() - 3600
-    for m in ladders.GAME_MODES:
-        rm_delta += len(recent_matches[m])
-        recent_matches[m] = list(filter(lambda s: s > t, recent_matches[m]))
-        rm_delta -= len(recent_matches[m])
-
-    try:
+    # --- Queue mutation (lock-protected) ------------------------------------
+    def _remove_from_all(self, player_id: str):
         for m in ladders.GAME_MODES:
-            for player in queue[m]:
-                time_in_queue = time.time() - queue[m][player]["Time"]
-                min_rating, max_rating = calc_search_range(queue[m][player]["Rating"], m, time_in_queue)
-                if await check_for_match(bot, m, player, min_rating, max_rating):
-                    match_found = True
-                    break
+            self.queues[m].pop(player_id, None)
 
-        if match_found or rm_delta != 0:
-            await update_queue_status()
+    def _find_match(self, game_type: str, user_id: str, min_rating: float, max_rating: float) -> str | None:
+        """Return the id of the closest-rated opponent in range, or None."""
+        mode_queue = self.queues[game_type]
+        if len(mode_queue) < 2:
+            return None
+        me = mode_queue[user_id]
+        best_id: str | None = None
+        best_diff: float | None = None
+        for pid, player in mode_queue.items():
+            if pid == user_id:
+                continue
+            if min_rating <= player.rating <= max_rating:
+                diff = abs(player.rating - me.rating)
+                if best_diff is None or diff < best_diff:
+                    best_id = pid
+                    best_diff = diff
+        return best_id
 
-    except KeyError:
-        print("Key error")
-    except RuntimeError:
-        print("Runtime error")
+    def _commit_match(self, game_type: str, user_id: str, opponent_id: str) -> MatchAnnouncement:
+        """Remove both players from every queue and record the match. Lock held."""
+        searcher = self.queues[game_type][user_id]
+        opponent = self.queues[game_type][opponent_id]
+        self._remove_from_all(user_id)
+        self._remove_from_all(opponent_id)
+        number = self.match_count[game_type]
+        self.match_count[game_type] += 1
+        self.recent_matches[game_type].append(time.time())
+        return MatchAnnouncement(game_type=game_type, number=number, searcher=searcher, opponent=opponent)
 
+    @staticmethod
+    def _role_for_mode(game_type: str) -> tuple[str, str]:
+        if game_type in (ladders.STARS_ON_MODE, ladders.BIG_BALLA):
+            return STARS_ON_ROLE, "STARS-ON"
+        # Stars-off, hazards, randoms and anything else default to stars-off.
+        return STARS_OFF_ROLE, "STARS-OFF"
 
-# Update message with the current queue status
-async def update_queue_status():
-    try:
-        global mm_message
-        details = ""
-        total = 0
-        rm_total = 0
-        for m in ladders.GAME_MODES:
-            total += len(queue[m])
-            rm_total += len(recent_matches[m])
-            details += m + ": " + str(len(queue[m])) + "\n"
+    # --- Search range -------------------------------------------------------
+    def calc_search_range(self, rating: float, game_type: str, time_in_queue: float) -> tuple[float, float]:
+        """Return (min_rating, max_rating) a player can match against.
 
-        matches_made = "There have been " + str(rm_total) + " matches made in the past hour!"
+        Widens with time in queue and shrinks as more recent matches stack up.
+        """
+        percentile = BASE_PERCENTILE_RANGE / (len(self.recent_matches[game_type]) + 1)
+        percentile += (percentile * time_in_queue / SEARCH_WIDEN_INTERVAL)
 
-        new_message = "Press buttons below to search for a game.\n" + str(total) + " player(s) in the matchmaking queue:"
-        embed = discord.Embed()
-        embed.add_field(name=new_message,
-                        value=details)
-        embed.set_footer(text=matches_made)
-        await mm_message.edit(embed=embed)
-    except KeyError:
-        print("Key error")
-    except RuntimeError:
-        print("Runtime error")
+        rating_list = [ladders.ladders[game_type][user]["rating"] for user in ladders.ladders[game_type]]
+        rating_list.append(rating)
+        rating_list.append(0)
+        rating_list.append(3000)
+        pct_list = sorted(rating_list, reverse=True)
 
+        rank = pct_list.index(rating)
+        max_index = round(rank - (len(pct_list) * percentile))
+        min_index = round(rank + (len(pct_list) * percentile))
+        max_index = max(max_index, 0)
+        min_index = min(min_index, len(pct_list) - 1)
 
-# params: player's rating and amount of time they've spent in queue
-# return: min and max rating the player can match against
-def calc_search_range(rating, game_type, time_in_queue):
-    percentile = BASE_PERCENTILE_RANGE / (len(recent_matches[game_type]) + 1)
-    percentile += (percentile * time_in_queue / 120)
-    # if game_type == ladders.STARS_OFF_MODE:
-    #     percentile = min(percentile, 0.5)
-    rating_list_copy = []
-    for user in ladders.ladders[game_type]:
-        rating_list_copy.append(ladders.ladders[game_type][user]["rating"])
-    rating_list_copy.append(rating)
-    rating_list_copy.append(0)
-    rating_list_copy.append(3000)
-    pct_list = sorted(rating_list_copy, reverse=True)
-    max_index = round(pct_list.index(rating) - (len(pct_list) * percentile))
-    min_index = round(pct_list.index(rating) + (len(pct_list) * percentile))
-    if max_index < 0:
-        max_index = 0
-    if min_index >= len(pct_list):
-        min_index = len(pct_list) - 1
+        return pct_list[min_index], pct_list[max_index]
 
-    max_rating = pct_list[max_index]
-    min_rating = pct_list[min_index]
+    # --- Player entry / exit ------------------------------------------------
+    async def add_player(self, interaction, bot: commands.Bot, game_type: str) -> bool:
+        """Add (or refresh) a player in a mode's queue. Returns False if the
+        player still needs to register."""
+        player_id = str(interaction.user.id)
+        rio_name = rio_name_map.get_rio_name(player_id)
+        if rio_name is None:
+            embed = discord.Embed(
+                title="Registration required",
+                description="You must link your Project Rio username before joining the queue.\n"
+                            f"Use `!register <rio_username>` in <#{BOT_SPAM_CHANNEL_ID}> to register.",
+                color=0xFF5733)
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return False
 
-    return min_rating, max_rating
+        rio_name_lower = rio_name.lower()
+        player_rating = DEFAULT_RATING
+        for user in ladders.ladders[game_type]:
+            if user.lower() == rio_name_lower:
+                player_rating = ladders.ladders[game_type][user]["rating"]
+                break
 
+        announcement: MatchAnnouncement | None = None
+        async with self._lock:
+            self.queues[game_type][player_id] = QueuedPlayer(
+                discord_id=player_id,
+                name=interaction.user.name,
+                rating=player_rating,
+                joined_at=time.time(),
+            )
+            min_rating, max_rating = self.calc_search_range(player_rating, game_type, 0)
+            opponent_id = self._find_match(game_type, player_id, min_rating, max_rating)
+            if opponent_id is not None:
+                announcement = self._commit_match(game_type, player_id, opponent_id)
 
-# Checks if there is an available match for a user.
-# Uses their user_id, search range (min-max ratings).
-async def check_for_match(bot: commands.Bot, game_type, user_id, min_rating, max_rating):
-    print("Player:", queue[game_type][user_id]["Name"], "Rating:", queue[game_type][user_id]["Rating"], "Time:",
-          round(time.time() - queue[game_type][user_id]["Time"]), "Search Range", min_rating, max_rating)
-    channel = bot.get_channel(MATCH_CHANNEL_ID)
-    if len(queue[game_type]) >= 2:
-        try:
-            best_match = False
-            for player in queue[game_type]:
-                if max_rating >= queue[game_type][player]["Rating"] >= min_rating and player != user_id:
-                    if not best_match or abs(queue[game_type][best_match]["Rating"] - queue[game_type][user_id]["Rating"]) \
-                            > abs(queue[game_type][player]["Rating"] - queue[game_type][user_id]["Rating"]):
-                        best_match = player
+        if announcement is not None:
+            await self._send_match(bot, announcement)
+        await self.update_queue_status()
+        return True
 
-            # If match is found
-            if best_match:
-                match_queue = {user_id: queue[game_type][user_id], best_match: queue[game_type][best_match]}
-                best_match_queues = []
-                user_queues = []
-                for mode in ladders.GAME_MODES:
-                    if best_match in queue[mode]:
-                        del queue[mode][best_match]
-                        best_match_queues.append(mode)
-                    if user_id in queue[mode]:
-                        del queue[mode][user_id]
-                        user_queues.append(mode)
+    async def remove_player(self, interaction):
+        async with self._lock:
+            self._remove_from_all(str(interaction.user.id))
+        await self.update_queue_status()
 
-                global match_count
-                log_text = str(match_count[game_type]) + " " + game_type + " match: " + \
-                           match_queue[user_id]["Name"] + " " + str(match_queue[user_id]["Rating"]) + " vs " + \
-                           match_queue[best_match]["Name"] + " " + str(match_queue[best_match]["Rating"])
-                print(log_text)
-                with open("match_log.txt", "a") as file:
-                    file.write(log_text + "\n")
-                embed = discord.Embed()
+    # --- Periodic refresh ---------------------------------------------------
+    async def run_refresh(self, bot: commands.Bot):
+        now = time.time()
+        cutoff = now - RECENT_MATCH_WINDOW
 
-                # RANDOMS LOGIC
-                if "Random" in game_type or "Quickplay" in game_type or "Balla" in game_type:
-                    team_list = rfRandomTeamsWithoutDupes()
-                    captain_list = [team_list[0][0], team_list[1][0]]
+        announcements: list[MatchAnnouncement] = []
+        pings: list[tuple[str, str, str]] = []  # (role_id, role_name, game_type)
+        afk_dm_ids: list[str] = []
 
-                    file = ifBuildTeamImageFile(team_list, captain_list)
-                    embed.set_image(url="attachment://image.png")
-                    stadium = rfRandomStadium()
-                    if rfFlipCoin() == "Heads":
-                        away = match_queue[user_id]["Name"]
-                        home = match_queue[best_match]["Name"]
-                    else:
-                        away = match_queue[best_match]["Name"]
-                        home = match_queue[user_id]["Name"]
+        async with self._lock:
+            # Prune the recent-match window; note if anything changed so the
+            # status footer ("matches in the past hour") can refresh.
+            recent_changed = False
+            for m in ladders.GAME_MODES:
+                before = len(self.recent_matches[m])
+                self.recent_matches[m] = [t for t in self.recent_matches[m] if t > cutoff]
+                if len(self.recent_matches[m]) != before:
+                    recent_changed = True
 
-                    if "Quickplay" in game_type:
-                        embed.add_field(name=game_type + " match found!",
-                                        value=away + " (top team, away)\n" + home + " (bottom team, home)", inline=False)
+            # Try to make one match per mode per tick (same as before).
+            match_found = False
+            for m in ladders.GAME_MODES:
+                for pid in list(self.queues[m].keys()):
+                    player = self.queues[m].get(pid)
+                    if player is None:
+                        continue  # already pulled into a match this tick
+                    time_in_queue = now - player.joined_at
+                    min_rating, max_rating = self.calc_search_range(player.rating, m, time_in_queue)
+                    opponent_id = self._find_match(m, pid, min_rating, max_rating)
+                    if opponent_id is not None:
+                        announcements.append(self._commit_match(m, pid, opponent_id))
+                        match_found = True
+                        break
 
-                        game_mode = rfRandomQuickplayMode()
-                        embed.add_field(name="Mode", value=game_mode)
-                    else:
-                        embed.add_field(name=game_type + " match found!",
-                                        value=away + " (top team, away)\n" + home + " (bottom team, home)")
+            # Gather notifications for everyone still waiting.
+            for m in ladders.GAME_MODES:
+                role_id, role_name = self._role_for_mode(m)
+                for player in self.queues[m].values():
+                    elapsed = now - player.joined_at
+                    if elapsed >= PING_AFTER and now - self.last_ping_time[role_id] > PING_COOLDOWN:
+                        self.last_ping_time[role_id] = now
+                        pings.append((role_id, role_name, m))
+                    if elapsed >= AFK_AFTER and not player.afk_reminded:
+                        player.afk_reminded = True
+                        afk_dm_ids.append(player.discord_id)
 
-                    embed.add_field(name="Stadium", value=stadium)
-                    await channel.send("<@" + user_id + "> <@" + str(
-                        best_match) + ">", embed=embed, file=file)
-                else:
-                    player_1 = match_queue[user_id]["Name"] + " ("
-                    player_2 = match_queue[best_match]["Name"] + " ("
-                    if rfFlipCoin() == "Heads":
-                        player_1 += "1p, "
-                        player_2 += "2p, "
-                    else:
-                        player_1 += "2p, "
-                        player_2 += "1p, "
-                    if rfFlipCoin() == "Heads":
-                        player_1 += "away)"
-                        player_2 += "home)"
-                    else:
-                        player_1 += "home)"
-                        player_2 += "away)"
-                    stadium = rfRandomStadium()
-                    if "Hazards" in game_type and "Mario" in stadium:
-                        stadium = rfRandomHazardsStadium()
-                    embed.add_field(name=game_type + " match found!",
-                                    value=player_1 + " vs " + player_2 + "\n\nFind matches in <#" + str(
-                                        BUTTON_CHANNEL_ID) + ">")
-                    embed.add_field(name="Stadium", value=stadium)
-                    await channel.send("<@" + user_id + "> <@" + str(
-                        best_match) + ">", embed=embed)
-                # else:
-                #     embed.add_field(name=game_type + " match found!",
-                #                     value=match_queue[user_id]["Name"] + " vs " + str(
-                #                         match_queue[best_match]["Name"]) + "\n\nFind matches in <#" + str(
-                #                         BUTTON_CHANNEL_ID) + ">")
-                #     await channel.send("<@" + user_id + "> <@" + str(
-                #         best_match) + ">", embed=embed)
+            update_needed = match_found or recent_changed
 
-                # Increment total match count
-                match_count[game_type] += 1
+        # All Discord I/O happens after the lock is released.
+        for announcement in announcements:
+            await self._send_match(bot, announcement)
 
-                # Add to recent matches list
-                recent_matches[game_type].append(time.time())
-
-                return True
-        except KeyError:
-            if best_match and best_match_queues and match_queue:
-                for mode in best_match_queues:
-                    queue[mode][best_match] = match_queue[best_match]
-            if user_id and user_queues and match_queue:
-                for mode in user_queues:
-                    queue[mode][user_id] = match_queue[user_id]
-            print("Double match")
-        except RuntimeError:
-            if best_match and best_match_queues and match_queue:
-                for mode in best_match_queues:
-                    queue[mode][best_match] = match_queue[best_match]
-            if user_id and user_queues and match_queue:
-                for mode in user_queues:
-                    queue[mode][user_id] = match_queue[user_id]
-            print("Timing error")
-        except UnboundLocalError:
-            print("Something weird went wrong")
-
-    global last_ping_time
-
-    if game_type == ladders.STARS_OFF_MODE or game_type == ladders.STARS_OFF_HAZARDS:
-        role_id = STARS_OFF_ROLE
-        role_name = "STARS-OFF"
-    elif game_type == ladders.STARS_ON_MODE or game_type == ladders.BIG_BALLA:
-        role_id = STARS_ON_ROLE
-        role_name = "STARS-ON"
-    else:
-        role_id = STARS_OFF_ROLE
-        role_name = "STARS-OFF"
-
-    if 120 <= time.time() - queue[game_type][user_id]["Time"] and time.time() - last_ping_time[role_id] > 1800:
-        embed = discord.Embed()
-        embed.add_field(name=f'ATTENTION {role_name} GAMERS',
-                        value="There is a player looking for a " + game_type + " match in queue!")
-        last_ping_time[role_id] = time.time()
-        await channel.send(role_id, embed=embed)
-
-    if 1800 < time.time() - queue[game_type][user_id]["Time"] < 1815:
-        user = await bot.fetch_user(user_id)
-        try:
+        channel = bot.get_channel(MATCH_CHANNEL_ID)
+        for role_id, role_name, game_type in pings:
             embed = discord.Embed()
-            embed.add_field(name="AFK Reminder",
-                            value="You have been in the queue for 30 minutes. "
-                                  "Please leave the queue if you have found a match or are no longer looking.")
-            await user.send(embed=embed)
-        except discord.Forbidden:
-            print("DM forbidden")
+            embed.add_field(name=f'ATTENTION {role_name} GAMERS',
+                            value="There is a player looking for a " + game_type + " match in queue!")
+            await channel.send(role_id, embed=embed)
 
-    return False
+        for user_id in afk_dm_ids:
+            try:
+                user = await bot.fetch_user(user_id)
+                embed = discord.Embed()
+                embed.add_field(name="AFK Reminder",
+                                value="You have been in the queue for 30 minutes. "
+                                      "Please leave the queue if you have found a match or are no longer looking.")
+                await user.send(embed=embed)
+            except discord.Forbidden:
+                logger.info("AFK DM forbidden for user %s", user_id)
+
+        if update_needed or announcements:
+            await self.update_queue_status()
+
+    # --- Discord presentation ----------------------------------------------
+    async def update_queue_status(self):
+        if self.mm_message is None:
+            return
+        embed = build_status_embed(self.queues, self.recent_matches)
+        try:
+            await self.mm_message.edit(embed=embed)
+        except discord.HTTPException:
+            logger.exception("Failed to update queue status message")
+
+    async def _send_match(self, bot: commands.Bot, ann: MatchAnnouncement):
+        searcher = ann.searcher
+        opponent = ann.opponent
+        logger.info("%s %s match: %s %s vs %s %s", ann.number, ann.game_type,
+                    searcher.name, searcher.rating, opponent.name, opponent.rating)
+
+        channel = bot.get_channel(MATCH_CHANNEL_ID)
+        mentions, embed, file = build_match_message(ann)
+        await channel.send(mentions, embed=embed, file=file)

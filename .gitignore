@@ -9,3 +9,7 @@ main/resources/test_BACKUP.json
 /main/resources/test_BACKUP.json
 main/.env
 main/resources/test.json
+/test_adj_wrc.py
+/test_wrc.py
+/.claude/settings.local.json
+/main/.env_PROD
