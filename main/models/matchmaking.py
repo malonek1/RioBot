@@ -15,10 +15,11 @@ class QueuedPlayer(BaseModel):
 
 
 class MatchAnnouncement(BaseModel):
-    """A committed match waiting to be announced outside the lock."""
+    """A committed match waiting to be announced outside the lock.
+
+    The two players are interchangeable — matching is symmetric. Which one is
+    listed first / assigned home/away is decided cosmetically at render time.
+    """
     game_type: str
-    number: int
-    # `searcher` is the player whose search produced the match; `opponent` is
-    # the best match found. This mirrors the original player_1/player_2 roles.
-    searcher: QueuedPlayer
-    opponent: QueuedPlayer
+    player_a: QueuedPlayer
+    player_b: QueuedPlayer

@@ -13,13 +13,15 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
     Returns ``file=None`` for non-randoms modes (no team image is generated).
     """
     game_type = ann.game_type
-    searcher = ann.searcher
-    opponent = ann.opponent
-    mentions = f"<@{searcher.discord_id}> <@{opponent.discord_id}>"
+    player_a = ann.player_a
+    player_b = ann.player_b
+    mentions = f"<@{player_a.discord_id}> <@{player_b.discord_id}>"
     embed = discord.Embed()
     file: discord.File | None = None
 
-    if "Random" in game_type or "Quickplay" in game_type or "Balla" in game_type:
+    props = ladders.get_mode_rendering(game_type)
+
+    if props.get("random_teams"):
         team_list = rfRandomTeamsWithoutDupes()
         captain_list = [team_list[0][0], team_list[1][0]]
 
@@ -27,60 +29,52 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
         embed.set_image(url="attachment://image.png")
         stadium = rfRandomStadium()
         if rfFlipCoin() == "Heads":
-            away = searcher.name
-            home = opponent.name
+            away, home = player_a.name, player_b.name
         else:
-            away = opponent.name
-            home = searcher.name
+            away, home = player_b.name, player_a.name
 
-        if "Quickplay" in game_type:
-            embed.add_field(name=game_type + " match found!",
-                            value=away + " (top team, away)\n" + home + " (bottom team, home)", inline=False)
+        teams_value = f"{away} (top team, away)\n{home} (bottom team, home)"
+        if props.get("quickplay"):
+            embed.add_field(name=f"{game_type} match found!", value=teams_value, inline=False)
             embed.add_field(name="Mode", value=rfRandomQuickplayMode())
         else:
-            embed.add_field(name=game_type + " match found!",
-                            value=away + " (top team, away)\n" + home + " (bottom team, home)")
+            embed.add_field(name=f"{game_type} match found!", value=teams_value)
 
         embed.add_field(name="Stadium", value=stadium)
     else:
-        player_1 = searcher.name + " ("
-        player_2 = opponent.name + " ("
         if rfFlipCoin() == "Heads":
-            player_1 += "1p, "
-            player_2 += "2p, "
+            slot_a, slot_b = "1p", "2p"
         else:
-            player_1 += "2p, "
-            player_2 += "1p, "
+            slot_a, slot_b = "2p", "1p"
         if rfFlipCoin() == "Heads":
-            player_1 += "away)"
-            player_2 += "home)"
+            side_a, side_b = "away", "home"
         else:
-            player_1 += "home)"
-            player_2 += "away)"
+            side_a, side_b = "home", "away"
+        player_1 = f"{player_a.name} ({slot_a}, {side_a})"
+        player_2 = f"{player_b.name} ({slot_b}, {side_b})"
         stadium = rfRandomStadium()
-        if "Hazards" in game_type and "Mario" in stadium:
+        if props.get("hazards") and "Mario" in stadium:
             stadium = rfRandomHazardsStadium()
-        embed.add_field(name=game_type + " match found!",
-                        value=player_1 + " vs " + player_2 + "\n\nFind matches in <#" + str(
-                            ev.MM_BUTTON_CHANNEL_ID) + ">")
+        embed.add_field(name=f"{game_type} match found!",
+                        value=f"{player_1} vs {player_2}\n\nFind matches in <#{ev.MM_BUTTON_CHANNEL_ID}>")
         embed.add_field(name="Stadium", value=stadium)
 
     return mentions, embed, file
 
 
-def build_status_embed(queues: dict, recent_matches: dict) -> discord.Embed:
+def build_status_embed(queues: dict, recent_counts: dict) -> discord.Embed:
     """Build the persistent queue-status embed shown in the button channel."""
     details = ""
     total = 0
     rm_total = 0
     for m in ladders.GAME_MODES:
         total += len(queues[m])
-        rm_total += len(recent_matches[m])
-        details += m + ": " + str(len(queues[m])) + "\n"
+        rm_total += recent_counts[m]
+        details += f"{m}: {len(queues[m])}\n"
 
     embed = discord.Embed()
     embed.add_field(
-        name="Press buttons below to search for a game.\n" + str(total) + " player(s) in the matchmaking queue:",
+        name=f"Press buttons below to search for a game.\n{total} player(s) in the matchmaking queue:",
         value=details)
-    embed.set_footer(text="There have been " + str(rm_total) + " matches made in the past hour!")
+    embed.set_footer(text=f"There have been {rm_total} matches made in the past hour!")
     return embed

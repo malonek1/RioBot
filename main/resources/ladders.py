@@ -86,6 +86,24 @@ ALL_POTENTIAL_GAME_MODES = [STARS_OFF_MODE, STARS_ON_MODE, BIG_BALLA, STARS_OFF_
 
 GAME_MODES = [mode for mode in ALL_POTENTIAL_GAME_MODES if mode != "Not Found"]
 
+# How each mode's match announcement should be rendered. Keyed by resolved
+# official mode name; a mode absent from this map renders as a plain 1p/2p
+# matchup. Driving this off properties (not substring-matching the mode name)
+# keeps the embed logic stable when modes are renamed on the API side.
+#   random_teams: roll random teams + team image, label top/bottom away/home
+#   quickplay:    additionally pick a random quickplay sub-mode
+#   hazards:      avoid Mario-themed stadiums (re-roll if one comes up)
+MODE_RENDERING: dict[str, dict[str, bool]] = {
+    RANDOM: {"random_teams": True},
+    BIG_BALLA: {"random_teams": True},
+    STARS_OFF_HAZARDS: {"hazards": True},
+    # QUICKPLAY: {"random_teams": True, "quickplay": True},
+}
+
+
+def get_mode_rendering(mode: str) -> dict[str, bool]:
+    return MODE_RENDERING.get(mode, {})
+
 MODE_ALIASES = {
     STARS_OFF_MODE: ["off", "starsoff", "stoff", "ssoff"],
     STARS_ON_MODE: ["on", "starson", "ston", "stars", "sson", "superstars"],
@@ -100,6 +118,24 @@ ladders = {}
 
 for m in GAME_MODES:
     ladders[m] = {}
+
+# Ladder ratings per mode, sorted ascending. Recomputed on each refresh so
+# matchmaking's search-range calc doesn't have to re-sort the whole ladder on
+# every call.
+sorted_ratings: dict[str, list[float]] = {m: [] for m in GAME_MODES}
+
+# Per-mode lookup of lowercased rio username -> rating, rebuilt on each refresh
+# so a queue join is an O(1) dict hit instead of a linear lowercasing scan of
+# the whole ladder.
+rating_lookup: dict[str, dict[str, float]] = {m: {} for m in GAME_MODES}
+
+
+def get_sorted_ratings(mode: str) -> list[float]:
+    return sorted_ratings.get(mode, [])
+
+
+def get_player_rating(mode: str, rio_name: str, default: float) -> float:
+    return rating_lookup.get(mode, {}).get(rio_name.lower(), default)
 
 def find_game_mode(mode: str):
     for m in MODE_ALIASES:
@@ -139,5 +175,7 @@ async def refresh_ladders():
                 new_ladder[user]["adjusted_rating"] = (BETA + ((1 - BETA) * (1 - (math.exp(1 - (ALPHA * player_wins)))))) * \
                     (new_ladder[user]["rating"] - (500 * math.sqrt(math.log10(player_games + 1) / player_games)))
             ladders[mode] = new_ladder
+            sorted_ratings[mode] = sorted(new_ladder[user]["rating"] for user in new_ladder)
+            rating_lookup[mode] = {user.lower(): new_ladder[user]["rating"] for user in new_ladder}
         except Exception:
             logger.exception("Failed to refresh ladder for %s", mode)

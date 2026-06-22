@@ -5,7 +5,7 @@ from discord import ButtonStyle
 from discord.ext import commands, tasks
 
 from resources import ladders
-from matchmaking import Matchmaker, BUTTON_CHANNEL_ID
+from matchmaker import Matchmaker, BUTTON_CHANNEL_ID
 
 logger = logging.getLogger(__name__)
 
@@ -15,15 +15,15 @@ FEEDBACK_URL = "https://forms.gle/KNKwp86VFxrgkZiW9"
 class QueueButton(discord.ui.Button):
     """Joins (or refreshes) a player in a single mode's queue."""
 
-    def __init__(self, matchmaker: Matchmaker, bot: commands.Bot, mode: str):
+    def __init__(self, cog: "Matchmaking", mode: str):
         super().__init__(label=mode, style=ButtonStyle.blurple, custom_id=f"mm_queue:{mode}")
-        self.matchmaker = matchmaker
-        self.bot = bot
+        self.cog = cog
         self.mode = mode
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        if await self.matchmaker.add_player(interaction, self.bot, self.mode):
+        if await self.cog.matchmaker.add_player(interaction, self.cog.bot, self.mode):
+            self.cog.start_refresh_if_needed()
             embed = discord.Embed()
             embed.add_field(name='Queue Status:', value="You have entered the " + self.mode + " queue.")
             await interaction.followup.send(embed=embed, ephemeral=True)
@@ -32,13 +32,13 @@ class QueueButton(discord.ui.Button):
 class LeaveQueueButton(discord.ui.Button):
     """Removes a player from every mode's queue."""
 
-    def __init__(self, matchmaker: Matchmaker):
+    def __init__(self, cog: "Matchmaking"):
         super().__init__(label="Leave Queue", style=ButtonStyle.red, custom_id="mm_leave")
-        self.matchmaker = matchmaker
+        self.cog = cog
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await self.matchmaker.remove_player(interaction)
+        await self.cog.matchmaker.remove_player(interaction)
         embed = discord.Embed()
         embed.add_field(name='Queue Status:', value="You have left the matchmaking queue.")
         await interaction.followup.send(embed=embed, ephemeral=True)
@@ -47,11 +47,11 @@ class LeaveQueueButton(discord.ui.Button):
 class MatchmakingView(discord.ui.View):
     """Persistent (timeout=None) view holding the queue buttons."""
 
-    def __init__(self, matchmaker: Matchmaker, bot: commands.Bot):
+    def __init__(self, cog: "Matchmaking"):
         super().__init__(timeout=None)
         for mode in ladders.GAME_MODES:
-            self.add_item(QueueButton(matchmaker, bot, mode))
-        self.add_item(LeaveQueueButton(matchmaker))
+            self.add_item(QueueButton(cog, mode))
+        self.add_item(LeaveQueueButton(cog))
         self.add_item(discord.ui.Button(label="Give Feedback", style=ButtonStyle.url, url=FEEDBACK_URL))
 
 
@@ -60,6 +60,11 @@ class Matchmaking(commands.Cog):
 
     The matching engine itself lives in matchmaking.Matchmaker; this cog just
     wires it to Discord.
+
+    The refresh loop is *idle-aware*: it isn't started at load. A join starts it
+    (start_refresh_if_needed); it stops itself once the queue drains. That stop
+    is decided synchronously at the end of each tick, so a join that lands
+    mid-tick is seen by has_waiting_players() and the loop won't wrongly stop.
     """
 
     def __init__(self, bot: commands.Bot):
@@ -68,14 +73,9 @@ class Matchmaking(commands.Cog):
         # The button message is recreated once per process, not per reconnect.
         self._message_posted = False
 
-    async def cog_load(self):
-        # Safe to start here: the loop's before_loop waits for the gateway to be
-        # ready before the first tick (we can't wait_until_ready in cog_load
-        # itself — that runs inside setup_hook, before the bot connects).
-        self.refresh_queue.start()
-
     def cog_unload(self):
-        self.refresh_queue.cancel()
+        if self.refresh_queue.is_running():
+            self.refresh_queue.cancel()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -88,6 +88,9 @@ class Matchmaking(commands.Cog):
 
     async def _post_queue_message(self):
         channel = self.bot.get_channel(BUTTON_CHANNEL_ID)
+        if channel is None:
+            logger.error("Button channel %s not found; cannot post queue message", BUTTON_CHANNEL_ID)
+            return
         async for msg in channel.history():
             if msg.author == self.bot.user:
                 await msg.delete()
@@ -95,8 +98,13 @@ class Matchmaking(commands.Cog):
         embed = discord.Embed()
         embed.add_field(name="Matchmaking queue initialized! Press buttons below to search for a game.",
                         value="Queue details will appear here when a user has entered the queue")
-        view = MatchmakingView(self.matchmaker, self.bot)
+        view = MatchmakingView(self)
         self.matchmaker.mm_message = await channel.send(embed=embed, view=view)
+
+    def start_refresh_if_needed(self):
+        """Start the refresh loop if players are waiting and it isn't running."""
+        if self.matchmaker.has_waiting_players() and not self.refresh_queue.is_running():
+            self.refresh_queue.start()
 
     @tasks.loop(seconds=15)
     async def refresh_queue(self):
@@ -104,6 +112,9 @@ class Matchmaking(commands.Cog):
             await self.matchmaker.run_refresh(self.bot)
         except Exception:
             logger.exception("refresh_queue tick failed")
+        # Idle-aware: stop once the queue has drained; a future join restarts us.
+        if not self.matchmaker.has_waiting_players():
+            self.refresh_queue.stop()
 
     @refresh_queue.before_loop
     async def before_refresh_queue(self):
