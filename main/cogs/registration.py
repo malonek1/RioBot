@@ -2,6 +2,7 @@ from json import JSONDecodeError
 
 import discord
 from discord.ext import commands
+
 from resources import EnvironmentVariables as ev
 from resources import rio_name_map
 

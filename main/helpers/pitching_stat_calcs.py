@@ -4,6 +4,7 @@ from json import JSONDecodeError
 
 import aiohttp
 import discord
+
 from helpers import stat_cache
 from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from models.misc_stats import MiscStats

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+
 from resources import CharacterStats
 from resources import EnvironmentVariables as ev
 from resources.characters import BAT_URLS
