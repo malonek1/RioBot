@@ -73,12 +73,10 @@ def randomTeamsWithoutDupes():
 # END randomTeamsWithoutDupes
 
 
-def randomTeamsWtihDupes():
+def randomTeamsWithDupes():
     first_team = []
     second_team = []
-    all_characters = []
-    for char in Char:
-        all_characters.append(char)
+    all_characters = list(Char)
     shuffle(all_characters)
     pureRandomTeams(first_team, second_team, all_characters, copy.deepcopy(all_captains))
     return [first_team, second_team]

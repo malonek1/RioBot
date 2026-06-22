@@ -3,6 +3,8 @@ from discord.ext import commands
 
 from services.image_functions import ifBuildTeamImageFile, ifBuildSingleTeamImageFile
 from services.random_functions import *
+from helpers.random_team_builder import randomTeamsWithoutDupes, randomTeamsWithDupes, randomBalancedTeams, \
+    randomPowerTeams, randomTeeBallTeams
 
 # Random Cog Properties
 hex_y = 0xE8E337  # Error message
@@ -72,25 +74,25 @@ class RandomizeCommands(commands.Cog):
             await ctx.send(embed=embed)
         elif command == "teams":
             if not qualifier or qualifier == "":
-                team_list = rfRandomTeamsWithoutDupes()
+                team_list = randomTeamsWithoutDupes()
                 title = "**Random Teams**"
                 description = "Pure random teams without dupes but random variants. Captains are highlighted."
             elif "dupes" in qualifier:
-                team_list = rfRandomTeamsWithDupes()
+                team_list = randomTeamsWithDupes()
                 title = "**Random Teams with Dupes** "
                 description = "Pure random teams with duplicates enabled. Captains are highlighted."
             elif "balance" in qualifier:
-                team_list = rfRandomBalancedTeams()
+                team_list = randomBalancedTeams()
                 title = "**Random Balanced Teams**"
                 description = "Random teams where each team is given a character from one of five broadly balanced " \
                               "tiers until teams are filled. Captains are highlighted."
             elif "power" in qualifier:
-                team_list = rfRandomPowerTeams()
+                team_list = randomPowerTeams()
                 title = "**Random Power Teams**"
                 description = "Random teams made from top characters exclusively. Duplicates are enabled. Each team " \
                               "is guaranteed one meta pitcher. Captains are highlighted."
             elif "teeball" in qualifier:
-                team_list = rfRandomTeeBallTeams()
+                team_list = randomTeeBallTeams()
                 title = "**Random Tee-Ball Teams**"
                 description = "Random teams made from the Tee-Ball roster. This excludes the top 9 characters " \
                               "as well as diddy & dixie."

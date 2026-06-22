@@ -1,9 +1,9 @@
 import discord
 
 from resources import EnvironmentVariables as ev, ladders
-from services.random_functions import rfRandomTeamsWithoutDupes, rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, \
-    rfRandomQuickplayMode
+from services.random_functions import rfRandomStadium, rfFlipCoin, rfRandomHazardsStadium, rfRandomQuickplayMode
 from services.image_functions import ifBuildTeamImageFile
+from helpers.random_team_builder import randomTeamsWithoutDupes
 from models.matchmaking import MatchAnnouncement
 
 
@@ -22,7 +22,7 @@ def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, dis
     props = ladders.get_mode_rendering(game_type)
 
     if props.get("random_teams"):
-        team_list = rfRandomTeamsWithoutDupes()
+        team_list = randomTeamsWithoutDupes()
         captain_list = [team_list[0][0], team_list[1][0]]
 
         file = ifBuildTeamImageFile(team_list, captain_list)
