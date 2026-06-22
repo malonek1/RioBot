@@ -5,7 +5,6 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-
 from resources import EnvironmentVariables as ev
 
 logger = logging.getLogger(__name__)

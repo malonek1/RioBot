@@ -1,9 +1,7 @@
 from io import BytesIO
 
 import discord
-import requests
 from PIL import Image, ImageOps
-from resources.characters import images
 
 image_width = 52
 image_height = 60

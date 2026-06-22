@@ -1,4 +1,4 @@
-from random import randint, choice, sample, shuffle
+from random import choice, randint, sample, shuffle
 
 from resources.characters import Char
 

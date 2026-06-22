@@ -5,9 +5,9 @@ import time
 
 import discord
 from discord.ext import commands
-
-from resources import EnvironmentVariables as ev, ladders, rio_name_map
-from models.matchmaking import QueuedPlayer, MatchAnnouncement
+from models.matchmaking import MatchAnnouncement, QueuedPlayer
+from resources import EnvironmentVariables as ev
+from resources import ladders, rio_name_map
 from services.matchmaking_embeds import build_match_message, build_status_embed
 
 logger = logging.getLogger(__name__)

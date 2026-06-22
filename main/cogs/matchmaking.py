@@ -3,9 +3,8 @@ import logging
 import discord
 from discord import ButtonStyle
 from discord.ext import commands, tasks
-
+from matchmaker import BUTTON_CHANNEL_ID, Matchmaker
 from resources import ladders
-from matchmaker import Matchmaker, BUTTON_CHANNEL_ID
 
 logger = logging.getLogger(__name__)
 

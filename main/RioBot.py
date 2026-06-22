@@ -1,18 +1,17 @@
 # file: RioBot.py
 # authors: Kevin Malone / Cactus, Nick Taber / Pokebunny
 
-import os
 import datetime
 import logging
+import os
 
 import aiohttp
+import discord
 import pytz
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import discord
-
-from resources import ladders
 from helpers import offensive_stat_calcs, pitching_stat_calcs
+from resources import ladders
 
 logger = logging.getLogger(__name__)
 

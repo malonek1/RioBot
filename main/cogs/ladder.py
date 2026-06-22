@@ -1,8 +1,10 @@
-from discord.ext import commands
-import discord
 import urllib.parse
-from resources import EnvironmentVariables as ev, ladders
+
+import discord
+from discord.ext import commands
 from helpers.stat_utils import FRONTEND_URL
+from resources import EnvironmentVariables as ev
+from resources import ladders
 
 ROWS_PER_PAGE = 25
 

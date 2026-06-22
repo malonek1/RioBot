@@ -1,10 +1,10 @@
 import discord
-
-from resources import EnvironmentVariables as ev, ladders
-from services.randomness import random_stadium, flip_coin, random_hazards_stadium, random_quickplay_mode
-from services.team_images import build_team_image_file
 from helpers.random_team_builder import random_teams_without_dupes
 from models.matchmaking import MatchAnnouncement
+from resources import EnvironmentVariables as ev
+from resources import ladders
+from services.randomness import flip_coin, random_hazards_stadium, random_quickplay_mode, random_stadium
+from services.team_images import build_team_image_file
 
 
 def build_match_message(ann: MatchAnnouncement) -> tuple[str, discord.Embed, discord.File | None]:

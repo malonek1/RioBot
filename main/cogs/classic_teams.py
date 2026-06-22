@@ -1,12 +1,14 @@
-import json
 
 import discord
 from discord.ext import commands
-from services.classic_teams_service import get_random_classic_team, get_filtered_random_classic_team, \
-    get_classic_draft_quote
-from helpers.classic_teams_parser import build_classic_teams, ClassicTeam
-from services.team_images import build_team_image_file, build_single_team_image_file
+from helpers.classic_teams_parser import ClassicTeam, build_classic_teams
+from services.classic_teams_service import (
+    get_classic_draft_quote,
+    get_filtered_random_classic_team,
+    get_random_classic_team,
+)
 from services.randomness import random_stadium
+from services.team_images import build_single_team_image_file, build_team_image_file
 
 # Builds the classic teams libraries
 build_classic_teams()

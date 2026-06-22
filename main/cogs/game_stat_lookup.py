@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
-from resources import EnvironmentVariables as ev, CharacterStats
-
+from resources import CharacterStats
+from resources import EnvironmentVariables as ev
 from resources.characters import BAT_URLS
-
 
 stats_lol = []
 CharacterStats.build_stats_lol(stats_lol)

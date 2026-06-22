@@ -1,9 +1,8 @@
-import discord
 from discord.ext import commands
+from helpers.offensive_stat_calcs import ostat_all, ostat_char, ostat_user, ostat_user_char
+from helpers.pitching_stat_calcs import pstat_all, pstat_char, pstat_user, pstat_user_char
+from resources import characters, ladders
 
-from helpers.offensive_stat_calcs import ostat_user_char, ostat_user, ostat_char, ostat_all
-from helpers.pitching_stat_calcs import pstat_user_char, pstat_user, pstat_char, pstat_all
-from resources import ladders, characters
 
 class WebStatLookup(commands.Cog):
     def __init__(self, client):

@@ -259,7 +259,6 @@ aliases = {
     "rafael": 42,
     "ron": 42,
     "ronald": 42,
-    "rkoopa": 42,
     "paratroopa(g)": 43,
     "koopaparatroopagreen": 43,
     "greenkoopaparatroopa": 43,

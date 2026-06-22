@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from resources import ladders
 from models.game import Game
+from resources import ladders
 
 BASE_GAMES_URL = "https://api.projectrio.app/games/"
 

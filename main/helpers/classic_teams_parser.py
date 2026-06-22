@@ -1,5 +1,6 @@
 import csv
 from random import shuffle
+
 from helpers.utils import ordinal
 from resources.characters import Char
 
@@ -18,9 +19,6 @@ classic_team_players = []
 
 
 class ClassicTeam:
-    def __init__(self):
-        pass
-
     def __init__(self, league, player, characters, season, pick, finish):
         self.league = league
         self.player = player

@@ -1,5 +1,6 @@
 import copy
-from random import shuffle, choice
+from random import choice, shuffle
+
 from resources.characters import Char
 
 # General Character Lists

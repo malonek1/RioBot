@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["venv", ".venv", "test_wrc.py", "test_adj_wrc.py"]
+
+[tool.ruff.lint]
+# Start with the core rule sets: pycodestyle errors (E), pyflakes (F), isort (I).
+select = ["E", "F", "I"]
+# Line length is deferred to the formatter pass (step 3), so don't flag it yet.
+ignore = ["E501"]
