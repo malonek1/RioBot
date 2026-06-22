@@ -2,14 +2,20 @@
 # authors: Kevin Malone / Cactus, Nick Taber / Pokebunny
 
 import os
+import datetime
 
 import aiohttp
+import pytz
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import discord
 
 from resources import ladders
+from helpers import offensive_stat_calcs, pitching_stat_calcs
 import matchmaking as mm
+
+_EST = pytz.timezone("America/New_York")
+_CACHE_REFRESH_TIME = datetime.time(hour=6, minute=0, tzinfo=_EST)
 
 # load .env file which has discord token
 
@@ -17,7 +23,7 @@ load_dotenv()
 token = os.getenv("BOT_TOKEN")
 intents = discord.Intents.all()
 
-cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results"]
+cog_files = ["web_stat_lookup", "game_stat_lookup", "misc", "memes", "randomize_commands", "ladder", "recent_games", "classic_teams", "submit_results", "registration"]
 
 
 class RioBot(commands.Bot):
@@ -46,6 +52,18 @@ async def on_ready():
         ladders.refresh_ladders.start()
     if not handle_crash.is_running():
         handle_crash.start()
+    if not refresh_stat_caches.is_running():
+        refresh_stat_caches.start()
+
+
+@tasks.loop(time=_CACHE_REFRESH_TIME)
+async def refresh_stat_caches():
+    for mode in ladders.GAME_MODES:
+        try:
+            await offensive_stat_calcs.refresh_baselines(mode, bot.session)
+            await pitching_stat_calcs.refresh_baselines(mode, bot.session)
+        except Exception as e:
+            print(f"Failed to refresh stat cache for {mode}: {e}")
 
 
 @tasks.loop(minutes=1)

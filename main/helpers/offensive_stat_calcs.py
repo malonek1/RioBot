@@ -5,22 +5,68 @@ from resources import characters
 from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
 from helpers.stat_utils import BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
+from helpers import stat_cache
 
-all_stats = {}
-all_by_char_stats = {}
+
+async def _get_batting_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
+    key = f"batting:all:{mode}"
+    cached = stat_cache.get(key)
+    if cached is not None:
+        return cached
+    url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}"
+    async with session.get(url) as response:
+        data = (await response.json(content_type=None))["Stats"]
+    batting = BattingStats.model_validate(data["Batting"])
+    _, _, obp, slg = calc_slash_line(batting)
+    result = {"obp": obp, "slg": slg}
+    stat_cache.set(key, result)
+    return result
+
+
+async def _get_batting_by_char_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
+    key = f"batting:by_char:{mode}"
+    cached = stat_cache.get(key)
+    if cached is not None:
+        return cached
+    url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}&by_char=1"
+    async with session.get(url) as response:
+        data = (await response.json(content_type=None))["Stats"]
+    result = {}
+    for char, char_data in data.items():
+        char_batting = BattingStats.model_validate(char_data["Batting"])
+        _, _, obp, slg = calc_slash_line(char_batting)
+        result[char] = {"obp": obp, "slg": slg}
+    stat_cache.set(key, result)
+    return result
+
+
+async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
+    all_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}"
+    by_char_url = all_url + "&by_char=1"
+
+    async with session.get(all_url) as response:
+        all_data = (await response.json(content_type=None))["Stats"]
+    batting = BattingStats.model_validate(all_data["Batting"])
+    _, _, obp, slg = calc_slash_line(batting)
+    stat_cache.set(f"batting:all:{mode}", {"obp": obp, "slg": slg})
+
+    async with session.get(by_char_url) as response:
+        by_char_data = (await response.json(content_type=None))["Stats"]
+    by_char_result = {}
+    for char, char_data in by_char_data.items():
+        char_batting = BattingStats.model_validate(char_data["Batting"])
+        _, _, char_obp, char_slg = calc_slash_line(char_batting)
+        by_char_result[char] = {"obp": char_obp, "slg": char_slg}
+    stat_cache.set(f"batting:by_char:{mode}", by_char_result)
 
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
-    global all_by_char_stats
     try:
-        all_by_char_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&by_char=1&exclude_nonfair=1"
         char_id = characters.reverse_mappings[char]
         url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&tag={mode}&char_id={char_id}&by_char=1&username={user}&exclude_nonfair=1"
         async with session.get(url) as response:
             data = await response.json(content_type=None)
-        if not all_by_char_stats.get(mode, {}).get("Batting", {}):
-            async with session.get(all_by_char_url) as response:
-                all_by_char_stats[mode] = (await response.json(content_type=None))["Stats"]
+        by_char_baseline = await _get_batting_by_char_baseline(mode, session)
         stats = BattingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Batting", {}))
     except (JSONDecodeError, KeyError):
         await send_error_embed(ctx, f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.")
@@ -29,8 +75,9 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
     pa, avg, obp, slg = calc_slash_line(stats)
     ops = obp + slg
 
-    all_char_stats = BattingStats.model_validate(all_by_char_stats.get(mode, {}).get(char, {}).get("Batting", {}))
-    overall_pa, overall_avg, overall_obp, overall_slg = calc_slash_line(all_char_stats)
+    char_baseline = by_char_baseline.get(char, {})
+    overall_obp = char_baseline.get("obp", 0)
+    overall_slg = char_baseline.get("slg", 0)
     ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
 
     misc = MiscStats.model_validate(data.get("Stats", {}).get(char, {}).get("Misc", {}))
@@ -64,26 +111,17 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         embed.add_field(name=name, value=value, inline=True)
 
     embed.set_thumbnail(url=characters.images[char])
-
     await ctx.send(embed=embed)
 
 
 async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     await ctx.send(f"This information can now be accessed here: {FRONTEND_URL}/user/{user}/batting")
-    global all_stats, all_by_char_stats
-    all_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
-    user_url = f"{all_url}&username={user}"
-    all_by_char_url = f"{all_url}&by_char=1"
-    user_by_char_url = f"{all_by_char_url}&username={user}"
+    base_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&tag={mode}&exclude_nonfair=1"
+    user_url = f"{base_url}&username={user}"
+    user_by_char_url = f"{base_url}&by_char=1&username={user}"
     try:
-        if not all_stats.get(mode, {}).get("Batting", {}):
-            print("getting all stats")
-            async with session.get(all_url) as response:
-                all_stats[mode] = (await response.json(content_type=None))["Stats"]
-        if not all_by_char_stats.get(mode, {}):
-            print("Getting all by char stats")
-            async with session.get(all_by_char_url) as response:
-                all_by_char_stats[mode] = (await response.json(content_type=None))["Stats"]
+        all_baseline = await _get_batting_baseline(mode, session)
+        by_char_baseline = await _get_batting_by_char_baseline(mode, session)
         async with session.get(user_url) as response:
             user_response = await response.json(content_type=None)
         async with session.get(user_by_char_url) as response:
@@ -101,11 +139,9 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     user_stats = user_dict["all"]
     pa, avg, obp, slg = calc_slash_line(user_stats)
 
-    _, _, overall_obp, overall_slg = calc_slash_line(BattingStats.model_validate(all_stats[mode]["Batting"]))
-    if overall_obp > 0 and overall_slg > 0:
-        ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
-    else:
-        ops_plus = -100
+    overall_obp = all_baseline.get("obp", 0)
+    overall_slg = all_baseline.get("slg", 0)
+    ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
     title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
 
     desc = "**Char** (PA): AVG / OBP / SLG, cOPS+"
@@ -123,12 +159,10 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     for char in sorted_char_list:
         char_stats = user_dict[char]
         pa, avg, obp, slg = calc_slash_line(char_stats)
-        all_char_stats = BattingStats.model_validate(all_by_char_stats[mode][char]["Batting"])
-        _, _, overall_obp, overall_slg = calc_slash_line(all_char_stats)
-        if overall_obp > 0 and overall_slg > 0:
-            ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100
-        else:
-            ops_plus = -100
+        char_baseline = by_char_baseline.get(char, {})
+        overall_obp = char_baseline.get("obp", 0)
+        overall_slg = char_baseline.get("slg", 0)
+        ops_plus = ((obp / overall_obp) + (slg / overall_slg) - 1) * 100 if overall_obp > 0 and overall_slg > 0 else -100
         desc += f'\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} cOPS+'
 
     await send_stat_embed(ctx, title, desc, "all")
@@ -190,37 +224,43 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
 
 
 async def ostat_all(ctx, mode: str, session: aiohttp.ClientSession):
-    global all_stats, all_by_char_stats
-    all_url = BASE_STATS_URL + "?exclude_pitching=1&exclude_fielding=1&exclude_nonfair=1&exclude_misc=1&tag=" + mode
-    all_by_char_url = all_url + "&by_char=1"
+    all_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_nonfair=1&exclude_misc=1&tag={mode}"
+    by_char_url = all_url + "&by_char=1"
 
     async with session.get(all_url) as response:
-        all_stats[mode] = (await response.json(content_type=None))["Stats"]
-    async with session.get(all_by_char_url) as response:
-        all_by_char_stats[mode] = (await response.json(content_type=None))["Stats"]
+        all_data = (await response.json(content_type=None))["Stats"]
+    async with session.get(by_char_url) as response:
+        by_char_data = (await response.json(content_type=None))["Stats"]
 
-    all_batting = BattingStats.model_validate(all_stats[mode]["Batting"])
+    all_batting = BattingStats.model_validate(all_data["Batting"])
     all_pa, all_avg, all_obp, all_slg = calc_slash_line(all_batting)
+    stat_cache.set(f"batting:all:{mode}", {"obp": all_obp, "slg": all_slg})
+
+    by_char_baseline = {}
+    for char, char_data in by_char_data.items():
+        char_batting = BattingStats.model_validate(char_data["Batting"])
+        _, _, char_obp, char_slg = calc_slash_line(char_batting)
+        by_char_baseline[char] = {"obp": char_obp, "slg": char_slg}
+    stat_cache.set(f"batting:by_char:{mode}", by_char_baseline)
+
     desc = "**Char** (PA): AVG / OBP / SLG, OPS+"
     title = f"\nAll ({all_pa} PA): {all_avg:.3f} / {all_obp:.3f} / {all_slg:.3f}"
 
     try:
-        sorted_char_list = sorted(all_by_char_stats[mode].keys(),
-                                  key=lambda x: all_by_char_stats[mode][x]["Batting"].get("summary_at_bats", 0) +
-                                                all_by_char_stats[mode][x]["Batting"].get("summary_walks_bb", 0) +
-                                                all_by_char_stats[mode][x]["Batting"].get("summary_walks_hbp", 0) +
-                                                all_by_char_stats[mode][x]["Batting"].get("summary_sac_flys", 0),
+        sorted_char_list = sorted(by_char_data.keys(),
+                                  key=lambda x: by_char_data[x]["Batting"].get("summary_at_bats", 0) +
+                                                by_char_data[x]["Batting"].get("summary_walks_bb", 0) +
+                                                by_char_data[x]["Batting"].get("summary_walks_hbp", 0) +
+                                                by_char_data[x]["Batting"].get("summary_sac_flys", 0),
                                   reverse=True)
     except KeyError:
         print("There was an error sorting the character list")
-        sorted_char_list = sorted(all_by_char_stats[mode].keys())
+        sorted_char_list = sorted(by_char_data.keys())
 
     for char in sorted_char_list:
-        char_stats = BattingStats.model_validate(all_by_char_stats[mode][char]["Batting"])
-        pa, avg, obp, slg = calc_slash_line(char_stats)
-
+        char_batting = BattingStats.model_validate(by_char_data[char]["Batting"])
+        pa, avg, obp, slg = calc_slash_line(char_batting)
         ops_plus = ((obp / all_obp) + (slg / all_slg) - 1) * 100
-
         desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(ops_plus)} OPS+"
 
     await send_stat_embed(ctx, title, desc, "all")

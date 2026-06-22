@@ -13,7 +13,7 @@ class Ladder(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ladder(self, ctx, mode="off"):
         await ladders.refresh_ladders()
-        if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
+        if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
             mode = ladders.find_game_mode(mode)
             await ctx.send(f"This information can also be accessed here: {FRONTEND_URL}/modes/{urllib.parse.quote(mode)}/ladder")
 
@@ -45,14 +45,14 @@ class Ladder(commands.Cog):
                 await ctx.send(message)
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.get_var("bot_spam_channel_id")}>')
+            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
             await ctx.send(embed=embed)
 
     @commands.command(name="ladderCompact", help="Display the ladder in a compact view. Parameters: [mode] [min_games]")
     @commands.cooldown(1, 2, commands.BucketType.default)
     async def ladder_compact(self, ctx, mode="off", min_games=5):
         await ladders.refresh_ladders()
-        if str(ctx.channel.id) == ev.get_var("bot_spam_channel_id"):
+        if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
             mode = ladders.find_game_mode(mode)
 
             ladder_values = sorted(ladders.ladders[mode].values(), key=lambda x: x["adjusted_rating"], reverse=True)
@@ -102,7 +102,7 @@ class Ladder(commands.Cog):
                 await ctx.send(message)
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.get_var("bot_spam_channel_id")}>')
+            embed.add_field(name='The !ladder command must be used here:', value=f'<#{ev.BOT_SPAM_CHANNEL_ID}>')
             await ctx.send(embed=embed)
 
 

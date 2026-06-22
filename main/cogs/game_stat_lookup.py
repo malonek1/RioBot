@@ -4,7 +4,6 @@ from resources import EnvironmentVariables as ev, CharacterStats
 
 from resources.characters import BAT_URLS
 
-BOT_SPAM_CHANNEL_ID = int(ev.get_var("bot_spam_channel_id"))
 
 stats_lol = []
 CharacterStats.build_stats_lol(stats_lol)
@@ -52,13 +51,13 @@ class GameStatLookup(commands.Cog):
     @commands.command(help = "returns a display of all possible stat commands")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stathelp(self, ctx):
-        if ctx.channel.id == BOT_SPAM_CHANNEL_ID:
+        if ctx.channel.id == ev.BOT_SPAM_CHANNEL_ID:
             embed = discord.Embed(title='How to use stat commands:', description=stat_help_string)
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title='This command cannot be used in this channel:',
-                description=f'Please use this command in the following channel: <#{BOT_SPAM_CHANNEL_ID}>',
+                description=f'Please use this command in the following channel: <#{ev.BOT_SPAM_CHANNEL_ID}>',
                 color=0xFF5733)
             await ctx.send(embed=embed)
 
