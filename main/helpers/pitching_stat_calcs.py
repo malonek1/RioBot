@@ -6,6 +6,13 @@ import aiohttp
 import discord
 
 from helpers import stat_cache
+from helpers.offensive_stat_calcs import (
+    _get_batting_baseline,
+    _get_mode_schedules,
+    _get_opponent_batting_table,
+)
+from helpers.opponent_adjustment import opponent_adjusted_pitching_index, schedule_offense
+from helpers.sabermetrics import calc_pitching_index, calc_woba, woba_scale
 from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from models.misc_stats import MiscStats
 from models.pitching_stats import PitchingStats
@@ -14,7 +21,12 @@ from resources import characters
 logger = logging.getLogger(__name__)
 
 
-async def _get_pitching_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
+def _league_rpa(all_pitching: PitchingStats) -> float:
+    """League runs allowed per batter faced — the PSI denominator."""
+    return all_pitching.runs_allowed / all_pitching.batters_faced if all_pitching.batters_faced > 0 else 0.0
+
+
+async def _get_pitching_baseline(mode: str, session: aiohttp.ClientSession) -> PitchingStats:
     key = f"pitching:all:{mode}"
     cached = stat_cache.get(key)
     if cached is not None:
@@ -23,13 +35,11 @@ async def _get_pitching_baseline(mode: str, session: aiohttp.ClientSession) -> d
     async with session.get(url) as response:
         data = (await response.json(content_type=None))["Stats"]
     pitching = PitchingStats.model_validate(data["Pitching"])
-    ip, _, _, era = calc_slash_line(pitching)
-    result = {"era": era, "ip": ip}
-    stat_cache.set(key, result)
-    return result
+    stat_cache.set(key, pitching)
+    return pitching
 
 
-async def _get_pitching_by_char_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
+async def _get_pitching_by_char_baseline(mode: str, session: aiohttp.ClientSession) -> dict[str, PitchingStats]:
     key = f"pitching:by_char:{mode}"
     cached = stat_cache.get(key)
     if cached is not None:
@@ -37,11 +47,7 @@ async def _get_pitching_by_char_baseline(mode: str, session: aiohttp.ClientSessi
     url = f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&tag={mode}&by_char=1"
     async with session.get(url) as response:
         data = (await response.json(content_type=None))["Stats"]
-    result = {}
-    for char, char_data in data.items():
-        char_pitching = PitchingStats.model_validate(char_data["Pitching"])
-        ip, _, _, era = calc_slash_line(char_pitching)
-        result[char] = {"era": era, "ip": ip}
+    result = {char: PitchingStats.model_validate(char_data["Pitching"]) for char, char_data in data.items()}
     stat_cache.set(key, result)
     return result
 
@@ -52,17 +58,13 @@ async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
 
     async with session.get(all_url) as response:
         all_data = (await response.json(content_type=None))["Stats"]
-    pitching = PitchingStats.model_validate(all_data["Pitching"])
-    ip, _, _, era = calc_slash_line(pitching)
-    stat_cache.set(f"pitching:all:{mode}", {"era": era, "ip": ip})
+    stat_cache.set(f"pitching:all:{mode}", PitchingStats.model_validate(all_data["Pitching"]))
 
     async with session.get(by_char_url) as response:
         by_char_data = (await response.json(content_type=None))["Stats"]
-    by_char_result = {}
-    for char, char_data in by_char_data.items():
-        char_pitching = PitchingStats.model_validate(char_data["Pitching"])
-        char_ip, _, _, char_era = calc_slash_line(char_pitching)
-        by_char_result[char] = {"era": char_era, "ip": char_ip}
+    by_char_result = {
+        char: PitchingStats.model_validate(char_data["Pitching"]) for char, char_data in by_char_data.items()
+    }
     stat_cache.set(f"pitching:by_char:{mode}", by_char_result)
 
 
@@ -73,6 +75,10 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         async with session.get(url) as response:
             data = await response.json(content_type=None)
         by_char_baseline = await _get_pitching_by_char_baseline(mode, session)
+        all_pitching = await _get_pitching_baseline(mode, session)
+        all_batting = await _get_batting_baseline(mode, session)
+        batting_table = await _get_opponent_batting_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         stats = PitchingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Pitching", {}))
     except (JSONDecodeError, KeyError):
         await send_error_embed(
@@ -83,10 +89,19 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 
     ip, avg, k_rate, era = calc_slash_line(stats)
 
-    char_baseline = by_char_baseline.get(char, {})
-    overall_era = char_baseline.get("era", 0)
-    overall_ip = char_baseline.get("ip", 0)
-    era_minus = ((era / overall_era) * 100) if overall_era > 0 and overall_ip > 0 else 200
+    league_rpa = _league_rpa(all_pitching)
+    char_ref = by_char_baseline.get(char)
+    if char_ref is not None:
+        raw_psi = calc_pitching_index(stats, char_ref, league_rpa)
+        # The schedule is the user's overall slate in this mode (per-character
+        # matchup data isn't available) — same approximation as the batting side.
+        schedule = mode_schedules.get(user.lower(), {})
+        offense_effect, total_games = schedule_offense(
+            schedule, batting_table, calc_woba(all_batting), woba_scale(all_batting)
+        )
+        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
+    else:
+        psi = 0.0
 
     misc = MiscStats.model_validate(data.get("Stats", {}).get(char, {}).get("Misc", {}))
     games = misc.home_wins + misc.away_wins + misc.home_loses + misc.away_loses
@@ -108,7 +123,7 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         ("Opp. AVG", "{:.3f}".format(avg)),
         ("K%", "{:.1%}".format(k_rate)),
         ("ERA", "{:.2f}".format(era)),
-        ("ERA-", str(round(era_minus))),
+        ("PSI", str(round(psi))),
         ("​", "​"),
     ]
 
@@ -124,8 +139,11 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     user_url = f"{base_url}&username={user}"
     user_by_char_url = f"{base_url}&by_char=1&username={user}"
     try:
-        all_baseline = await _get_pitching_baseline(mode, session)
+        all_pitching = await _get_pitching_baseline(mode, session)
         by_char_baseline = await _get_pitching_by_char_baseline(mode, session)
+        all_batting = await _get_batting_baseline(mode, session)
+        batting_table = await _get_opponent_batting_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         async with session.get(user_url) as response:
             user_response = await response.json(content_type=None)
         async with session.get(user_by_char_url) as response:
@@ -141,14 +159,19 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     user_stats = user_dict["all"]
     ip, avg, k_rate, era = calc_slash_line(user_stats)
 
-    overall_ip = all_baseline.get("ip", 0)
-    overall_era = all_baseline.get("era", 0)
-    era_minus = (era / overall_era) * 100 if overall_era > 0 and overall_ip > 0 else 200
+    league_rpa = _league_rpa(all_pitching)
+    league_woba = calc_woba(all_batting)
+    scale = woba_scale(all_batting)
+    schedule = mode_schedules.get(user.lower(), {})
+    offense_effect, total_games = schedule_offense(schedule, batting_table, league_woba, scale)
+
+    raw_psi = calc_pitching_index(user_stats, all_pitching, league_rpa)
+    psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
 
     ip_str = str(math.floor(ip)) + "." + str(user_stats.outs_pitched % 3)
-    title = f"\n{user} ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f} ERA, {round(era_minus)} ERA-"
+    title = f"\n{user} ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f} ERA, {round(psi)} PSI"
 
-    desc = "**Char** (IP): Opp. AVG / K% / ERA, cERA-"
+    desc = "**Char** (IP): Opp. AVG / K% / ERA, PSI"
 
     del user_dict["all"]
     try:
@@ -160,13 +183,15 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     for char in sorted_char_list:
         char_stats = user_dict[char]
         ip, avg, k_rate, era = calc_slash_line(char_stats)
-        char_baseline = by_char_baseline.get(char, {})
-        overall_ip = char_baseline.get("ip", 0)
-        overall_era = char_baseline.get("era", 0)
-        era_minus = (era / overall_era) * 100 if overall_ip > 0 and overall_era > 0 else 200
+        char_ref = by_char_baseline.get(char)
+        if char_ref is not None:
+            raw_char_psi = calc_pitching_index(char_stats, char_ref, league_rpa)
+            char_psi = opponent_adjusted_pitching_index(raw_char_psi, offense_effect, total_games, league_rpa)
+        else:
+            char_psi = 0.0
         if char_stats.batters_faced > 0 and char_stats.outs_pitched > 3:
             ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
-            desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-"
+            desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(char_psi)} PSI"
 
     await send_stat_embed(ctx, title, desc, "all")
 
@@ -181,6 +206,10 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
             char_url = all_url
             char_by_user_url = all_url + "&by_user=1"
 
+        all_pitching = await _get_pitching_baseline(mode, session)
+        all_batting = await _get_batting_baseline(mode, session)
+        batting_table = await _get_opponent_batting_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         async with session.get(char_url) as response:
             char_response = await response.json(content_type=None)
         async with session.get(char_by_user_url) as response:
@@ -201,22 +230,28 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     ip, avg, k_rate, era = calc_slash_line(char_stats)
     ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
 
+    league_rpa = _league_rpa(all_pitching)
+    league_woba = calc_woba(all_batting)
+    scale = woba_scale(all_batting)
+
     title = f"\n{char} ({ip_str} IP): {avg:.3f} Opp. AVG / {k_rate:.1%} K% / {era:.2f} ERA"
-    desc = "**User** (IP): Opp. AVG / K% / ERA, ERA-"
+    desc = "**User** (IP): Opp. AVG / K% / ERA, PSI"
 
     output_list = []
     for user, user_stats in user_list[1:]:
         user_ip, user_avg, user_k_rate, user_era = calc_slash_line(user_stats)
-        if ip > 0 and era > 0:
-            era_minus = (user_era / era) * 100
-        else:
-            era_minus = 200
+        raw_psi = calc_pitching_index(user_stats, char_stats, league_rpa)
+        # Each row is a different user, adjusted by that user's own schedule —
+        # all from the one cached mode game-log map (no extra calls).
+        schedule = mode_schedules.get(user.lower(), {})
+        offense_effect, total_games = schedule_offense(schedule, batting_table, league_woba, scale)
+        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
 
         if user_ip > (ip / 100):
             user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats.outs_pitched % 3)
-            output_list.append((user, user_ip_str, user_avg, user_k_rate, user_era, era_minus))
+            output_list.append((user, user_ip_str, user_avg, user_k_rate, user_era, psi))
 
-    sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=False)
+    sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=True)
 
     for index, user_stats in zip(range(20), sorted_user_list):
         user = user_stats[0]
@@ -224,8 +259,8 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         user_avg = user_stats[2]
         user_k_rate = user_stats[3]
         user_era = user_stats[4]
-        era_minus = user_stats[5]
-        desc += f"\n{index + 1}. **{user}** ({user_ip} IP): {user_avg:.3f} / {user_k_rate:.1%} / {user_era:.2f}, {round(era_minus)} ERA-"
+        psi = user_stats[5]
+        desc += f"\n{index + 1}. **{user}** ({user_ip} IP): {user_avg:.3f} / {user_k_rate:.1%} / {user_era:.2f}, {round(psi)} PSI"
 
     await send_stat_embed(ctx, title, desc, char)
 
@@ -241,34 +276,32 @@ async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
 
     all_pitching = PitchingStats.model_validate(all_data["Pitching"])
     all_ip, all_avg, all_k_rate, all_era = calc_slash_line(all_pitching)
-    stat_cache.set(f"pitching:all:{mode}", {"era": all_era, "ip": all_ip})
+    stat_cache.set(f"pitching:all:{mode}", all_pitching)
 
-    by_char_baseline = {}
-    for char, char_data in by_char_data.items():
-        char_pitching = PitchingStats.model_validate(char_data["Pitching"])
-        char_ip, _, _, char_era = calc_slash_line(char_pitching)
-        by_char_baseline[char] = {"era": char_era, "ip": char_ip}
+    league_rpa = _league_rpa(all_pitching)
+
+    by_char_baseline = {
+        char: PitchingStats.model_validate(char_data["Pitching"]) for char, char_data in by_char_data.items()
+    }
     stat_cache.set(f"pitching:by_char:{mode}", by_char_baseline)
 
     all_ip_str = str(math.floor(all_ip)) + "." + str(all_pitching.outs_pitched % 3)
-    desc = "**Char** (IP): Opp AVG / K% / ERA, ERA-"
+    desc = "**Char** (IP): Opp AVG / K% / ERA, PSI"
     title = f"\nAll ({all_ip_str} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
 
     try:
-        sorted_char_list = sorted(
-            by_char_data.keys(), key=lambda x: by_char_data[x]["Pitching"].get("outs_pitched", 0), reverse=True
-        )
+        sorted_char_list = sorted(by_char_baseline.keys(), key=lambda x: by_char_baseline[x].outs_pitched, reverse=True)
     except KeyError:
         logger.warning("Error sorting the character list; falling back to name order")
-        sorted_char_list = sorted(by_char_data.keys())
+        sorted_char_list = sorted(by_char_baseline.keys())
 
     for char in sorted_char_list:
-        char_stats = PitchingStats.model_validate(by_char_data[char]["Pitching"])
+        char_stats = by_char_baseline[char]
         ip, avg, k_rate, era = calc_slash_line(char_stats)
-        era_minus = (era / all_era) * 100
+        psi = calc_pitching_index(char_stats, all_pitching, league_rpa)
         if char_stats.batters_faced > 0 and char_stats.outs_pitched > 27:
             ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
-            desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} ERA-"
+            desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(psi)} PSI"
 
     await send_stat_embed(ctx, title, desc, "all")
 

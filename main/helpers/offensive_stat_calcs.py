@@ -5,14 +5,13 @@ import aiohttp
 import discord
 
 from helpers import stat_cache
-from helpers.stat_utils import BASE_GAMES_URL, BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
-from helpers.wrc import (
+from helpers.opponent_adjustment import (
     build_schedules,
-    calc_wrc_plus,
-    league_runs_per_pa,
     opponent_adjusted_wrc_plus,
     schedule_run_prevention,
 )
+from helpers.sabermetrics import calc_wrc_plus, league_runs_per_pa
+from helpers.stat_utils import BASE_GAMES_URL, BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
 from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
 from models.pitching_stats import PitchingStats
@@ -69,6 +68,26 @@ async def _get_opponent_pitching_table(mode: str, session: aiohttp.ClientSession
     return table
 
 
+async def _get_opponent_batting_table(mode: str, session: aiohttp.ClientSession) -> dict[str, BattingStats]:
+    """Every user's batting (offensive) stats in a mode, keyed by lowercase username.
+
+    Mirror of the pitching table: it supplies the per-opponent offensive quality
+    used by the pitching strength-of-schedule adjustment (PSI).
+    """
+    key = f"batting:by_user:{mode}"
+    cached = stat_cache.get(key)
+    if cached is not None:
+        return cached
+    url = (
+        f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}&by_user=1"
+    )
+    async with session.get(url) as response:
+        data = (await response.json(content_type=None))["Stats"]
+    table = {user.lower(): BattingStats.model_validate(user_data["Batting"]) for user, user_data in data.items()}
+    stat_cache.set(key, table)
+    return table
+
+
 async def _get_mode_schedules(mode: str, session: aiohttp.ClientSession) -> dict[str, dict[str, int]]:
     """Every user's opponent schedule in a mode, from one bulk game-log fetch.
 
@@ -90,6 +109,7 @@ async def _get_mode_schedules(mode: str, session: aiohttp.ClientSession) -> dict
 async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
     all_url = f"{BASE_STATS_URL}?exclude_pitching=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}"
     by_char_url = all_url + "&by_char=1"
+    batting_by_user_url = all_url + "&by_user=1"
     pitching_url = (
         f"{BASE_STATS_URL}?exclude_batting=1&exclude_fielding=1&exclude_misc=1&exclude_nonfair=1&tag={mode}&by_user=1"
     )
@@ -107,8 +127,13 @@ async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
 
     async with session.get(pitching_url) as response:
         pitching_data = (await response.json(content_type=None))["Stats"]
-    table = {user.lower(): PitchingStats.model_validate(u["Pitching"]) for user, u in pitching_data.items()}
-    stat_cache.set(f"pitching:by_user:{mode}", table)
+    pitching_table = {user.lower(): PitchingStats.model_validate(u["Pitching"]) for user, u in pitching_data.items()}
+    stat_cache.set(f"pitching:by_user:{mode}", pitching_table)
+
+    async with session.get(batting_by_user_url) as response:
+        batting_user_data = (await response.json(content_type=None))["Stats"]
+    batting_table = {user.lower(): BattingStats.model_validate(u["Batting"]) for user, u in batting_user_data.items()}
+    stat_cache.set(f"batting:by_user:{mode}", batting_table)
 
     games_url = f"{BASE_GAMES_URL}?tag={mode}&limit_games={GAME_LOG_LIMIT}"
     async with session.get(games_url) as response:
