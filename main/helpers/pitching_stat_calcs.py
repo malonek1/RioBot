@@ -1,13 +1,16 @@
+import logging
 import math
+from json import JSONDecodeError
 
 import aiohttp
 import discord
-from json import JSONDecodeError
-from resources import characters
-from models.pitching_stats import PitchingStats
-from models.misc_stats import MiscStats
-from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from helpers import stat_cache
+from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
+from models.misc_stats import MiscStats
+from models.pitching_stats import PitchingStats
+from resources import characters
+
+logger = logging.getLogger(__name__)
 
 
 async def _get_pitching_baseline(mode: str, session: aiohttp.ClientSession) -> dict:
@@ -71,7 +74,10 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         by_char_baseline = await _get_pitching_by_char_baseline(mode, session)
         stats = PitchingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Pitching", {}))
     except (JSONDecodeError, KeyError):
-        await send_error_embed(ctx, f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.")
+        await send_error_embed(
+            ctx,
+            f"There are no stats for user {user} with character {char} in {mode} or the user/character alias was not found.",
+        )
         return
 
     ip, avg, k_rate, era = calc_slash_line(stats)
@@ -87,21 +93,23 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
 
     ip_str = str(math.floor(ip)) + "." + str(stats.outs_pitched % 3)
     embed = discord.Embed(title=f"{user} - {char} ({ip_str} IP)")
-    fields = [("G", str(games)),
-              ("Win%", "{:.1f}".format(winrate * 100)),
-              ("Batters Faced", str(stats.batters_faced)),
-              ("Hits Allowed", str(stats.hits_allowed)),
-              ("IP", str(round(stats.outs_pitched / 3, 1))),
-              ("Runs Allowed", str(stats.runs_allowed)),
-              ("​", "​"),
-              ("K", str(stats.strikeouts_pitched)),
-              ("BB", str(stats.walks_bb + stats.walks_hbp)),
-              ("​", "​"),
-              ("Opp. AVG", "{:.3f}".format(avg)),
-              ("K%", "{:.1%}".format(k_rate)),
-              ("ERA", "{:.2f}".format(era)),
-              ("ERA-", str(round(era_minus))),
-              ("​", "​")]
+    fields = [
+        ("G", str(games)),
+        ("Win%", "{:.1f}".format(winrate * 100)),
+        ("Batters Faced", str(stats.batters_faced)),
+        ("Hits Allowed", str(stats.hits_allowed)),
+        ("IP", str(round(stats.outs_pitched / 3, 1))),
+        ("Runs Allowed", str(stats.runs_allowed)),
+        ("​", "​"),
+        ("K", str(stats.strikeouts_pitched)),
+        ("BB", str(stats.walks_bb + stats.walks_hbp)),
+        ("​", "​"),
+        ("Opp. AVG", "{:.3f}".format(avg)),
+        ("K%", "{:.1%}".format(k_rate)),
+        ("ERA", "{:.2f}".format(era)),
+        ("ERA-", str(round(era_minus))),
+        ("​", "​"),
+    ]
 
     for name, value in fields:
         embed.add_field(name=name, value=value, inline=True)
@@ -125,9 +133,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         await send_error_embed(ctx, f"There are no stats for user {user} in {mode} or the username was not found.")
         return
 
-    user_dict: dict[str, PitchingStats] = {
-        "all": PitchingStats.model_validate(user_response["Stats"]["Pitching"])
-    }
+    user_dict: dict[str, PitchingStats] = {"all": PitchingStats.model_validate(user_response["Stats"]["Pitching"])}
     for char in user_by_char_response["Stats"]:
         user_dict[char] = PitchingStats.model_validate(user_by_char_response["Stats"][char]["Pitching"])
 
@@ -145,11 +151,9 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
 
     del user_dict["all"]
     try:
-        sorted_char_list = sorted(user_dict.keys(),
-                                  key=lambda x: user_dict[x].outs_pitched,
-                                  reverse=True)
+        sorted_char_list = sorted(user_dict.keys(), key=lambda x: user_dict[x].outs_pitched, reverse=True)
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(user_dict.keys())
 
     for char in sorted_char_list:
@@ -161,7 +165,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         era_minus = (era / overall_era) * 100 if overall_ip > 0 and overall_era > 0 else 200
         if char_stats.batters_faced > 0 and char_stats.outs_pitched > 3:
             ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
-            desc += f'\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-'
+            desc += f"\n**{char}** ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f}, {round(era_minus)} cERA-"
 
     await send_stat_embed(ctx, title, desc, "all")
 
@@ -181,7 +185,9 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         async with session.get(char_by_user_url) as response:
             char_by_user_response = await response.json(content_type=None)
     except (JSONDecodeError, KeyError):
-        await send_error_embed(ctx, f"There are no stats for character {char} in {mode} or the character alias was not found.")
+        await send_error_embed(
+            ctx, f"There are no stats for character {char} in {mode} or the character alias was not found."
+        )
         return
 
     user_list: list[tuple[str, PitchingStats]] = [
@@ -248,11 +254,11 @@ async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
     title = f"\nAll ({all_ip_str} IP): {all_avg:.3f} Opp. AVG / {all_k_rate:.1%} K% / {all_era:.2f} ERA"
 
     try:
-        sorted_char_list = sorted(by_char_data.keys(),
-                                  key=lambda x: by_char_data[x]["Pitching"].get("outs_pitched", 0),
-                                  reverse=True)
+        sorted_char_list = sorted(
+            by_char_data.keys(), key=lambda x: by_char_data[x]["Pitching"].get("outs_pitched", 0), reverse=True
+        )
     except KeyError:
-        print("There was an error sorting the character list")
+        logger.warning("Error sorting the character list; falling back to name order")
         sorted_char_list = sorted(by_char_data.keys())
 
     for char in sorted_char_list:
@@ -268,7 +274,13 @@ async def pstat_all(ctx, mode: str, session: aiohttp.ClientSession):
 
 def calc_slash_line(stats: PitchingStats):
     ip = stats.outs_pitched / 3
-    avg = stats.hits_allowed / (stats.batters_faced - stats.walks_bb - stats.walks_hbp) if stats.batters_faced > 0 else 0
-    k_rate = stats.strikeouts_pitched / (stats.batters_faced - stats.walks_bb - stats.walks_hbp) if stats.batters_faced > 0 else 0
+    avg = (
+        stats.hits_allowed / (stats.batters_faced - stats.walks_bb - stats.walks_hbp) if stats.batters_faced > 0 else 0
+    )
+    k_rate = (
+        stats.strikeouts_pitched / (stats.batters_faced - stats.walks_bb - stats.walks_hbp)
+        if stats.batters_faced > 0
+        else 0
+    )
     era = (9 * stats.runs_allowed) / ip if ip > 0 else 0
     return ip, avg, k_rate, era

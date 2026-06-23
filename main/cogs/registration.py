@@ -2,10 +2,35 @@ from json import JSONDecodeError
 
 import discord
 from discord.ext import commands
-from resources import rio_name_map, EnvironmentVariables as ev
+from resources import EnvironmentVariables as ev
+from resources import rio_name_map
 
 MOD_ROLE_ID = ev.MOD_ROLE_ID
 BOT_SPAM_CHANNEL_ID = ev.BOT_SPAM_CHANNEL_ID
+
+
+class CaseInsensitiveMember(commands.Converter):
+    """Resolve a member like the default converter, then fall back to a
+    case-insensitive match on name / nick / display name. Without this the
+    built-in MemberConverter only matches names case-sensitively, so
+    `!whois PokeBunny` fails when the member's name is `pokebunny`.
+    """
+
+    async def convert(self, ctx, argument: str) -> discord.Member:
+        try:
+            return await commands.MemberConverter().convert(ctx, argument)
+        except commands.MemberNotFound:
+            if ctx.guild is not None:
+                target = argument.lstrip("@").lower()
+                for member in ctx.guild.members:
+                    candidates = {member.name.lower(), member.display_name.lower(), str(member).lower()}
+                    if member.nick:
+                        candidates.add(member.nick.lower())
+                    if member.global_name:
+                        candidates.add(member.global_name.lower())
+                    if target in candidates:
+                        return member
+            raise commands.MemberNotFound(argument)
 
 
 class Registration(commands.Cog):
@@ -26,8 +51,9 @@ class Registration(commands.Cog):
             embed = discord.Embed(
                 title="Registration failed",
                 description=f"**{rio_username}** is already linked to another Discord account. "
-                            "If you believe this is an error, please contact a moderator.",
-                color=0xFF5733)
+                "If you believe this is an error, please contact a moderator.",
+                color=0xFF5733,
+            )
             await ctx.send(embed=embed)
             return
 
@@ -43,8 +69,9 @@ class Registration(commands.Cog):
             embed = discord.Embed(
                 title="Registration failed",
                 description=f"No Project Rio account found with username **{rio_username}**. "
-                            "Please check the spelling and try again.",
-                color=0xFF5733)
+                "Please check the spelling and try again.",
+                color=0xFF5733,
+            )
             await ctx.send(embed=embed)
             return
 
@@ -52,7 +79,8 @@ class Registration(commands.Cog):
         embed = discord.Embed(color=0x00CC44)
         embed.add_field(
             name="Registration successful!",
-            value=f"Your Discord account is now linked to Rio username **{rio_username}**.")
+            value=f"Your Discord account is now linked to Rio username **{rio_username}**.",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="Remove your Project Rio username registration")
@@ -69,12 +97,15 @@ class Registration(commands.Cog):
             embed.add_field(name="Unregistered", value="Your Rio username link has been removed.")
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name="Not registered", value="You don't have a Rio username linked. Use `!register <rio_username>` to link your account.")
+            embed.add_field(
+                name="Not registered",
+                value="You don't have a Rio username linked. Use `!register <rio_username>` to link your account.",
+            )
         await ctx.send(embed=embed)
 
     @commands.command(help="Check what Rio username is linked to a Discord account. Example: !whois @user")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def whois(self, ctx, user: discord.Member = None):
+    async def whois(self, ctx, user: CaseInsensitiveMember = None):
         target = user or ctx.author
         rio_name = rio_name_map.get_rio_name(str(target.id))
         embed = discord.Embed(color=0xEA7D07)
@@ -83,13 +114,13 @@ class Registration(commands.Cog):
         else:
             embed.add_field(
                 name=f"{target.display_name}",
-                value="No Rio username linked. Use `!register <rio_username>` to link your account."
+                value="No Rio username linked. Use `!register <rio_username>` to link your account.",
             )
         await ctx.send(embed=embed)
 
     @commands.command(help="[Mod] Link a Discord user to a Rio username. Example: !link @user pokebunny")
     @commands.has_role(MOD_ROLE_ID)
-    async def link(self, ctx, user: discord.Member, rio_username: str):
+    async def link(self, ctx, user: CaseInsensitiveMember, rio_username: str):
         notes = []
         prev_rio_name = rio_name_map.get_rio_name(str(user.id))
         if prev_rio_name and prev_rio_name.lower() != rio_username.lower():
@@ -110,7 +141,7 @@ class Registration(commands.Cog):
 
     @commands.command(help="[Mod] Remove the Rio username link for a Discord user. Example: !unlink @user")
     @commands.has_role(MOD_ROLE_ID)
-    async def unlink(self, ctx, user: discord.Member):
+    async def unlink(self, ctx, user: CaseInsensitiveMember):
         if rio_name_map.remove_rio_name(str(user.id)):
             embed = discord.Embed(color=0xEA7D07)
             embed.add_field(name="Unlinked", value=f"{user.display_name}'s Rio username link has been removed.")
