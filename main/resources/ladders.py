@@ -18,7 +18,9 @@ _TAG_SET_LADDER_URL = f"{_API_BASE}/tag_set/ladder"
 # Startup fetch resilience: retry a momentary API blip rather than crashing the
 # whole bot on boot. The bot can't run without game modes, so we still fail
 # loudly if the API is genuinely unreachable after all retries.
-_STARTUP_TIMEOUT = 10
+# The timeout is generous because tag_set/list is slow to first byte on a cold
+# API (observed ~12s), which would otherwise time out a healthy boot.
+_STARTUP_TIMEOUT = 30
 _STARTUP_RETRIES = 5
 _STARTUP_BACKOFF = 3
 
