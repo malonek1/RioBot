@@ -20,23 +20,21 @@ LINEAR_WEIGHTS = {
 DEFAULT_LEAGUE_RUNS_PER_PA = 0.16961480888026817
 
 # --- Opponent-quality adjustment tuning -------------------------------------
-# The adjustment is additive on the run scale: a batter who faced tougher-than-
-# average run prevention gets a higher adjusted wRC+. Two regression layers keep
-# small samples from dominating. See helpers/opponent_adjustment.py for the model.
+# The adjustment is additive on the run scale: facing tougher competition raises
+# the skill index. Opponent quality is measured leave-one-out from the game log
+# (runs per inning). See helpers/opponent_adjustment.py for the model.
 
-# Transfer coefficient. 1.0 = full additive transfer (justified by the run-scale
-# model); lower values dampen the adjustment uniformly.
+# Transfer coefficient. 1.0 = full additive transfer (the principled value, and
+# validated across three seasons once the opponent input is de-confounded via LOO;
+# higher values overfit on individual seasons). Lower values dampen uniformly.
 OPPONENT_TRANSFER_COEFF = 1.0
 
-# Per-opponent reliability: the batters-faced count at which an opponent's
-# run-prevention rate is trusted halfway. Below this it's regressed toward league.
-OPPONENT_REGRESSION_BF = 100
+# Per-opponent reliability: the innings count at which an opponent's run rate is
+# trusted halfway; below it the rate is regressed toward league. ~90 innings
+# (~400 batters faced), in line with the measured stabilization of run rate.
+OPPONENT_REGRESSION_INN = 90
 
-# Same idea on the offensive side (for the pitching adjustment): the plate-
-# appearance count at which an opponent's offensive rate is trusted halfway.
-OPPONENT_REGRESSION_PA = 100
-
-# Schedule reliability: the number of games at which a batter's strength-of-
+# Schedule reliability: the number of games at which a player's strength-of-
 # schedule estimate is trusted halfway. Thin schedules are damped toward zero.
 SCHEDULE_REGRESSION_GAMES = 10
 

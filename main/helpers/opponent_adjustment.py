@@ -1,90 +1,113 @@
 """Strength-of-schedule (opponent-quality) adjustment that turns raw wRC+ and the
 pitching index into BSI / PSI. Pure functions — no I/O — unit-tested offline.
 
-The adjustment is additive on the run scale: facing tougher competition raises
-the skill number.
+Additive on the run scale: facing tougher competition raises the skill number.
 
-    BSI = wRC+          - (D / L) * 100 * transfer * schedule_reliability
+    BSI = wRC+           - (D / L) * 100 * transfer * schedule_reliability
     PSI = pitching index + (O / L) * 100 * transfer * schedule_reliability
 
-where L is league runs/PA, D is the games-weighted average of each opponent's
-run prevention vs league (so a tough schedule, D < 0, raises BSI), and O is the
-games-weighted average of each opponent's offense vs league (a tough schedule,
-O > 0, raises PSI). Opponent offense is measured by wOBA, which the reliability
-experiment (scratch/metric_reliability.py) showed beats runs as a skill signal.
+L is the league run rate (runs per inning). D is the games-weighted average of each
+opponent's run prevention vs league (tough = D < 0 -> raises BSI); O is the same for
+opponent offense (tough = O > 0 -> raises PSI).
+
+Opponent quality is computed LEAVE-ONE-OUT from the game log: an opponent's runs
+allowed/scored EXCLUDE their games against the player being evaluated. In 1v1 this
+removes the endogeneity where a player's own results inflate their opponents' stats
+— validated across three seasons to flip the adjustment from harmful to helpful
+mid-season (see scratch/loo_validation.py).
 """
 
-from helpers.sabermetrics import calc_woba
-from models.batting_stats import BattingStats
-from models.pitching_stats import PitchingStats
 from resources.stat_constants import (
-    OPPONENT_REGRESSION_BF,
-    OPPONENT_REGRESSION_PA,
+    OPPONENT_REGRESSION_INN,
     OPPONENT_TRANSFER_COEFF,
     SCHEDULE_REGRESSION_GAMES,
 )
 
 
-def build_schedules(games: list[dict]) -> dict[str, dict[str, int]]:
-    """From a mode's game log, build every user's opponent schedule in one pass.
+def build_matchup_stats(games: list[dict]) -> dict:
+    """From a mode's game log, build everything the LOO adjustment needs:
 
-    Returns ``{user: {opponent: games_played}}`` with all usernames lowercased so
-    lookups line up with the opponent stat tables. Games missing either user
-    are skipped.
+        {
+          "schedules": {user: {opponent: games_played}},
+          "defense":   {user: {"runs": runs allowed, "inn": innings, "vs": {opp: (runs, inn)}}},
+          "offense":   {user: {"runs": runs scored,  "inn": innings, "vs": {opp: (runs, inn)}}},
+          "league_runs_per_inning": float,
+        }
+
+    All usernames lowercased. Games missing a user or with no innings are skipped.
     """
     schedules: dict[str, dict[str, int]] = {}
+    defense: dict[str, dict] = {}
+    offense: dict[str, dict] = {}
+    total_runs = 0
+    total_innings = 0
+
+    def add(side: dict, user: str, runs: int, innings: int, opp: str):
+        s = side.setdefault(user, {"runs": 0, "inn": 0, "vs": {}})
+        s["runs"] += runs
+        s["inn"] += innings
+        prev_r, prev_i = s["vs"].get(opp, (0, 0))
+        s["vs"][opp] = (prev_r + runs, prev_i + innings)
+
     for game in games:
         home = (game.get("home_user") or "").lower()
         away = (game.get("away_user") or "").lower()
-        if not home or not away:
+        innings = game.get("innings_played", 0) or 0
+        if not home or not away or innings <= 0:
             continue
-        schedules.setdefault(home, {})
-        schedules.setdefault(away, {})
-        schedules[home][away] = schedules[home].get(away, 0) + 1
-        schedules[away][home] = schedules[away].get(home, 0) + 1
-    return schedules
+        home_score = game.get("home_score", 0)
+        away_score = game.get("away_score", 0)
+        total_runs += home_score + away_score
+        total_innings += 2 * innings
+
+        schedules.setdefault(home, {})[away] = schedules.setdefault(home, {}).get(away, 0) + 1
+        schedules.setdefault(away, {})[home] = schedules.setdefault(away, {}).get(home, 0) + 1
+        add(defense, home, away_score, innings, away)  # defense = runs allowed (opponent's score)
+        add(defense, away, home_score, innings, home)
+        add(offense, home, home_score, innings, away)  # offense = runs scored
+        add(offense, away, away_score, innings, home)
+
+    league_runs_per_inning = total_runs / total_innings if total_innings else 0.0
+    return {
+        "schedules": schedules,
+        "defense": defense,
+        "offense": offense,
+        "league_runs_per_inning": league_runs_per_inning,
+    }
 
 
-# --- Batting adjustment (BSI): adjust for opponents' run prevention ----------
-
-
-def shrunk_run_prevention(
-    stats: PitchingStats,
-    league_rpa: float,
-    regression_bf: int = OPPONENT_REGRESSION_BF,
-) -> float:
-    """An opponent's runs allowed per PA, regressed toward league by sample size.
-
-    A pitcher with few batters faced is pulled toward ``league_rpa`` so small
-    samples can't read as elite or terrible.
-    """
-    if stats.batters_faced == 0:
-        return league_rpa
-    raw = stats.runs_allowed / stats.batters_faced
-    reliability = stats.batters_faced / (stats.batters_faced + regression_bf)
-    return league_rpa + reliability * (raw - league_rpa)
-
-
-def schedule_run_prevention(
-    opponent_games: dict[str, int],
-    pitching_table: dict[str, PitchingStats],
-    league_rpa: float,
-    regression_bf: int = OPPONENT_REGRESSION_BF,
+def loo_schedule_effect(
+    player: str,
+    side_stats: dict[str, dict],
+    schedule: dict[str, int],
+    league_run_rate: float,
+    regression_inn: int = OPPONENT_REGRESSION_INN,
 ) -> tuple[float, int]:
-    """Games-weighted average opponent run-prevention relative to league (D).
+    """Games-weighted average opponent quality vs league (runs/inning), leave-one-out.
 
-    ``opponent_games`` maps opponent username -> games played against them.
-    Opponents missing from ``pitching_table`` are skipped (and don't count toward
-    the games total). Returns ``(D, total_games)``; D < 0 is a tough schedule.
+    ``side_stats`` is the ``defense`` map (for BSI) or ``offense`` map (for PSI) from
+    :func:`build_matchup_stats`. Each opponent's rate excludes their games against
+    ``player`` and is regressed toward league by the leftover innings. Returns
+    ``(effect, total_games)``. Sign follows the side: for defense, negative = tough
+    pitching faced; for offense, positive = tough hitting faced.
     """
     weighted = 0.0
     total_games = 0
-    for opponent, games in opponent_games.items():
-        opp_stats = pitching_table.get(opponent)
-        if opp_stats is None:
+    for opponent, games in schedule.items():
+        stats = side_stats.get(opponent)
+        if stats is None:
             continue
-        opp_rpa = shrunk_run_prevention(opp_stats, league_rpa, regression_bf)
-        weighted += games * (opp_rpa - league_rpa)
+        runs = stats["runs"]
+        innings = stats["inn"]
+        seen_runs, seen_inn = stats["vs"].get(player, (0, 0))
+        runs -= seen_runs
+        innings -= seen_inn
+        if innings <= 0:
+            rate = league_run_rate
+        else:
+            reliability = innings / (innings + regression_inn)
+            rate = league_run_rate + reliability * (runs / innings - league_run_rate)
+        weighted += games * (rate - league_run_rate)
         total_games += games
     if total_games == 0:
         return 0.0, 0
@@ -95,87 +118,39 @@ def opponent_adjusted_wrc_plus(
     raw_wrc_plus: float,
     schedule_effect: float,
     total_games: int,
-    league_rpa: float,
+    league_run_rate: float,
     transfer_coeff: float = OPPONENT_TRANSFER_COEFF,
     regression_games: int = SCHEDULE_REGRESSION_GAMES,
 ) -> float:
     """Apply the strength-of-schedule adjustment to a raw wRC+ (-> BSI).
 
-    ``schedule_effect`` is D from :func:`schedule_run_prevention`. A tougher
-    schedule (D < 0) raises the result; a soft one lowers it. The shift is damped
-    for thin schedules via games / (games + regression_games).
+    ``schedule_effect`` is D from :func:`loo_schedule_effect` on the defense map.
+    A tougher schedule (D < 0) raises the result; a soft one lowers it. Damped for
+    thin schedules via games / (games + regression_games).
     """
-    if league_rpa <= 0 or total_games == 0:
+    if league_run_rate <= 0 or total_games == 0:
         return raw_wrc_plus
     schedule_reliability = total_games / (total_games + regression_games)
-    delta = (schedule_effect / league_rpa) * 100 * transfer_coeff * schedule_reliability
+    delta = (schedule_effect / league_run_rate) * 100 * transfer_coeff * schedule_reliability
     return raw_wrc_plus - delta
-
-
-# --- Pitching adjustment (PSI): adjust for opponents' offense ----------------
-
-
-def offense_runs_above_league(stats: BattingStats, league_woba: float, scale: float) -> float:
-    """A batter's offensive value above league average, in runs per PA."""
-    if scale <= 0:
-        return 0.0
-    return (calc_woba(stats) - league_woba) / scale
-
-
-def shrunk_offense(
-    stats: BattingStats,
-    league_woba: float,
-    scale: float,
-    regression_pa: int = OPPONENT_REGRESSION_PA,
-) -> float:
-    """An opponent's offensive value (runs/PA above league), regressed toward
-    league average by plate-appearance sample size."""
-    pa = stats.summary_at_bats + stats.summary_walks_bb + stats.summary_walks_hbp + stats.summary_sac_flys
-    if pa == 0:
-        return 0.0
-    reliability = pa / (pa + regression_pa)
-    return reliability * offense_runs_above_league(stats, league_woba, scale)
-
-
-def schedule_offense(
-    opponent_games: dict[str, int],
-    batting_table: dict[str, BattingStats],
-    league_woba: float,
-    scale: float,
-    regression_pa: int = OPPONENT_REGRESSION_PA,
-) -> tuple[float, int]:
-    """Games-weighted average offensive quality of the batters faced (O), in
-    runs/PA above league. Opponents missing from ``batting_table`` are skipped.
-    Returns ``(O, total_games)``; O > 0 is a tough (high-offense) schedule."""
-    weighted = 0.0
-    total_games = 0
-    for opponent, games in opponent_games.items():
-        opp_stats = batting_table.get(opponent)
-        if opp_stats is None:
-            continue
-        weighted += games * shrunk_offense(opp_stats, league_woba, scale, regression_pa)
-        total_games += games
-    if total_games == 0:
-        return 0.0, 0
-    return weighted / total_games, total_games
 
 
 def opponent_adjusted_pitching_index(
     raw_index: float,
-    schedule_offense_effect: float,
+    schedule_effect: float,
     total_games: int,
-    league_rpa: float,
+    league_run_rate: float,
     transfer_coeff: float = OPPONENT_TRANSFER_COEFF,
     regression_games: int = SCHEDULE_REGRESSION_GAMES,
 ) -> float:
     """Apply the strength-of-schedule adjustment to a raw pitching index (-> PSI).
 
-    ``schedule_offense_effect`` is O from :func:`schedule_offense`. Facing tougher
-    offenses (O > 0) raises the index; weaker offenses lower it. Mirror of
-    :func:`opponent_adjusted_wrc_plus`, but the schedule effect is *added*.
+    ``schedule_effect`` is O from :func:`loo_schedule_effect` on the offense map.
+    Facing tougher offenses (O > 0) raises the index; weaker offenses lower it.
+    Mirror of :func:`opponent_adjusted_wrc_plus`, but the effect is *added*.
     """
-    if league_rpa <= 0 or total_games == 0:
+    if league_run_rate <= 0 or total_games == 0:
         return raw_index
     schedule_reliability = total_games / (total_games + regression_games)
-    delta = (schedule_offense_effect / league_rpa) * 100 * transfer_coeff * schedule_reliability
+    delta = (schedule_effect / league_run_rate) * 100 * transfer_coeff * schedule_reliability
     return raw_index + delta

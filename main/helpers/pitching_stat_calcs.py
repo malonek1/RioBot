@@ -6,13 +6,9 @@ import aiohttp
 import discord
 
 from helpers import stat_cache
-from helpers.offensive_stat_calcs import (
-    _get_batting_baseline,
-    _get_mode_schedules,
-    _get_opponent_batting_table,
-)
-from helpers.opponent_adjustment import opponent_adjusted_pitching_index, schedule_offense
-from helpers.sabermetrics import calc_pitching_index, calc_woba, woba_scale
+from helpers.offensive_stat_calcs import _get_matchup_stats
+from helpers.opponent_adjustment import loo_schedule_effect, opponent_adjusted_pitching_index
+from helpers.sabermetrics import calc_pitching_index
 from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from models.misc_stats import MiscStats
 from models.pitching_stats import PitchingStats
@@ -76,9 +72,7 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
             data = await response.json(content_type=None)
         by_char_baseline = await _get_pitching_by_char_baseline(mode, session)
         all_pitching = await _get_pitching_baseline(mode, session)
-        all_batting = await _get_batting_baseline(mode, session)
-        batting_table = await _get_opponent_batting_table(mode, session)
-        mode_schedules = await _get_mode_schedules(mode, session)
+        matchup = await _get_matchup_stats(mode, session)
         stats = PitchingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Pitching", {}))
     except (JSONDecodeError, KeyError):
         await send_error_embed(
@@ -95,11 +89,10 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         raw_psi = calc_pitching_index(stats, char_ref, league_rpa)
         # The schedule is the user's overall slate in this mode (per-character
         # matchup data isn't available) — same approximation as the batting side.
-        schedule = mode_schedules.get(user.lower(), {})
-        offense_effect, total_games = schedule_offense(
-            schedule, batting_table, calc_woba(all_batting), woba_scale(all_batting)
-        )
-        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
+        league_rpi = matchup["league_runs_per_inning"]
+        schedule = matchup["schedules"].get(user.lower(), {})
+        offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
+        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpi)
     else:
         psi = 0.0
 
@@ -141,9 +134,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     try:
         all_pitching = await _get_pitching_baseline(mode, session)
         by_char_baseline = await _get_pitching_by_char_baseline(mode, session)
-        all_batting = await _get_batting_baseline(mode, session)
-        batting_table = await _get_opponent_batting_table(mode, session)
-        mode_schedules = await _get_mode_schedules(mode, session)
+        matchup = await _get_matchup_stats(mode, session)
         async with session.get(user_url) as response:
             user_response = await response.json(content_type=None)
         async with session.get(user_by_char_url) as response:
@@ -160,13 +151,12 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     ip, avg, k_rate, era = calc_slash_line(user_stats)
 
     league_rpa = _league_rpa(all_pitching)
-    league_woba = calc_woba(all_batting)
-    scale = woba_scale(all_batting)
-    schedule = mode_schedules.get(user.lower(), {})
-    offense_effect, total_games = schedule_offense(schedule, batting_table, league_woba, scale)
+    league_rpi = matchup["league_runs_per_inning"]
+    schedule = matchup["schedules"].get(user.lower(), {})
+    offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
 
     raw_psi = calc_pitching_index(user_stats, all_pitching, league_rpa)
-    psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
+    psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpi)
 
     ip_str = str(math.floor(ip)) + "." + str(user_stats.outs_pitched % 3)
     title = f"\n{user} ({ip_str} IP): {avg:.3f} / {k_rate:.1%} / {era:.2f} ERA, {round(psi)} PSI"
@@ -186,7 +176,7 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_ref = by_char_baseline.get(char)
         if char_ref is not None:
             raw_char_psi = calc_pitching_index(char_stats, char_ref, league_rpa)
-            char_psi = opponent_adjusted_pitching_index(raw_char_psi, offense_effect, total_games, league_rpa)
+            char_psi = opponent_adjusted_pitching_index(raw_char_psi, offense_effect, total_games, league_rpi)
         else:
             char_psi = 0.0
         if char_stats.batters_faced > 0 and char_stats.outs_pitched > 3:
@@ -207,9 +197,7 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
             char_by_user_url = all_url + "&by_user=1"
 
         all_pitching = await _get_pitching_baseline(mode, session)
-        all_batting = await _get_batting_baseline(mode, session)
-        batting_table = await _get_opponent_batting_table(mode, session)
-        mode_schedules = await _get_mode_schedules(mode, session)
+        matchup = await _get_matchup_stats(mode, session)
         async with session.get(char_url) as response:
             char_response = await response.json(content_type=None)
         async with session.get(char_by_user_url) as response:
@@ -231,8 +219,7 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     ip_str = str(math.floor(ip)) + "." + str(char_stats.outs_pitched % 3)
 
     league_rpa = _league_rpa(all_pitching)
-    league_woba = calc_woba(all_batting)
-    scale = woba_scale(all_batting)
+    league_rpi = matchup["league_runs_per_inning"]
 
     title = f"\n{char} ({ip_str} IP): {avg:.3f} Opp. AVG / {k_rate:.1%} K% / {era:.2f} ERA"
     desc = "**User** (IP): Opp. AVG / K% / ERA, PSI"
@@ -242,10 +229,10 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         user_ip, user_avg, user_k_rate, user_era = calc_slash_line(user_stats)
         raw_psi = calc_pitching_index(user_stats, char_stats, league_rpa)
         # Each row is a different user, adjusted by that user's own schedule —
-        # all from the one cached mode game-log map (no extra calls).
-        schedule = mode_schedules.get(user.lower(), {})
-        offense_effect, total_games = schedule_offense(schedule, batting_table, league_woba, scale)
-        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpa)
+        # all from the one cached game-log structure (no extra calls).
+        schedule = matchup["schedules"].get(user.lower(), {})
+        offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
+        psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpi)
 
         if user_ip > (ip / 100):
             user_ip_str = str(math.floor(user_ip)) + "." + str(user_stats.outs_pitched % 3)
