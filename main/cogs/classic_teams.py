@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+
 from helpers.classic_teams_parser import ClassicTeam, build_classic_teams
 from services.classic_teams_service import (
     get_classic_draft_quote,

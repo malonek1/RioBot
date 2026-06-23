@@ -1,4 +1,5 @@
 import discord
+
 from helpers.random_team_builder import random_teams_without_dupes
 from models.matchmaking import MatchAnnouncement
 from resources import EnvironmentVariables as ev

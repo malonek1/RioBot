@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+
 from models.game import Game
 from resources import ladders
 

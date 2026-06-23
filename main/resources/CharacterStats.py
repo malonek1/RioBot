@@ -1,5 +1,7 @@
 import csv
 
+from resources.paths import RESOURCES_DIR
+
 
 # returns row index of character in csv
 # arg1: >= 0 is index of character, -1 = character DNE, -2 = 'highest', -3 = 'lowest', -4 = 'average'
@@ -46,11 +48,11 @@ def build_stat_objs():
     # make LoL's
     char_name_list = []
     stats_name_list = []
-    with open("resources/CharNames.csv", "r") as file:
+    with open(RESOURCES_DIR / "CharNames.csv", "r") as file:
         reader = csv.reader(file)
         for row in reader:
             char_name_list.append(row)
-    with open("resources/StatNames.csv", "r") as file:
+    with open(RESOURCES_DIR / "StatNames.csv", "r") as file:
         reader = csv.reader(file)
         for row in reader:
             stats_name_list.append(row)
@@ -65,7 +67,7 @@ def build_stat_objs():
 
 
 def build_stats_lol(lolref):
-    with open("resources/Stats.csv", "r") as file:
+    with open(RESOURCES_DIR / "Stats.csv", "r") as file:
         reader = csv.reader(file)
         for row in reader:
             lolref.append(row)
