@@ -148,3 +148,23 @@ def opponent_adjusted_wrc_plus(
     schedule_reliability = total_games / (total_games + regression_games)
     delta = (schedule_effect / league_rpa) * 100 * transfer_coeff * schedule_reliability
     return raw_wrc_plus - delta
+
+
+def build_schedules(games: list[dict]) -> dict[str, dict[str, int]]:
+    """From a mode's game log, build every user's opponent schedule in one pass.
+
+    Returns ``{user: {opponent: games_played}}`` with all usernames lowercased so
+    lookups line up with the opponent pitching table. Games missing either user
+    are skipped.
+    """
+    schedules: dict[str, dict[str, int]] = {}
+    for game in games:
+        home = (game.get("home_user") or "").lower()
+        away = (game.get("away_user") or "").lower()
+        if not home or not away:
+            continue
+        schedules.setdefault(home, {})
+        schedules.setdefault(away, {})
+        schedules[home][away] = schedules[home].get(away, 0) + 1
+        schedules[away][home] = schedules[away].get(home, 0) + 1
+    return schedules

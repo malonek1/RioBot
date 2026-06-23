@@ -7,6 +7,7 @@ import discord
 from helpers import stat_cache
 from helpers.stat_utils import BASE_GAMES_URL, BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
 from helpers.wrc import (
+    build_schedules,
     calc_wrc_plus,
     league_runs_per_pa,
     opponent_adjusted_wrc_plus,
@@ -16,6 +17,7 @@ from models.batting_stats import BattingStats
 from models.misc_stats import MiscStats
 from models.pitching_stats import PitchingStats
 from resources import characters
+from resources.stat_constants import GAME_LOG_LIMIT
 
 logger = logging.getLogger(__name__)
 
@@ -67,32 +69,22 @@ async def _get_opponent_pitching_table(mode: str, session: aiohttp.ClientSession
     return table
 
 
-async def _get_opponent_schedule(user: str, mode: str, session: aiohttp.ClientSession) -> dict[str, int]:
-    """How many games ``user`` played against each opponent in a mode.
+async def _get_mode_schedules(mode: str, session: aiohttp.ClientSession) -> dict[str, dict[str, int]]:
+    """Every user's opponent schedule in a mode, from one bulk game-log fetch.
 
-    Keys are lowercased to match the opponent pitching table for lookups.
+    Returns ``{user: {opponent: games}}`` (lowercased). Built once per mode and
+    shared by every batting lookup, so no command makes per-user /games calls.
     """
-    key = f"schedule:{user}:{mode}"
+    key = f"schedules:{mode}"
     cached = stat_cache.get(key)
     if cached is not None:
         return cached
-    url = f"{BASE_GAMES_URL}?username={user}&tag={mode}&limit_games=500"
+    url = f"{BASE_GAMES_URL}?tag={mode}&limit_games={GAME_LOG_LIMIT}"
     async with session.get(url) as response:
         games = (await response.json(content_type=None)).get("games", [])
-    schedule: dict[str, int] = {}
-    user_lower = user.lower()
-    for game in games:
-        home = game.get("home_user", "").lower()
-        away = game.get("away_user", "").lower()
-        if home == user_lower:
-            opponent = away
-        elif away == user_lower:
-            opponent = home
-        else:
-            continue
-        schedule[opponent] = schedule.get(opponent, 0) + 1
-    stat_cache.set(key, schedule)
-    return schedule
+    schedules = build_schedules(games)
+    stat_cache.set(key, schedules)
+    return schedules
 
 
 async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
@@ -118,6 +110,11 @@ async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
     table = {user.lower(): PitchingStats.model_validate(u["Pitching"]) for user, u in pitching_data.items()}
     stat_cache.set(f"pitching:by_user:{mode}", table)
 
+    games_url = f"{BASE_GAMES_URL}?tag={mode}&limit_games={GAME_LOG_LIMIT}"
+    async with session.get(games_url) as response:
+        games = (await response.json(content_type=None)).get("games", [])
+    stat_cache.set(f"schedules:{mode}", build_schedules(games))
+
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
     try:
@@ -127,6 +124,7 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
             data = await response.json(content_type=None)
         by_char_baseline = await _get_batting_by_char_baseline(mode, session)
         pitching_table = await _get_opponent_pitching_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         stats = BattingStats.model_validate(data.get("Stats", {}).get(char, {}).get("Batting", {}))
     except (JSONDecodeError, KeyError):
         await send_error_embed(
@@ -145,11 +143,11 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         # The schedule is the user's overall slate in this mode (per-character
         # matchup data isn't available), so the per-character adjustment is an
         # approximation built on the same opponents they faced overall.
-        schedule = await _get_opponent_schedule(user, mode, session)
+        schedule = mode_schedules.get(user.lower(), {})
         schedule_effect, total_games = schedule_run_prevention(schedule, pitching_table, league_rpa)
-        adj_wrc = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpa)
+        bsi = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpa)
     else:
-        raw_wrc = adj_wrc = 0.0
+        bsi = 0.0
 
     misc = MiscStats.model_validate(data.get("Stats", {}).get(char, {}).get("Misc", {}))
     games = misc.home_wins + misc.away_wins + misc.home_loses + misc.away_loses
@@ -176,8 +174,8 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
         ("OBP", "{:.3f}".format(obp)),
         ("SLG", "{:.3f}".format(slg)),
         ("OPS", "{:.3f}".format(ops)),
-        ("cwRC+", str(round(raw_wrc))),
-        ("Adj wRC+", str(round(adj_wrc))),
+        ("BSI", str(round(bsi))),
+        ("​", "​"),
     ]
 
     for name, value in fields:
@@ -196,6 +194,7 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         all_baseline = await _get_batting_baseline(mode, session)
         by_char_baseline = await _get_batting_by_char_baseline(mode, session)
         pitching_table = await _get_opponent_pitching_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         async with session.get(user_url) as response:
             user_response = await response.json(content_type=None)
         async with session.get(user_by_char_url) as response:
@@ -212,13 +211,13 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
     pa, avg, obp, slg = calc_slash_line(user_stats)
 
     league_rpa = league_runs_per_pa(pitching_table)
-    raw_wrc = calc_wrc_plus(user_stats, all_baseline, league_rpa)
-    schedule = await _get_opponent_schedule(user, mode, session)
+    schedule = mode_schedules.get(user.lower(), {})
     schedule_effect, total_games = schedule_run_prevention(schedule, pitching_table, league_rpa)
-    adj_wrc = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpa)
-    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(raw_wrc)} wRC+ ({round(adj_wrc)} adj)"
+    raw_wrc = calc_wrc_plus(user_stats, all_baseline, league_rpa)
+    bsi = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpa)
+    title = f"\n{user} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(bsi)} BSI"
 
-    desc = "**Char** (PA): AVG / OBP / SLG, cwRC+"
+    desc = "**Char** (PA): AVG / OBP / SLG, BSI"
 
     del user_dict["all"]
     try:
@@ -240,8 +239,14 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_stats = user_dict[char]
         pa, avg, obp, slg = calc_slash_line(char_stats)
         char_baseline = by_char_baseline.get(char)
-        char_wrc = calc_wrc_plus(char_stats, char_baseline, league_rpa) if char_baseline is not None else 0.0
-        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(char_wrc)} cwRC+"
+        if char_baseline is not None:
+            char_wrc = calc_wrc_plus(char_stats, char_baseline, league_rpa)
+            # Reuse the user's overall schedule (already computed above) — same
+            # approximation as ostat_user_char, at no extra cost.
+            char_bsi = opponent_adjusted_wrc_plus(char_wrc, schedule_effect, total_games, league_rpa)
+        else:
+            char_bsi = 0.0
+        desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(char_bsi)} BSI"
 
     await send_stat_embed(ctx, title, desc, "all")
 
@@ -257,6 +262,7 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
             char_by_user_url = all_url + "&by_user=1"
 
         pitching_table = await _get_opponent_pitching_table(mode, session)
+        mode_schedules = await _get_mode_schedules(mode, session)
         async with session.get(char_url) as response:
             char_response = await response.json(content_type=None)
         async with session.get(char_by_user_url) as response:
@@ -278,15 +284,20 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     league_rpa = league_runs_per_pa(pitching_table)
 
     title = f"\n{char} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}"
-    desc = "**User** (PA): AVG / OBP / SLG, cwRC+"
+    desc = "**User** (PA): AVG / OBP / SLG, BSI"
 
     output_list = []
     for user, user_stats in user_list[1:]:
         user_pa, user_avg, user_obp, user_slg = calc_slash_line(user_stats)
-        wrc = calc_wrc_plus(user_stats, char_stats, league_rpa)
+        raw_wrc = calc_wrc_plus(user_stats, char_stats, league_rpa)
+        # Each row is a different user, so adjust by that user's own schedule —
+        # all available from the one cached mode game-log map (no extra calls).
+        schedule = mode_schedules.get(user.lower(), {})
+        schedule_effect, total_games = schedule_run_prevention(schedule, pitching_table, league_rpa)
+        bsi = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpa)
 
         if user_pa > (pa / 100):
-            output_list.append((user, user_pa, user_avg, user_obp, user_slg, wrc))
+            output_list.append((user, user_pa, user_avg, user_obp, user_slg, bsi))
 
     sorted_user_list = sorted(output_list, key=lambda x: x[5], reverse=True)
 
@@ -296,8 +307,8 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
         user_avg = user_stats[2]
         user_obp = user_stats[3]
         user_slg = user_stats[4]
-        wrc = user_stats[5]
-        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(wrc)} cwRC+"
+        bsi = user_stats[5]
+        desc += f"\n{index + 1}. **{user}** ({user_pa} PA): {user_avg:.3f} / {user_obp:.3f} / {user_slg:.3f}, {round(bsi)} BSI"
 
     await send_stat_embed(ctx, title, desc, char)
 

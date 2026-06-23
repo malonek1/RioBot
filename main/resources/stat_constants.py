@@ -33,3 +33,9 @@ OPPONENT_REGRESSION_BF = 100
 # Schedule reliability: the number of games at which a batter's strength-of-
 # schedule estimate is trusted halfway. Thin schedules are damped toward zero.
 SCHEDULE_REGRESSION_GAMES = 10
+
+# Most-recent games fetched per mode (in one bulk call) to build every user's
+# opponent schedule. Modes are season-scoped, so this comfortably covers a full
+# season — the largest live mode is ~1.1k games. Raise it if a season ever
+# approaches this many games (older games would otherwise drop out of schedules).
+GAME_LOG_LIMIT = 5000

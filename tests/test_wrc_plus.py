@@ -1,6 +1,7 @@
 import pytest
 
 from helpers.wrc import (
+    build_schedules,
     calc_woba,
     calc_wrc_plus,
     league_runs_per_pa,
@@ -172,3 +173,28 @@ class TestOpponentAdjustedWrcPlus:
         full = opponent_adjusted_wrc_plus(100, -0.085, 4, 0.17, transfer_coeff=1.0, regression_games=0)
         half = opponent_adjusted_wrc_plus(100, -0.085, 4, 0.17, transfer_coeff=0.5, regression_games=0)
         assert half - 100 == pytest.approx((full - 100) * 0.5)
+
+
+class TestBuildSchedules:
+    def test_counts_opponents_both_directions_and_lowercases(self):
+        games = [
+            {"home_user": "Alice", "away_user": "Bob"},
+            {"home_user": "bob", "away_user": "alice"},
+            {"home_user": "Alice", "away_user": "Carol"},
+        ]
+        schedules = build_schedules(games)
+        assert schedules["alice"] == {"bob": 2, "carol": 1}
+        assert schedules["bob"] == {"alice": 2}
+        assert schedules["carol"] == {"alice": 1}
+
+    def test_skips_games_missing_a_user(self):
+        games = [
+            {"home_user": "alice", "away_user": ""},
+            {"home_user": None, "away_user": "bob"},
+            {"home_user": "alice", "away_user": "bob"},
+        ]
+        schedules = build_schedules(games)
+        assert schedules == {"alice": {"bob": 1}, "bob": {"alice": 1}}
+
+    def test_empty_log(self):
+        assert build_schedules([]) == {}
