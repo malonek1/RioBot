@@ -3,6 +3,7 @@ import discord
 from resources import characters
 
 BASE_STATS_URL = "https://api.projectrio.app/stats/"
+BASE_GAMES_URL = "https://api.projectrio.app/games/"
 FRONTEND_URL = "https://projectrio.pages.dev"
 
 
