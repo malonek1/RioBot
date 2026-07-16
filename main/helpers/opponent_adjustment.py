@@ -76,6 +76,73 @@ def build_matchup_stats(games: list[dict]) -> dict:
     }
 
 
+def build_char_schedules(by_game: dict) -> dict:
+    """Per-character opponent schedules, weighted by plate exposure.
+
+    ``by_game`` is the ``/stats?by_user&by_char&by_game`` payload
+    (``{game_id: {username: {char: {"Batting": ..., "Pitching": ...}}}}``). For each
+    character a user actually appeared with, accumulate the opponents they faced,
+    weighted by plate appearances (batting) or batters faced (pitching) — so a
+    relief cameo counts far less than a full start. Returns::
+
+        {"batting":  {(user, char): ({opponent: pa}, game_count)},
+         "pitching": {(user, char): ({opponent: bf}, game_count)}}
+
+    Usernames are lowercased; character names are kept as the API returns them (the
+    same canonical names the lookups use). ``game_count`` (appearances, not exposure)
+    drives the schedule-reliability damping, matching the mode-wide path.
+    """
+    batting: dict[tuple[str, str], tuple[dict[str, int], int]] = {}
+    pitching: dict[tuple[str, str], tuple[dict[str, int], int]] = {}
+
+    def add(store, key, opp, weight):
+        schedule, games = store.get(key, ({}, 0))
+        schedule[opp] = schedule.get(opp, 0) + weight
+        store[key] = (schedule, games + 1)
+
+    for users in by_game.values():
+        names = [u.lower() for u in users]
+        if len(names) != 2:  # only well-formed 1v1 games
+            continue
+        for username, chars in users.items():
+            user = username.lower()
+            opp = names[0] if names[1] == user else names[1]
+            for char, summary in chars.items():
+                bat = summary.get("Batting") or {}
+                pa = (
+                    (bat.get("summary_at_bats") or 0)
+                    + (bat.get("summary_walks_bb") or 0)
+                    + (bat.get("summary_walks_hbp") or 0)
+                    + (bat.get("summary_sac_flys") or 0)
+                )
+                if pa > 0:
+                    add(batting, (user, char), opp, pa)
+                bf = (summary.get("Pitching") or {}).get("batters_faced") or 0
+                if bf > 0:
+                    add(pitching, (user, char), opp, bf)
+
+    return {"batting": batting, "pitching": pitching}
+
+
+def char_schedule_effect(
+    player: str,
+    side_stats: dict[str, dict],
+    char_schedule: tuple[dict[str, int], int],
+    league_run_rate: float,
+    regression_inn: int = OPPONENT_REGRESSION_INN,
+) -> tuple[float, int]:
+    """Opponent effect for one character's slate (from :func:`build_char_schedules`).
+
+    ``char_schedule`` is ``({opponent: exposure_weight}, game_count)``. The opponent
+    rates are exposure-weighted (PA/BF) rather than game-weighted, but the returned
+    count is game *appearances* so the caller's reliability damping stays in game
+    units. Returns ``(effect, game_count)`` for ``opponent_adjusted_*``.
+    """
+    weights, game_count = char_schedule
+    effect, _ = loo_schedule_effect(player, side_stats, weights, league_run_rate, regression_inn)
+    return effect, game_count
+
+
 def loo_schedule_effect(
     player: str,
     side_stats: dict[str, dict],

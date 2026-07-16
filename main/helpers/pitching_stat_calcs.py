@@ -7,7 +7,7 @@ import discord
 
 from helpers import stat_cache
 from helpers.offensive_stat_calcs import _get_matchup_stats
-from helpers.opponent_adjustment import loo_schedule_effect, opponent_adjusted_pitching_index
+from helpers.opponent_adjustment import char_schedule_effect, loo_schedule_effect, opponent_adjusted_pitching_index
 from helpers.sabermetrics import calc_pitching_index
 from helpers.stat_utils import BASE_STATS_URL, send_error_embed, send_stat_embed
 from models.misc_stats import MiscStats
@@ -87,11 +87,11 @@ async def pstat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
     char_ref = by_char_baseline.get(char)
     if char_ref is not None:
         raw_psi = calc_pitching_index(stats, char_ref, league_rpa)
-        # The schedule is the user's overall slate in this mode (per-character
-        # matchup data isn't available) — same approximation as the batting side.
+        # Adjust by the offenses this user faced *while pitching with this character*
+        # (BF-weighted), from the cached per-character schedules.
         league_rpi = matchup["league_runs_per_inning"]
-        schedule = matchup["schedules"].get(user.lower(), {})
-        offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
+        char_schedule = matchup["char_schedules"]["pitching"].get((user.lower(), char), ({}, 0))
+        offense_effect, total_games = char_schedule_effect(user.lower(), matchup["offense"], char_schedule, league_rpi)
         psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpi)
     else:
         psi = 0.0
@@ -176,7 +176,11 @@ async def pstat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_ref = by_char_baseline.get(char)
         if char_ref is not None:
             raw_char_psi = calc_pitching_index(char_stats, char_ref, league_rpa)
-            char_psi = opponent_adjusted_pitching_index(raw_char_psi, offense_effect, total_games, league_rpi)
+            # Adjust each character by the offenses faced *while pitching with that
+            # character* (BF-weighted), not the user's overall slate.
+            char_schedule = matchup["char_schedules"]["pitching"].get((user.lower(), char), ({}, 0))
+            char_effect, char_games = char_schedule_effect(user.lower(), matchup["offense"], char_schedule, league_rpi)
+            char_psi = opponent_adjusted_pitching_index(raw_char_psi, char_effect, char_games, league_rpi)
         else:
             char_psi = 0.0
         if char_stats.batters_faced > 0 and char_stats.outs_pitched > 3:
@@ -222,16 +226,26 @@ async def pstat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     league_rpi = matchup["league_runs_per_inning"]
 
     title = f"\n{char} ({ip_str} IP): {avg:.3f} Opp. AVG / {k_rate:.1%} K% / {era:.2f} ERA"
+    if char != "all":
+        # The character's overall index vs the whole-league baseline (same as pstat_all),
+        # so the leaderboard shows how the character itself performs, not just its users.
+        char_index = calc_pitching_index(char_stats, all_pitching, league_rpa)
+        title += f", {round(char_index)} PSI"
     desc = "**User** (IP): Opp. AVG / K% / ERA, PSI"
 
     output_list = []
     for user, user_stats in user_list[1:]:
         user_ip, user_avg, user_k_rate, user_era = calc_slash_line(user_stats)
         raw_psi = calc_pitching_index(user_stats, char_stats, league_rpa)
-        # Each row is a different user, adjusted by that user's own schedule —
-        # all from the one cached game-log structure (no extra calls).
-        schedule = matchup["schedules"].get(user.lower(), {})
-        offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
+        # Adjust each row by that user's schedule — for a specific character, the
+        # offenses faced *while pitching with that character* (BF-weighted); for the
+        # all-character ranking (prank), their overall mode slate.
+        if char != "all":
+            char_schedule = matchup["char_schedules"]["pitching"].get((user.lower(), char), ({}, 0))
+            offense_effect, total_games = char_schedule_effect(user.lower(), matchup["offense"], char_schedule, league_rpi)
+        else:
+            schedule = matchup["schedules"].get(user.lower(), {})
+            offense_effect, total_games = loo_schedule_effect(user.lower(), matchup["offense"], schedule, league_rpi)
         psi = opponent_adjusted_pitching_index(raw_psi, offense_effect, total_games, league_rpi)
 
         if user_ip > (ip / 100):

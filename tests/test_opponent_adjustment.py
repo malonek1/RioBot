@@ -1,7 +1,9 @@
 import pytest
 
 from helpers.opponent_adjustment import (
+    build_char_schedules,
     build_matchup_stats,
+    char_schedule_effect,
     loo_schedule_effect,
     opponent_adjusted_pitching_index,
     opponent_adjusted_wrc_plus,
@@ -88,6 +90,74 @@ class TestLooScheduleEffect:
 
     def test_empty_schedule_is_neutral(self):
         assert loo_schedule_effect("me", {}, {}, 0.3) == (0.0, 0)
+
+
+class TestBuildCharSchedules:
+    def _by_game(self):
+        # Two games. Alice runs Bowser both games (vs Bob, then vs Carl); she also
+        # rosters Mario only in game 1. Bob pitches with DK in game 1 only.
+        def bat(pa):
+            return {"summary_at_bats": pa, "summary_walks_bb": 0, "summary_walks_hbp": 0, "summary_sac_flys": 0}
+
+        return {
+            "1": {
+                "Alice": {"Bowser": {"Batting": bat(4)}, "Mario": {"Batting": bat(3)}},
+                "Bob": {"DK": {"Pitching": {"batters_faced": 30}}},
+            },
+            "2": {
+                "Alice": {"Bowser": {"Batting": bat(5)}},
+                "Carl": {"DK": {"Pitching": {"batters_faced": 28}}},
+            },
+        }
+
+    def test_batting_schedule_pa_weighted_per_character(self):
+        cs = build_char_schedules(self._by_game())["batting"]
+        # Alice/Bowser faced bob (4 PA) and carl (5 PA), across 2 games.
+        assert cs[("alice", "Bowser")] == ({"bob": 4, "carl": 5}, 2)
+        # Alice/Mario only appeared game 1 (3 PA vs bob).
+        assert cs[("alice", "Mario")] == ({"bob": 3}, 1)
+
+    def test_pitching_schedule_bf_weighted(self):
+        cs = build_char_schedules(self._by_game())["pitching"]
+        assert cs[("bob", "DK")] == ({"alice": 30}, 1)
+        assert cs[("carl", "DK")] == ({"alice": 28}, 1)
+
+    def test_zero_appearance_characters_excluded(self):
+        by_game = {
+            "1": {
+                "Alice": {"Bench": {"Batting": {"summary_at_bats": 0, "summary_walks_bb": 0,
+                                                "summary_walks_hbp": 0, "summary_sac_flys": 0}}},
+                "Bob": {"DK": {"Pitching": {"batters_faced": 0}}},
+            }
+        }
+        cs = build_char_schedules(by_game)
+        assert cs["batting"] == {}
+        assert cs["pitching"] == {}
+
+    def test_malformed_games_skipped(self):
+        by_game = {"1": {"OnlyOne": {"Bowser": {"Batting": {"summary_at_bats": 4}}}}}
+        cs = build_char_schedules(by_game)
+        assert cs["batting"] == {}
+
+
+class TestCharScheduleEffect:
+    def _defense(self):
+        return {"tough": {"runs": 10, "inn": 100, "vs": {}}}  # raw 0.1
+
+    def test_returns_game_count_not_exposure_weight(self):
+        # Weight is PA (200), but the returned count is the appearance count (5).
+        effect, games = char_schedule_effect("me", self._defense(), ({"tough": 200}, 5), 0.3, regression_inn=0)
+        assert games == 5
+        assert effect == pytest.approx(0.1 - 0.3)
+
+    def test_exposure_weights_the_average(self):
+        defense = {"a": {"runs": 10, "inn": 100, "vs": {}}, "b": {"runs": 50, "inn": 100, "vs": {}}}  # 0.1, 0.5
+        effect, _ = char_schedule_effect("me", defense, ({"a": 1, "b": 3}, 2), 0.3, regression_inn=0)
+        # heavily weighted toward b: (1*(0.1-0.3) + 3*(0.5-0.3)) / 4
+        assert effect == pytest.approx((1 * (0.1 - 0.3) + 3 * (0.5 - 0.3)) / 4)
+
+    def test_empty_schedule_neutral(self):
+        assert char_schedule_effect("me", self._defense(), ({}, 0), 0.3) == (0.0, 0)
 
 
 class TestOpponentAdjustedWrcPlus:

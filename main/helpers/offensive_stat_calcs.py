@@ -5,7 +5,13 @@ import aiohttp
 import discord
 
 from helpers import stat_cache
-from helpers.opponent_adjustment import build_matchup_stats, loo_schedule_effect, opponent_adjusted_wrc_plus
+from helpers.opponent_adjustment import (
+    build_char_schedules,
+    build_matchup_stats,
+    char_schedule_effect,
+    loo_schedule_effect,
+    opponent_adjusted_wrc_plus,
+)
 from helpers.sabermetrics import calc_wrc_plus, league_runs_per_pa
 from helpers.stat_utils import BASE_GAMES_URL, BASE_STATS_URL, FRONTEND_URL, send_error_embed, send_stat_embed
 from models.batting_stats import BattingStats
@@ -79,8 +85,41 @@ async def _get_matchup_stats(mode: str, session: aiohttp.ClientSession) -> dict:
     url = f"{BASE_GAMES_URL}?tag={mode}&limit_games={GAME_LOG_LIMIT}"
     async with session.get(url) as response:
         games = (await response.json(content_type=None)).get("games", [])
-    matchup = build_matchup_stats(games)
+    matchup = await _compute_matchup(mode, games, session)
     stat_cache.set(key, matchup)
+    return matchup
+
+
+# A single by_game pull for a full season can time out (504) on large modes
+# (e.g. s12 ~3.6k games), so fetch it in date-ordered windows and merge.
+BY_GAME_WINDOW = 300
+
+
+async def _fetch_by_game(mode: str, session: aiohttp.ClientSession, game_dates: list[int]) -> dict:
+    """Per-(game, user, char) batting+pitching appearances, fetched in windows.
+
+    Used only to build the character-specific schedules; merged by game_id.
+    """
+    dates = sorted(d for d in game_dates if d)
+    merged: dict = {}
+    for i in range(0, len(dates), BY_GAME_WINDOW):
+        lo = dates[i]
+        hi = dates[min(i + BY_GAME_WINDOW, len(dates)) - 1] + 1
+        url = (
+            f"{BASE_STATS_URL}?exclude_fielding=1&exclude_misc=1&by_user=1&by_char=1&by_game=1"
+            f"&tag={mode}&start_time={lo}&end_time={hi}"
+        )
+        async with session.get(url) as response:
+            data = (await response.json(content_type=None)).get("Stats", {})
+        merged.update(data)
+    return merged
+
+
+async def _compute_matchup(mode: str, games: list[dict], session: aiohttp.ClientSession) -> dict:
+    """Game-log SoS structure plus the character-specific schedules."""
+    matchup = build_matchup_stats(games)
+    by_game = await _fetch_by_game(mode, session, [g.get("date_time_start") for g in games])
+    matchup["char_schedules"] = build_char_schedules(by_game)
     return matchup
 
 
@@ -110,7 +149,7 @@ async def refresh_baselines(mode: str, session: aiohttp.ClientSession):
     games_url = f"{BASE_GAMES_URL}?tag={mode}&limit_games={GAME_LOG_LIMIT}"
     async with session.get(games_url) as response:
         games = (await response.json(content_type=None)).get("games", [])
-    stat_cache.set(f"matchup:{mode}", build_matchup_stats(games))
+    stat_cache.set(f"matchup:{mode}", await _compute_matchup(mode, games, session))
 
 
 async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp.ClientSession):
@@ -137,12 +176,11 @@ async def ostat_user_char(ctx, user: str, char: str, mode: str, session: aiohttp
     char_baseline = by_char_baseline.get(char)
     if char_baseline is not None:
         raw_wrc = calc_wrc_plus(stats, char_baseline, league_rpa)
-        # The schedule is the user's overall slate in this mode (per-character
-        # matchup data isn't available), so the per-character adjustment is an
-        # approximation built on the same opponents they faced overall.
+        # Adjust by the opponents this user actually faced *with this character*
+        # (PA-weighted), from the cached per-character schedules.
         league_rpi = matchup["league_runs_per_inning"]
-        schedule = matchup["schedules"].get(user.lower(), {})
-        schedule_effect, total_games = loo_schedule_effect(user.lower(), matchup["defense"], schedule, league_rpi)
+        char_schedule = matchup["char_schedules"]["batting"].get((user.lower(), char), ({}, 0))
+        schedule_effect, total_games = char_schedule_effect(user.lower(), matchup["defense"], char_schedule, league_rpi)
         bsi = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpi)
     else:
         bsi = 0.0
@@ -240,9 +278,11 @@ async def ostat_user(ctx, user: str, mode: str, session: aiohttp.ClientSession):
         char_baseline = by_char_baseline.get(char)
         if char_baseline is not None:
             char_wrc = calc_wrc_plus(char_stats, char_baseline, league_rpa)
-            # Reuse the user's overall schedule (already computed above) — same
-            # approximation as ostat_user_char, at no extra cost.
-            char_bsi = opponent_adjusted_wrc_plus(char_wrc, schedule_effect, total_games, league_rpi)
+            # Adjust each character by the schedule the user faced *with that
+            # character* (PA-weighted), not their overall slate.
+            char_schedule = matchup["char_schedules"]["batting"].get((user.lower(), char), ({}, 0))
+            char_effect, char_games = char_schedule_effect(user.lower(), matchup["defense"], char_schedule, league_rpi)
+            char_bsi = opponent_adjusted_wrc_plus(char_wrc, char_effect, char_games, league_rpi)
         else:
             char_bsi = 0.0
         desc += f"\n**{char}** ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}, {round(char_bsi)} BSI"
@@ -284,16 +324,27 @@ async def ostat_char(ctx, char: str, mode: str, session: aiohttp.ClientSession):
     league_rpi = matchup["league_runs_per_inning"]
 
     title = f"\n{char} ({pa} PA): {avg:.3f} / {obp:.3f} / {slg:.3f}"
+    if char != "all":
+        # The character's overall wRC+ vs the whole-league baseline (same as ostat_all),
+        # so the leaderboard shows how the character itself performs, not just its users.
+        all_batting = await _get_batting_baseline(mode, session)
+        char_wrc = calc_wrc_plus(char_stats, all_batting, league_rpa)
+        title += f", {round(char_wrc)} wRC+"
     desc = "**User** (PA): AVG / OBP / SLG, BSI"
 
     output_list = []
     for user, user_stats in user_list[1:]:
         user_pa, user_avg, user_obp, user_slg = calc_slash_line(user_stats)
         raw_wrc = calc_wrc_plus(user_stats, char_stats, league_rpa)
-        # Each row is a different user, so adjust by that user's own schedule —
-        # all from the one cached game-log structure (no extra calls).
-        schedule = matchup["schedules"].get(user.lower(), {})
-        schedule_effect, total_games = loo_schedule_effect(user.lower(), matchup["defense"], schedule, league_rpi)
+        # Adjust each row by that user's schedule — for a specific character, the
+        # slate they faced *with that character* (PA-weighted); for the all-character
+        # ranking (orank), their overall mode slate. All from the cached structures.
+        if char != "all":
+            char_schedule = matchup["char_schedules"]["batting"].get((user.lower(), char), ({}, 0))
+            schedule_effect, total_games = char_schedule_effect(user.lower(), matchup["defense"], char_schedule, league_rpi)
+        else:
+            schedule = matchup["schedules"].get(user.lower(), {})
+            schedule_effect, total_games = loo_schedule_effect(user.lower(), matchup["defense"], schedule, league_rpi)
         bsi = opponent_adjusted_wrc_plus(raw_wrc, schedule_effect, total_games, league_rpi)
 
         if user_pa > (pa / 100):
