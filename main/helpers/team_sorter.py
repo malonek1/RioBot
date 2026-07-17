@@ -54,7 +54,7 @@ ranked_character_dict = {
     Char.BABY_MARIO.value: 37,
     Char.BABY_LUIGI.value: 37,
     Char.GOOMBA.value: 38,
-    Char.PARAGOOMBA.value: 38
+    Char.PARAGOOMBA.value: 38,
 }
 
 
@@ -65,7 +65,9 @@ def get_character_rank(char):
         if char in ranked_character_dict:
             return ranked_character_dict[char]
         else:
-            return 99   # Put any unknown characters at end of list
+            return 99  # Put any unknown characters at end of list
+
+
 # END getCharacterRank
 
 
@@ -77,6 +79,8 @@ def sort_teams_by_tier(teams):
     for team in teams:
         team.sort(key=get_character_rank)
     return teams
+
+
 # END Sort Teams By Tier Exclude Captain
 
 
@@ -86,4 +90,6 @@ def sort_teams_by_tier_exclude_captain(teams):
         team.sort(key=get_character_rank)
         team.insert(0, captain)
     return teams
+
+
 # END Sort Teams By Tier Exclude Captain

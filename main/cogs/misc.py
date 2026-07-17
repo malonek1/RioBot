@@ -12,14 +12,17 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gcc(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name="Setting up a GameCube Controller", value="""
+        embed.add_field(
+            name="Setting up a GameCube Controller",
+            value="""
     To use a GameCube Controller with Rio, follow these steps:
     - Install the proper drivers <https://wiki.dolphin-emu.org/index.php?title=How_to_use_the_Official_GameCube_Controller_Adapter_for_Wii_U_in_Dolphin#Avoid_vJoy>
     - Change the controller port to "GameCube Adapter for WiiU" in the Controller settings
     - If your adapter has a switch, set it to WiiU mode instead of PC mode
     - Use port 1; only player 1 can control the menus in Mario Baseball
     - Make sure no other Dolphin/Rio tabs are open at the same time. The controller can only connect to one window at a time
-        """)
+        """,
+        )
         await ctx.send(embed=embed)
 
     # displays server rules
@@ -28,77 +31,105 @@ class Misc(commands.Cog):
     async def rule(self, ctx, rule: int):
         embed = discord.Embed()
         if rule == 1:
-            embed.add_field(name="Hate Speech",
-                            value="• Includes but is not limited to: racism, homophobia, transphobia, ableism, threats\n"
-                                  "• This includes profile pictures, usernames, and custom statuses")
+            embed.add_field(
+                name="Hate Speech",
+                value="• Includes but is not limited to: racism, homophobia, transphobia, ableism, threats\n"
+                "• This includes profile pictures, usernames, and custom statuses",
+            )
         elif rule == 2:
-            embed.add_field(name="Posting NSFW Content",
-                            value="• This includes pictures, long text copy pastas, spam pinging, posting discord links, having sexual and or graphic conversations in voice or text channels, or other disruptive content.\n"
-                                  "• NSFW topics include but are not limited to: pornographic, excessively disturbing, sexually suggestive, or topics concerning past sexual experiences, sexual desires, gore, disturbing conversations about abuse, images of scantily clad people, images that make any allusion to sexual fetishes, images of sex toys, or using trigger words.\n"
-                                  "•  Extremely edgy dark humor, making light of recent tragedies \n"
-                                  "• This includes profile pictures, usernames, and custom statuses.")
+            embed.add_field(
+                name="Posting NSFW Content",
+                value="• This includes pictures, long text copy pastas, spam pinging, posting discord links, having sexual and or graphic conversations in voice or text channels, or other disruptive content.\n"
+                "• NSFW topics include but are not limited to: pornographic, excessively disturbing, sexually suggestive, or topics concerning past sexual experiences, sexual desires, gore, disturbing conversations about abuse, images of scantily clad people, images that make any allusion to sexual fetishes, images of sex toys, or using trigger words.\n"
+                "•  Extremely edgy dark humor, making light of recent tragedies \n"
+                "• This includes profile pictures, usernames, and custom statuses.",
+            )
         elif rule == 3:
-            embed.add_field(name="Posting harmful or malicious links",
-                            value="• This includes posting links to malicious websites.\n"
-                                  "• Any post that crashes or attempts to crash Discord or a user's computer.\n"
-                                  "• Any post that pretends to or does send malware to a user will be met with a ban, no questions asked.")
+            embed.add_field(
+                name="Posting harmful or malicious links",
+                value="• This includes posting links to malicious websites.\n"
+                "• Any post that crashes or attempts to crash Discord or a user's computer.\n"
+                "• Any post that pretends to or does send malware to a user will be met with a ban, no questions asked.",
+            )
         elif rule == 4:
-            embed.add_field(name="Doxxing",
-                            value="• Do not post personal details or identifying information of any users without that user's express permission.\n"
-                                  "• Do not post pictures of other people without their consent")
+            embed.add_field(
+                name="Doxxing",
+                value="• Do not post personal details or identifying information of any users without that user's express permission.\n"
+                "• Do not post pictures of other people without their consent",
+            )
         elif rule == 5:
-            embed.add_field(name="Money Matching",
-                            value="• Money-matching (playing in a match in exchange for money) or other forms of gambling are not permitted. \n"
-                                  "• Do not approach other users of this server in DMs for the purpose of playing for money.")
+            embed.add_field(
+                name="Money Matching",
+                value="• Money-matching (playing in a match in exchange for money) or other forms of gambling are not permitted. \n"
+                "• Do not approach other users of this server in DMs for the purpose of playing for money.",
+            )
         elif rule == 6:
-            embed.add_field(name="Ban Evasion/Subverting Server Rules",
-                            value="• Using alternate accounts to evade bans will result in an immediate ban for the alternate account. \n"
-                                  "• Using alternate accounts to subvert instructions or discipline from the moderation team can also lead to a permanent ban for the alt account and main account as well.\n"
-                                  "• Assisting any user in ban evading will subject that user to a permanent ban.\n"
-                                  "• Any \"bending of\" the rules or \"finding loopholes\" in the rules can still be subject to the same punishment as if the rule was broken as written. Use common sense!")
+            embed.add_field(
+                name="Ban Evasion/Subverting Server Rules",
+                value="• Using alternate accounts to evade bans will result in an immediate ban for the alternate account. \n"
+                "• Using alternate accounts to subvert instructions or discipline from the moderation team can also lead to a permanent ban for the alt account and main account as well.\n"
+                "• Assisting any user in ban evading will subject that user to a permanent ban.\n"
+                '• Any "bending of" the rules or "finding loopholes" in the rules can still be subject to the same punishment as if the rule was broken as written. Use common sense!',
+            )
         elif rule == 7:
-            embed.add_field(name="Spamming",
-                            value="• Keep discussions on topic to their respective channels\n"
-                                  "• Messages in <#628353660698624024> must follow all other rules in the server\n"
-                                  "• Self-promotion outside of the self-promotion channel is not permitted\n"
-                                  "• Please only use Pings for their intended purpose. This includes @Netplayers and @LFGNewNetplayers for finding games in <#948321928760918087>")
+            embed.add_field(
+                name="Spamming",
+                value="• Keep discussions on topic to their respective channels\n"
+                "• Messages in <#628353660698624024> must follow all other rules in the server\n"
+                "• Self-promotion outside of the self-promotion channel is not permitted\n"
+                "• Please only use Pings for their intended purpose. This includes @Netplayers and @LFGNewNetplayers for finding games in <#948321928760918087>",
+            )
         elif rule == 8:
-            embed.add_field(name="Instigating Fights",
-                            value="• Intentional and continuous drama baiting/instigating is not allowed. Drama baiting/instigating is defined as constantly flaming/being toxic to users after being informally/formally warned.\n"
-                                  "• Members of the server must also be fair and understanding to those with different opinions.\n"
-                                  "• Mods or Admins may ask the discussion to end if it gets too heated.")
+            embed.add_field(
+                name="Instigating Fights",
+                value="• Intentional and continuous drama baiting/instigating is not allowed. Drama baiting/instigating is defined as constantly flaming/being toxic to users after being informally/formally warned.\n"
+                "• Members of the server must also be fair and understanding to those with different opinions.\n"
+                "• Mods or Admins may ask the discussion to end if it gets too heated.",
+            )
         elif rule == 9:
-            embed.add_field(name='No "Crossing The Line"',
-                            value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
-                                  "• Bullying and berating someone will not be tolerated. \n"
-                                  "• If you're unsure your communication is appropriate, then ask a moderator first.\n"
-                                  "• Alluding to suicide in any way will not be tolerated.\n"
-                                  "• Ban evading or helping someone to ban evade will result in permanent ban.\n"
-                                  "• Using loopholes for bending the rules is still rule breaking. Use common sense.")
+            embed.add_field(
+                name='No "Crossing The Line"',
+                value="• Please don't be too vitriolic, edgy, derogatory, or abrasive with your posts. Don’t be rude.\n"
+                "• Bullying and berating someone will not be tolerated. \n"
+                "• If you're unsure your communication is appropriate, then ask a moderator first.\n"
+                "• Alluding to suicide in any way will not be tolerated.\n"
+                "• Ban evading or helping someone to ban evade will result in permanent ban.\n"
+                "• Using loopholes for bending the rules is still rule breaking. Use common sense.",
+            )
         elif rule == 10:
-            embed.add_field(name="Having Non-English Conversations",
-                            value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
-                                  "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.")
+            embed.add_field(
+                name="Having Non-English Conversations",
+                value="• Please keep all text conversations in English. Most of the admins and mods in the server are native English speakers, so keeping conversations to English is most appreciated.\n"
+                "• Non-English media is allowed, however it may be removed at the mods discretion if they think it might be breaking a rule in another language.",
+            )
         elif rule == 11:
-            embed.add_field(name="Posting Excessively Loud Videos",
-                            value="• Excessively loud videos are not allowed in media channels.")
+            embed.add_field(
+                name="Posting Excessively Loud Videos",
+                value="• Excessively loud videos are not allowed in media channels.",
+            )
         elif rule == 12:
-            embed.add_field(name="Asking for an ISO / ROM",
-                            value="• Asking for an ISO / ROM of any game is prohibited.\n"
-                                  "• Users must obtain these files on their own accord")
+            embed.add_field(
+                name="Asking for an ISO / ROM",
+                value="• Asking for an ISO / ROM of any game is prohibited.\n"
+                "• Users must obtain these files on their own accord",
+            )
         elif rule == 13:
-            embed.add_field(name="Netplay Specific Rules",
-                            value="• Users can only submit games to the ranked leaderboards from one account. No smurfing.\n"
-                                  "• User must pass a latency test to at least 1 US Server (120ms ping / 15ms jitter) in order to use the matchmaking pings or matchmaking bot.\n"
-                                  "• Users who enter the Matchmaking Bot must accept the instructions given (including random assignment of home/away, stadium, order of pick, opponent, etc.). Failing to respond to the matches given by the bot or asking to gentleman's out of the bot's instructions will lead to a ban from using the features of the matchmaking bot. \n"
-                                  "• Users who wish to specify preferences (such as specific stadiums, specific pick orders, range of opponents, avoiding rematches/runbacks, etc.) should use the \"LFG-pings\" to find a match in #matchmaking-netplay. \n"
-                                  "• For additional rules regarding netplay please read: https://discord.com/channels/628353660698624020/708107695831646209/949426712658194452")
+            embed.add_field(
+                name="Netplay Specific Rules",
+                value="• Users can only submit games to the ranked leaderboards from one account. No smurfing.\n"
+                "• User must pass a latency test to at least 1 US Server (120ms ping / 15ms jitter) in order to use the matchmaking pings or matchmaking bot.\n"
+                "• Users who enter the Matchmaking Bot must accept the instructions given (including random assignment of home/away, stadium, order of pick, opponent, etc.). Failing to respond to the matches given by the bot or asking to gentleman's out of the bot's instructions will lead to a ban from using the features of the matchmaking bot. \n"
+                '• Users who wish to specify preferences (such as specific stadiums, specific pick orders, range of opponents, avoiding rematches/runbacks, etc.) should use the "LFG-pings" to find a match in #matchmaking-netplay. \n'
+                "• For additional rules regarding netplay please read: https://discord.com/channels/628353660698624020/708107695831646209/949426712658194452",
+            )
         elif rule == 14:
-            embed.add_field(name="Good Faith Discussion Only",
-                            value="• We discourage the discussion of politics as this is a server focused on Mario Baseball.\n"
-                                  "• However, we also acknowledge that many aspects of our every day lives tie into politics or have become politicized. For these conversational topics, we encourage people to be polite & respectful.\n"
-                                  "• Additionally we recognize the Paradox of Tolerance. As such intolerance, bigotry, and bad-faith misinformation are not allowed (See Rule 1)\n"
-                                  "• The mods reserve the right to shut down political discussions if they are deemed too controversial to remain polite & respectful")
+            embed.add_field(
+                name="Good Faith Discussion Only",
+                value="• We discourage the discussion of politics as this is a server focused on Mario Baseball.\n"
+                "• However, we also acknowledge that many aspects of our every day lives tie into politics or have become politicized. For these conversational topics, we encourage people to be polite & respectful.\n"
+                "• Additionally we recognize the Paradox of Tolerance. As such intolerance, bigotry, and bad-faith misinformation are not allowed (See Rule 1)\n"
+                "• The mods reserve the right to shut down political discussions if they are deemed too controversial to remain polite & respectful",
+            )
         await ctx.send(embed=embed)
 
     # stadium boundary chart
@@ -106,10 +137,12 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stadium(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='STADIUM BOUNDARY CHART',
-                        value='The following image displays the boundaries of all stadiums:\n')
+        embed.add_field(
+            name="STADIUM BOUNDARY CHART", value="The following image displays the boundaries of all stadiums:\n"
+        )
         embed.set_image(
-            url="https://media.discordapp.net/attachments/628354009865912350/943980502510104636/unknown.png")
+            url="https://media.discordapp.net/attachments/628354009865912350/943980502510104636/unknown.png"
+        )
         await ctx.send(embed=embed)
 
     # about rio stat files
@@ -117,9 +150,11 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def stats(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='RIO STATS:',
-                        value='By default, Project Rio records stats throughout a game and generates a stat json file to your computer.\n\n'
-                              'You can view these stat files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).')
+        embed.add_field(
+            name="RIO STATS:",
+            value="By default, Project Rio records stats throughout a game and generates a stat json file to your computer.\n\n"
+            'You can view these stat files by opening the "StatFiles" folder in your Project Rio user directory (on Windows, this is likely in your Documents folder).',
+        )
         await ctx.send(embed=embed)
 
     # datamined stats
@@ -127,9 +162,11 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def datamine(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='DATAMINED STATS:',
-                        value='We have uncovered many hidden stats in the game through datamining. See our full datamined stat spreadsheet here:\n'
-                              'https://docs.google.com/spreadsheets/d/16cEcCq-Gkudx5ESfqzS0MJlQI7WTvSIWsHVZS8jv750/edit?usp=sharing')
+        embed.add_field(
+            name="DATAMINED STATS:",
+            value="We have uncovered many hidden stats in the game through datamining. See our full datamined stat spreadsheet here:\n"
+            "https://docs.google.com/spreadsheets/d/16cEcCq-Gkudx5ESfqzS0MJlQI7WTvSIWsHVZS8jv750/edit?usp=sharing",
+        )
         await ctx.send(embed=embed)
 
     # reset a crashed game
@@ -137,13 +174,17 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def reset(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='RESET GAME:',
-                        value='In the event that a ranked/tournament game crashes or desyncs, use the "Fast Reset" feature in Rio to jump right back into the game.\n'
-                              'The checkbox can be found at the bottom of the netplay lobby, or under the Rio Config menu in the main Rio window.\n'
-                              'To use it, ensure the game mode and players are the same as the crashed game, and then both players just need to keep pressing A to advance through the menus. Ignore the graphics in the menus - the correct info will be loaded in the background.\n'
-                              'The game will resume from the pitch before the crash/desync happened. Depending on the nature of the crash/desync, the players can agree to recrease the subsequent event manually.\n'
-                              'There are some cases where the Fast Reset may not work properly, such as if the crash/desync happened during a pitch. In these cases, please refer to the guide below for how to manually reset the game:\n')
-        embed.set_image(url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png")
+        embed.add_field(
+            name="RESET GAME:",
+            value='In the event that a ranked/tournament game crashes or desyncs, use the "Fast Reset" feature in Rio to jump right back into the game.\n'
+            "The checkbox can be found at the bottom of the netplay lobby, or under the Rio Config menu in the main Rio window.\n"
+            "To use it, ensure the game mode and players are the same as the crashed game, and then both players just need to keep pressing A to advance through the menus. Ignore the graphics in the menus - the correct info will be loaded in the background.\n"
+            "The game will resume from the pitch before the crash/desync happened. Depending on the nature of the crash/desync, the players can agree to recrease the subsequent event manually.\n"
+            "There are some cases where the Fast Reset may not work properly, such as if the crash/desync happened during a pitch. In these cases, please refer to the guide below for how to manually reset the game:\n",
+        )
+        embed.set_image(
+            url="https://cdn.discordapp.com/attachments/634046643330613248/947262814261755994/Rio_Crash_Reset_Guide_3.png"
+        )
         await ctx.send(embed=embed)
 
     # TODO: Update or remove
@@ -151,19 +192,25 @@ class Misc(commands.Cog):
     @commands.command(help="Returns the current ranked draft rules")
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def draft(self, ctx, *draft_type):
-        if 'off' in draft_type:
-            embed = discord.Embed(title='Stars-Off Draft Rules:')
-            embed.set_image(url="https://cdn.discordapp.com/attachments/823805174811197470/1066092568712073286/DraftRules.png")
+        if "off" in draft_type:
+            embed = discord.Embed(title="Stars-Off Draft Rules:")
+            embed.set_image(
+                url="https://cdn.discordapp.com/attachments/823805174811197470/1066092568712073286/DraftRules.png"
+            )
             await ctx.send(embed=embed)
-        elif 'on' in draft_type:
-            embed = discord.Embed(title='Stars-On Draft Rules:')
-            embed.set_image(url="https://cdn.discordapp.com/attachments/939254901047951410/1065779869780299786/Season4StarsOnDraft.png")
+        elif "on" in draft_type:
+            embed = discord.Embed(title="Stars-On Draft Rules:")
+            embed.set_image(
+                url="https://cdn.discordapp.com/attachments/939254901047951410/1065779869780299786/Season4StarsOnDraft.png"
+            )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(color=0xEA7D07)
-            embed.add_field(name='Please use the following options to see draft rules:',
-                            value='`!draft off` - For draft ruleset in ranked stars-off\n'
-                                  '`!draft on` - For draft ruleset in ranked stars-on')
+            embed.add_field(
+                name="Please use the following options to see draft rules:",
+                value="`!draft off` - For draft ruleset in ranked stars-off\n"
+                "`!draft on` - For draft ruleset in ranked stars-on",
+            )
             await ctx.send(embed=embed)
 
     # ranked mode
@@ -171,10 +218,12 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def ranked(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='RANKED:',
-                        value=f'We run a ranked online ladder through this server. You can find the ranked leaderboards by typing !ladder <mode> <#{ev.get_var("bot_spam_channel_id")}>\n\n'
-                              'Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, use the buttons in the channel to queue for a game.\n'
-                              'To ensure the game counts for ranked, make sure the host selects the appropriate Game Mode when hosting the Rio lobby.')
+        embed.add_field(
+            name="RANKED:",
+            value=f"We run a ranked online ladder through this server. You can find the ranked leaderboards by typing !ladder <mode> <#{ev.get_var('bot_spam_channel_id')}>\n\n"
+            "Our full ruleset can be seen in <#841761307245281320>. To play a ranked game, use the buttons in the channel to queue for a game.\n"
+            "To ensure the game counts for ranked, make sure the host selects the appropriate Game Mode when hosting the Rio lobby.",
+        )
         await ctx.send(embed=embed)
 
     # explain auto golf mode
@@ -182,9 +231,11 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def golf(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='AUTO GOLF MODE:',
-                        value='Auto Golf Mode is the specific type of netcode that Project Rio uses for playing games online. It works giving one player 0 latency (the golfer) while the other player '
-                              '(the non-golfer) has an extra latency penalty.\n\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.')
+        embed.add_field(
+            name="AUTO GOLF MODE:",
+            value="Auto Golf Mode is the specific type of netcode that Project Rio uses for playing games online. It works giving one player 0 latency (the golfer) while the other player "
+            "(the non-golfer) has an extra latency penalty.\n\nAuto Golf Mode automatically sets the batter to the golfer while in the pitching/batting state of the game, and then swaps the fielder to the golfer while in the fielding/baserunning state.",
+        )
         await ctx.send(embed=embed)
 
     # message for helping new people figure out Rio
@@ -192,10 +243,12 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rioGuide(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='RIO GUIDE:',
-                        value='For a tutorial on setting up Project Rio, head to our website <https://www.projectrio.online/tutorial>\n'
-                              'For a guide to netplay, please check out https://discord.com/channels/628353660698624020/1078085662626033674/1213654488045592650\n'
-                              'If you need further help, please use <#823805409143685130> to get assistance.')
+        embed.add_field(
+            name="RIO GUIDE:",
+            value="For a tutorial on setting up Project Rio, head to our website <https://www.projectrio.online/tutorial>\n"
+            "For a guide to netplay, please check out https://discord.com/channels/628353660698624020/1078085662626033674/1213654488045592650\n"
+            "If you need further help, please use <#823805409143685130> to get assistance.",
+        )
         await ctx.send(embed=embed)
 
     # ball flickering
@@ -203,9 +256,11 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def flicker(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='HOW TO FIX FLICKER ISSUE:',
-                        value='If you notice the ball flickering, you can solve the issue by changing your graphics backend.\n\n'
-                              'Open Rio, click graphics, then change the backend. The default is OpenGL. Vulkan or Direct3D11/12 should work, but which one specifically is different for each computer, so you will need to test that on your own')
+        embed.add_field(
+            name="HOW TO FIX FLICKER ISSUE:",
+            value="If you notice the ball flickering, you can solve the issue by changing your graphics backend.\n\n"
+            "Open Rio, click graphics, then change the backend. The default is OpenGL. Vulkan or Direct3D11/12 should work, but which one specifically is different for each computer, so you will need to test that on your own",
+        )
         await ctx.send(embed=embed)
 
     # optimization guide
@@ -213,8 +268,10 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def optimize(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='OPTIMIZING PROJECT RIO:',
-                        value='Many settings on Project Rio are already optimized ahead of time; however, there is no one-size-fits-all option for different computers. Here is a guide on optimization to help help you started\n> <https://www.projectrio.online/optimize>')
+        embed.add_field(
+            name="OPTIMIZING PROJECT RIO:",
+            value="Many settings on Project Rio are already optimized ahead of time; however, there is no one-size-fits-all option for different computers. Here is a guide on optimization to help help you started\n> <https://www.projectrio.online/optimize>",
+        )
         await ctx.send(embed=embed)
 
     # tell what Rio is
@@ -222,8 +279,10 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def rio(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='PROJECT RIO:',
-                        value='Project Rio is a custom build of Dolphin Emulator built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and an in-progress web-app.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>')
+        embed.add_field(
+            name="PROJECT RIO:",
+            value="Project Rio is a custom build of Dolphin Emulator built specifically for Mario Superstar Baseball. It contains optimized online play, automatic stat tracking, built-in gecko codes, and an in-progress web-app.\n\nYou can download it here: <:ProjectRio:866436395349180416>\n> <https://www.projectrio.online/>",
+        )
         await ctx.send(embed=embed)
 
     # gecko code info
@@ -231,10 +290,12 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def gecko(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='GECKO CODES:',
-                        value='Gecko Codes allow modders to inject their own assembly code into the game in order to create all of the mods we use.\n\n'
-                              'You can change which gecko codes are active by opening Project Rio and clicking the "Gecko Code" tab on the top of the window. Simply checko off which mods you want to use. You can obtain all of out gecko codes by clicking "Download Codes" at the bottom right corner of the Gecko Codes window.\n\n'
-                              '**NOTES**:\n-Do **NOT** disable any code which is labeled as "Required" otherwise many Project Rio functionalites will not work\n-If you run into bugs when using gecko codes, you may have too many turned on. Try turning off the Netplay Event Code\n-The Netplay Event Code is used for making online competitive games easy to set up. It is only required for ranked online games')
+        embed.add_field(
+            name="GECKO CODES:",
+            value="Gecko Codes allow modders to inject their own assembly code into the game in order to create all of the mods we use.\n\n"
+            'You can change which gecko codes are active by opening Project Rio and clicking the "Gecko Code" tab on the top of the window. Simply checko off which mods you want to use. You can obtain all of out gecko codes by clicking "Download Codes" at the bottom right corner of the Gecko Codes window.\n\n'
+            '**NOTES**:\n-Do **NOT** disable any code which is labeled as "Required" otherwise many Project Rio functionalites will not work\n-If you run into bugs when using gecko codes, you may have too many turned on. Try turning off the Netplay Event Code\n-The Netplay Event Code is used for making online competitive games easy to set up. It is only required for ranked online games',
+        )
         await ctx.send(embed=embed)
 
     # inform users about roles
@@ -242,7 +303,7 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def roles(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='ROLES:', value='Set roles for yourself in <#945478927214866522>!')
+        embed.add_field(name="ROLES:", value="Set roles for yourself in <#945478927214866522>!")
         await ctx.send(embed=embed)
 
     # mario superstar baseball wiki
@@ -250,9 +311,11 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def wiki(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='MARIO SUPERSTAR BASEBALL WIKI:',
-                        value='The link below takes you to the official mario superstar baseball wikipedia page that our dedicated community is actively making additions to!\n\n'
-                              'https://mario-superstar-baseball.fandom.com/wiki/Mario_Superstar_Baseball_Wiki')
+        embed.add_field(
+            name="MARIO SUPERSTAR BASEBALL WIKI:",
+            value="The link below takes you to the official mario superstar baseball wikipedia page that our dedicated community is actively making additions to!\n\n"
+            "https://mario-superstar-baseball.fandom.com/wiki/Mario_Superstar_Baseball_Wiki",
+        )
         await ctx.send(embed=embed)
 
     # feedback link
@@ -260,71 +323,79 @@ class Misc(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def feedback(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Send your RioBot ideas here:',
-                        value='https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link')
+        embed.add_field(
+            name="Send your RioBot ideas here:",
+            value="https://docs.google.com/forms/d/e/1FAIpQLSfXWbWMkMnaP7xcinJob9YD4L-D_f3bKyHL9mC5ktqI-XKAhw/viewform?usp=sf_link",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="returns a link to roeming's batting calculator")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def battingCalculator(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Roeming\'s Batting Calculator',
-                        value='https://roeming.github.io/MSSB_Batting_Calculator/')
+        embed.add_field(name="Roeming's Batting Calculator", value="https://roeming.github.io/MSSB_Batting_Calculator/")
         await ctx.send(embed=embed)
 
     @commands.command(help="returns the body check table")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def bodyCheck(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Body Check Table',
-                        value='The following image displays the body check odds:\n')
+        embed.add_field(name="Body Check Table", value="The following image displays the body check odds:\n")
         embed.set_image(
-            url="https://media.discordapp.net/attachments/747305360255352832/1394839462520815718/body-check-table.png")
+            url="https://media.discordapp.net/attachments/747305360255352832/1394839462520815718/body-check-table.png"
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="returns a link that explains wall jump mechanics")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def walljump(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Wall Jump Mechanics:',
-                        value='The link below takes you to a discord post explaining wall jump mechanics!\n'
-                              '• https://discord.com/channels/628353660698624020/841677353108242444/1074404141310431282')
+        embed.add_field(
+            name="Wall Jump Mechanics:",
+            value="The link below takes you to a discord post explaining wall jump mechanics!\n"
+            "• https://discord.com/channels/628353660698624020/841677353108242444/1074404141310431282",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="returns a link that explain walu tech")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def waluTech(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Walu Tech Mechanics:',
-                        value='The link below takes you to a discord post explaining walu tech!\n'
-                              '• https://discord.com/channels/628353660698624020/841677353108242444/1081418770381283339')
+        embed.add_field(
+            name="Walu Tech Mechanics:",
+            value="The link below takes you to a discord post explaining walu tech!\n"
+            "• https://discord.com/channels/628353660698624020/841677353108242444/1081418770381283339",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="returns a link to the thread with traj cones")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def trajCones(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Trajectory Cones:',
-                        value='The link below takes you to a discord thread displaying all the trajectory cones!\n'
-                              '• https://discord.com/channels/628353660698624020/1087489311764652132/1087492641664536677')
+        embed.add_field(
+            name="Trajectory Cones:",
+            value="The link below takes you to a discord thread displaying all the trajectory cones!\n"
+            "• https://discord.com/channels/628353660698624020/1087489311764652132/1087492641664536677",
+        )
         await ctx.send(embed=embed)
 
     @commands.command(help="returns an image displaying all character's ability groupings")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def abilities(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Character\'s Abilities',
-                        value='The following image displays all character\'s abilities by group:\n')
-        embed.set_image(
-            url="https://media.discordapp.net/attachments/628354009865912350/1395295968345456670/image.png")
+        embed.add_field(
+            name="Character's Abilities", value="The following image displays all character's abilities by group:\n"
+        )
+        embed.set_image(url="https://media.discordapp.net/attachments/628354009865912350/1395295968345456670/image.png")
         await ctx.send(embed=embed)
 
     @commands.command(help="infomartion about memory cards")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def memoryCard(self, ctx):
         embed = discord.Embed()
-        embed.add_field(name='Memory Card Usage in Project Rio',
-                        value='Project Rio supports memory cards as of version 2.2.0.')
+        embed.add_field(
+            name="Memory Card Usage in Project Rio", value="Project Rio supports memory cards as of version 2.2.0."
+        )
         await ctx.send(embed=embed)
 
 

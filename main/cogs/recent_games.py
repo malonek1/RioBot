@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from resources import ladders
 from models.game import Game
+from resources import ladders
 
 BASE_GAMES_URL = "https://api.projectrio.app/games/"
 
@@ -11,7 +11,7 @@ stadium_map = {
     2: "Wario Palace",
     3: "Yoshi Park",
     4: "Peach Garden",
-    5: "DK Jungle"
+    5: "DK Jungle",
 }
 
 

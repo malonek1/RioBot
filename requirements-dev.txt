@@ -1,0 +1,3 @@
+# Dev-only tooling. NOT installed on the bot runtime (keep out of requirements.txt).
+# Pinned so local runs and CI agree; bump deliberately.
+ruff==0.15.18
