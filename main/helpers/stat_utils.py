@@ -1,4 +1,5 @@
 import discord
+
 from resources import characters
 
 BASE_STATS_URL = "https://api.projectrio.app/stats/"

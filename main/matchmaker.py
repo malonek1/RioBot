@@ -5,6 +5,7 @@ import time
 
 import discord
 from discord.ext import commands
+
 from models.matchmaking import MatchAnnouncement, QueuedPlayer
 from resources import EnvironmentVariables as ev
 from resources import ladders, rio_name_map

@@ -3,6 +3,7 @@ from random import shuffle
 
 from helpers.utils import ordinal
 from resources.characters import Char
+from resources.paths import RESOURCES_DIR
 
 # Static variables of which row in the CSV are which
 league_row = 0
@@ -76,7 +77,7 @@ def build_character_list(char_row):
 
 
 def build_classic_teams():
-    with open("resources/ClassicTeams.csv", "r") as file:
+    with open(RESOURCES_DIR / "ClassicTeams.csv", "r") as file:
         reader = csv.reader(file)
         for row in reader:
             classic_team_leagues.append(row[league_row].lower())

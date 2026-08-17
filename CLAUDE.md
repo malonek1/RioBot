@@ -48,3 +48,18 @@ The root logger is configured by `bot.run(..., root_logger=True)` in `RioBot.py`
 Ladder/stat data comes from the Project Rio API (`https://api.projectrio.app`).
 `resources/ladders.py` fetches game modes at import (with startup retries) and
 refreshes ladders on a loop.
+
+## Development
+
+Runtime deps live in `requirements.txt`; dev-only tooling (ruff, pytest) lives in
+`requirements-dev.txt` and is never installed on the bot runtime. Install both
+locally with `pip install -r requirements.txt -r requirements-dev.txt`.
+
+- **Lint/format:** `ruff check .` and `ruff format .`. Config is in
+  `pyproject.toml`. CI enforces `ruff check` on every PR.
+- **Tests:** `pytest` from the repo root. Tests live in `tests/` (outside `main/`,
+  so they don't ship to prod) and import app modules via the `pythonpath = ["main"]`
+  setting in `pyproject.toml`. CI runs the suite on every PR.
+- Tests cover pure logic (stat calcs, sorting, model validation) and stay offline.
+  Modules that hit the Project Rio API or Discord at import (`resources/ladders.py`,
+  the cogs) are intentionally untested for now — they'd need mocking.

@@ -1,10 +1,11 @@
 import json
-from os.path import exists
 
-prod_env = "resources/prod.json"
-dev_env = "resources/test.json"
+from resources.paths import RESOURCES_DIR
 
-_env_file = dev_env if exists(dev_env) else prod_env
+_prod_env = RESOURCES_DIR / "prod.json"
+_dev_env = RESOURCES_DIR / "test.json"
+
+_env_file = _dev_env if _dev_env.exists() else _prod_env
 with open(_env_file) as _f:
     _vars = json.load(_f)
 

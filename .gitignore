@@ -10,5 +10,6 @@ main/resources/test_BACKUP.json
 main/.env
 main/resources/test.json
 /scratch/
+.git_commit_msg.tmp
 /.claude/settings.local.json
 /main/.env_PROD

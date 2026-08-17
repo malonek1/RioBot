@@ -2,6 +2,7 @@ import urllib.parse
 
 import discord
 from discord.ext import commands
+
 from helpers.stat_utils import FRONTEND_URL
 from resources import EnvironmentVariables as ev
 from resources import ladders
