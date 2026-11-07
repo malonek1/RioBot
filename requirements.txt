@@ -3,5 +3,4 @@ discord.py~=2.7.1
 pydantic~=2.13.4
 Pillow~=12.2
 python-dotenv~=1.2
-pytz~=2026.2
 requests~=2.34

@@ -3,11 +3,12 @@
 
 import datetime
 import logging
+import logging.handlers
 import os
+import zoneinfo
 
 import aiohttp
 import discord
-import pytz
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
@@ -16,7 +17,9 @@ from resources import ladders
 
 logger = logging.getLogger(__name__)
 
-_EST = pytz.timezone("America/New_York")
+# zoneinfo, never pytz: a pytz zone on a datetime.time is LMT (-4:56), which made
+# discord.py schedule each run in the past and spin, logging "Clock drift" non-stop.
+_EST = zoneinfo.ZoneInfo("America/New_York")
 _CACHE_REFRESH_TIME = datetime.time(hour=6, minute=0, tzinfo=_EST)
 
 # load .env file which has discord token
@@ -116,7 +119,18 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
 
 
-# root_logger=True lets discord.py configure the root logger (timestamped
-# StreamHandler at INFO) so our own module loggers are actually emitted, not
-# just discord's. Without this our logger.info calls go nowhere.
-bot.run(token, root_logger=True)
+# root_logger=True lets discord.py configure the root logger so our own module
+# loggers are emitted, not just discord's. RIOBOT_LOG_FILE (set on the server)
+# sends it to a size-capped rotating file instead of stdout, so a log flood can
+# never fill the disk again.
+_LOG_FILE = os.getenv("RIOBOT_LOG_FILE")
+_LOG_MAX_BYTES = 20 * 1024 * 1024
+_LOG_BACKUPS = 5
+
+if __name__ == "__main__":
+    log_handler = discord.utils.MISSING
+    if _LOG_FILE:
+        log_handler = logging.handlers.RotatingFileHandler(
+            _LOG_FILE, maxBytes=_LOG_MAX_BYTES, backupCount=_LOG_BACKUPS, encoding="utf-8"
+        )
+    bot.run(token, log_handler=log_handler, root_logger=True)

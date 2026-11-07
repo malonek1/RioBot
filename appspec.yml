@@ -86,10 +86,10 @@ hooks:
       runas: root
   # During the BeforeInstall deployment lifecycle event, run the commands
   #   in the script specified in "location".
-  # BeforeInstall:
-  #   - location:
-  #     timeout:
-  #     runas:
+  BeforeInstall:
+    - location: scripts/free_log_space.sh
+      timeout: 60
+      runas: root
   # During the AfterInstall deployment lifecycle event, run the commands
   #   in the script specified in "location".
   AfterInstall:
